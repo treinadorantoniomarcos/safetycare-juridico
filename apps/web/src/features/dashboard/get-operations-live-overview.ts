@@ -3,14 +3,14 @@ import {
   WorkflowJobRepository,
   casesTable,
   clinicalAnalysesTable,
+  clientsTable,
   evidenceChecklistsTable,
   journeyTimelinesTable,
-  leadsTable,
   legalScoresTable,
   rightsAssessmentsTable,
   triageAnalysesTable
 } from "@safetycare/database";
-import { and, count, desc, gte, inArray, isNotNull } from "drizzle-orm";
+import { and, desc, eq, inArray, notInArray } from "drizzle-orm";
 import { getCaseReviewQueue } from "../intake/get-case-review-queue";
 import { getCaseSlaAlerts } from "../intake/get-case-sla-alerts";
 import { getDatabaseClient } from "../../lib/database";
@@ -62,6 +62,17 @@ export type ConversionByHourItem = {
   percentual: number;
 };
 
+export type FutureClientItemOverview = {
+  caseId: string;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  legalStatus: string;
+  commercialStatus: string;
+  submittedAt: string;
+  updatedAt: string;
+};
+
 export type OperationsLiveOverview = {
   generatedAt: string;
   systemOnline: boolean;
@@ -81,6 +92,10 @@ export type OperationsLiveOverview = {
     total: number;
     items: AlertItemOverview[];
   };
+  futureClients: {
+    total: number;
+    items: FutureClientItemOverview[];
+  };
   modules: ModuleBreakdownItem[];
   conversionByHour: ConversionByHourItem[];
 };
@@ -95,19 +110,8 @@ const TRIAGE_STATUSES = [
   "score_pending"
 ] as const;
 
-const OPERATIONAL_STATUSES_FOR_CLIENT = [
-  "human_triage_pending",
-  "triage_pending",
-  "triaged",
-  "clinical_pending",
-  "rights_pending",
-  "evidence_pending",
-  "score_pending",
-  "human_review_required",
-  "conversion_pending",
-  "legal_execution_pending",
-  "legal_execution_in_progress"
-] as const;
+const CLIENT_INFORMATION_SUBMITTED_ACTION = "intake.client_information_submitted";
+const CLOSED_PROSPECT_COMMERCIAL_STATUSES = ["retained", "closed_lost"] as const;
 
 const ORCHESTRATOR_FLOW = [
   "capture",
@@ -228,16 +232,13 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
   const auditLogs = new AuditLogRepository(db);
 
   const [
-    leadsHojeRows,
-    casosTriagemRows,
     scoreRows,
     decisionRows,
-    activeCasesRows,
-    moduleRows,
     queue,
     sla,
     conversionEvents,
     jobSummaries,
+    submissionEvents,
     lastCaseUpdated,
     lastTriage,
     lastJourney,
@@ -247,29 +248,12 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
     lastScore
   ] = await Promise.all([
     db
-      .select({ total: count() })
-      .from(leadsTable)
-      .where(gte(leadsTable.receivedAt, todayStart)),
-    db
-      .select({ total: count() })
-      .from(casesTable)
-      .where(inArray(casesTable.legalStatus, [...TRIAGE_STATUSES])),
-    db
-      .select({ viabilityScore: legalScoresTable.viabilityScore })
+      .select({
+        caseId: legalScoresTable.caseId,
+        viabilityScore: legalScoresTable.viabilityScore
+      })
       .from(legalScoresTable),
     auditLogs.listByAction("conversion.decision_recorded", last24h, 1000),
-    db
-      .select({ total: count() })
-      .from(casesTable)
-      .where(inArray(casesTable.legalStatus, [...OPERATIONAL_STATUSES_FOR_CLIENT])),
-    db
-      .select({
-        caseType: casesTable.caseType,
-        total: count()
-      })
-      .from(casesTable)
-      .where(and(isNotNull(casesTable.caseType), gte(casesTable.createdAt, last24h)))
-      .groupBy(casesTable.caseType),
     getCaseReviewQueue(20),
     getCaseSlaAlerts(20),
     auditLogs.listByAction("conversion.decision_recorded", last24h, 1000),
@@ -278,6 +262,11 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
         const summary = await workflowJobs.summarizeByStatus(jobType);
         return { jobType, summary };
       })
+    ),
+    auditLogs.listByAction(
+      CLIENT_INFORMATION_SUBMITTED_ACTION,
+      new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000),
+      500
     ),
     db
       .select({ updatedAt: casesTable.updatedAt })
@@ -316,10 +305,56 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
       .limit(1)
   ]);
 
-  const leadsHoje = Number(leadsHojeRows[0]?.total ?? 0);
-  const casosEmTriagem = Number(casosTriagemRows[0]?.total ?? 0);
+  const latestSubmissionByCaseId = new Map<string, Date>();
+
+  for (const event of submissionEvents) {
+    if (!event.caseId) {
+      continue;
+    }
+
+    const current = latestSubmissionByCaseId.get(event.caseId);
+    if (!current || current < event.createdAt) {
+      latestSubmissionByCaseId.set(event.caseId, event.createdAt);
+    }
+  }
+
+  const submittedCaseIds = [...latestSubmissionByCaseId.keys()];
+  const futureClientRows =
+    submittedCaseIds.length > 0
+      ? await db
+          .select({
+            caseId: casesTable.id,
+            caseType: casesTable.caseType,
+            legalStatus: casesTable.legalStatus,
+            commercialStatus: casesTable.commercialStatus,
+            updatedAt: casesTable.updatedAt,
+            fullName: clientsTable.fullName,
+            email: clientsTable.email,
+            phone: clientsTable.phone
+          })
+          .from(casesTable)
+          .innerJoin(clientsTable, eq(casesTable.clientId, clientsTable.id))
+          .where(
+            and(
+              inArray(casesTable.id, submittedCaseIds),
+              notInArray(casesTable.commercialStatus, [...CLOSED_PROSPECT_COMMERCIAL_STATUSES])
+            )
+          )
+      : [];
+
+  const futureClientCaseIdSet = new Set(futureClientRows.map((item) => item.caseId));
+
+  const leadsHoje = futureClientRows.filter((item) => {
+    const submittedAt = latestSubmissionByCaseId.get(item.caseId);
+    return submittedAt ? submittedAt >= todayStart : false;
+  }).length;
+
+  const casosEmTriagem = futureClientRows.filter((item) =>
+    TRIAGE_STATUSES.includes(item.legalStatus as (typeof TRIAGE_STATUSES)[number])
+  ).length;
 
   const numericScores = scoreRows
+    .filter((row) => futureClientCaseIdSet.has(row.caseId))
     .map((row) => Number(row.viabilityScore))
     .filter((value) => Number.isFinite(value));
   const scoreJuridicoMedio =
@@ -331,6 +366,10 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
   let decisionSigned = 0;
 
   for (const event of decisionRows) {
+    if (!event.caseId || !futureClientCaseIdSet.has(event.caseId)) {
+      continue;
+    }
+
     const payload = (event.afterPayload ?? {}) as Record<string, unknown>;
     const decision = typeof payload.decision === "string" ? payload.decision : undefined;
 
@@ -346,8 +385,14 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
   }
 
   const conversaoPercentual = decisionTotal > 0 ? round((decisionSigned / decisionTotal) * 100, 1) : 0;
+
+  const filteredSlaAlerts = sla.alerts.filter((item) => futureClientCaseIdSet.has(item.caseId));
+  const filteredSlaTotal = filteredSlaAlerts.length;
+  const filteredSlaBreachTotal = filteredSlaAlerts.filter((item) => item.breach).length;
   const slaConformidadePercentual =
-    sla.total > 0 ? round(((sla.total - sla.breachTotal) / sla.total) * 100, 1) : 100;
+    filteredSlaTotal > 0
+      ? round(((filteredSlaTotal - filteredSlaBreachTotal) / filteredSlaTotal) * 100, 1)
+      : 100;
 
   const moduleTotals = new Map<"Neuro" | "Estetico" | "Plano de Saude", number>([
     ["Neuro", 0],
@@ -355,21 +400,22 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
     ["Plano de Saude", 0]
   ]);
 
-  for (const row of moduleRows) {
-    const caseType = row.caseType;
-    const total = Number(row.total ?? 0);
-
-    if (caseType === "aesthetic") {
-      moduleTotals.set("Estetico", (moduleTotals.get("Estetico") ?? 0) + total);
+  for (const row of futureClientRows) {
+    if (!row.caseType) {
       continue;
     }
 
-    if (caseType === "health_plan") {
-      moduleTotals.set("Plano de Saude", (moduleTotals.get("Plano de Saude") ?? 0) + total);
+    if (row.caseType === "aesthetic") {
+      moduleTotals.set("Estetico", (moduleTotals.get("Estetico") ?? 0) + 1);
       continue;
     }
 
-    moduleTotals.set("Neuro", (moduleTotals.get("Neuro") ?? 0) + total);
+    if (row.caseType === "health_plan") {
+      moduleTotals.set("Plano de Saude", (moduleTotals.get("Plano de Saude") ?? 0) + 1);
+      continue;
+    }
+
+    moduleTotals.set("Neuro", (moduleTotals.get("Neuro") ?? 0) + 1);
   }
 
   const jobSummaryMap = new Map<string, { status: string; total: number }[]>();
@@ -384,16 +430,27 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
   const evidenceStatus = mapJobSummaryToStatus(jobSummaryMap.get("evidence.builder"));
   const legalExecutionStatus = mapJobSummaryToStatus(jobSummaryMap.get("legal.execution"));
 
-  const hasReviewCases = queue.summary.some((item) => item.status === "human_review_required" && item.total > 0);
+  const filteredQueueCases = queue.cases.filter((item) => futureClientCaseIdSet.has(item.id));
+  const filteredQueueSummary = queue.statuses.map((status) => ({
+    status,
+    total: filteredQueueCases.filter((item) => item.legalStatus === status).length
+  }));
+  const filteredQueueTotal = filteredQueueCases.length;
+
+  const hasReviewCases = filteredQueueSummary.some(
+    (item) => item.status === "human_review_required" && item.total > 0
+  );
   const scoreStatus = hasReviewCases
     ? ("revisao" as const)
     : mapJobSummaryToStatus(jobSummaryMap.get("legal.score"));
 
-  const conversionStatus = queue.summary.some((item) => item.status === "conversion_pending" && item.total > 0)
+  const conversionStatus = filteredQueueSummary.some(
+    (item) => item.status === "conversion_pending" && item.total > 0
+  )
     ? ("online" as const)
     : ("fila" as const);
-  const monitoringStatus = sla.total > 0 ? ("online" as const) : ("inativo" as const);
-  const clientStatus = Number(activeCasesRows[0]?.total ?? 0) > 0 ? ("online" as const) : ("inativo" as const);
+  const monitoringStatus = filteredSlaTotal > 0 ? ("online" as const) : ("inativo" as const);
+  const clientStatus = futureClientRows.length > 0 ? ("online" as const) : ("inativo" as const);
   const growthStatus = leadsHoje > 0 ? ("online" as const) : ("fila" as const);
 
   const timeline = buildHourlyTimeline(now);
@@ -404,6 +461,10 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
   }
 
   for (const event of conversionEvents) {
+    if (!event.caseId || !futureClientCaseIdSet.has(event.caseId)) {
+      continue;
+    }
+
     const payload = (event.afterPayload ?? {}) as Record<string, unknown>;
     const decision = typeof payload.decision === "string" ? payload.decision : undefined;
     const key = `${event.createdAt.getFullYear()}-${event.createdAt.getMonth()}-${event.createdAt.getDate()}-${event.createdAt.getHours()}`;
@@ -546,7 +607,7 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
       statusLabel: statusLabel(clientStatus),
       latencyMs: estimateLatencyMs(clientStatus, 120),
       lastProcessedAt: fallbackTimestamp,
-      summary: `${Number(activeCasesRows[0]?.total ?? 0)} casos ativos com comunicacao em curso.`
+      summary: `${futureClientRows.length} futuros clientes com informacoes enviadas.`
     },
     {
       key: "growth",
@@ -562,14 +623,14 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
 
   const orchestratorStatus = mapJobSummaryToStatus(jobSummaryMap.get("intake.orchestrator.bootstrap"));
 
-  const queueItems: QueueItemOverview[] = queue.cases.slice(0, 8).map((item) => ({
+  const queueItems: QueueItemOverview[] = filteredQueueCases.slice(0, 8).map((item) => ({
     caseId: item.id,
     legalStatus: item.legalStatus,
     priority: item.priority,
     updatedAt: item.updatedAt.toISOString()
   }));
 
-  const alertItems: AlertItemOverview[] = sla.alerts
+  const alertItems: AlertItemOverview[] = filteredSlaAlerts
     .filter((item) => item.breach)
     .slice(0, 8)
     .map((item) => ({
@@ -578,6 +639,23 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
       ageMinutes: item.ageMinutes,
       slaHours: item.slaHours
     }));
+
+  const futureClientItems: FutureClientItemOverview[] = futureClientRows
+    .map((item) => {
+      const submittedAt = latestSubmissionByCaseId.get(item.caseId);
+      return {
+        caseId: item.caseId,
+        fullName: item.fullName,
+        email: item.email,
+        phone: item.phone,
+        legalStatus: item.legalStatus,
+        commercialStatus: item.commercialStatus,
+        submittedAt: submittedAt ? submittedAt.toISOString() : item.updatedAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString()
+      };
+    })
+    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+    .slice(0, 20);
 
   const modules: ModuleBreakdownItem[] = [
     { module: "Neuro", total: moduleTotals.get("Neuro") ?? 0 },
@@ -603,12 +681,16 @@ export async function getOperationsLiveOverview(): Promise<OperationsLiveOvervie
     },
     agents,
     queue: {
-      total: queue.total,
+      total: filteredQueueTotal,
       items: queueItems
     },
     alerts: {
-      total: sla.breachTotal,
+      total: filteredSlaBreachTotal,
       items: alertItems
+    },
+    futureClients: {
+      total: futureClientRows.length,
+      items: futureClientItems
     },
     modules,
     conversionByHour

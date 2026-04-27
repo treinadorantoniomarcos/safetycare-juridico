@@ -50,8 +50,8 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
         <p className="section-eyebrow">Solicitacao recebida</p>
         <h1>Cadastro concluido. Triagem humana em andamento.</h1>
         <p>
-          Sua jornada foi registrada e agora passa por validacao humana inicial. A execucao
-          automatizada dos agentes comeca somente apos essa aprovacao.
+          Sua jornada foi registrada e agora passa por validacao humana inicial. A analise
+          tecnica do caso comeca somente apos essa aprovacao.
         </p>
 
         <p>

@@ -1,12 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { DashboardLogoutButton } from "./dashboard-logout-button";
-import type {
-  AgentCardOverview,
-  ConversionByHourItem,
-  OperationsLiveOverview
-} from "../../features/dashboard/get-operations-live-overview";
+import type { OperationsLiveOverview } from "../../features/dashboard/get-operations-live-overview";
 
 type OperationsLiveDashboardProps = {
   initialData: OperationsLiveOverview;
@@ -24,42 +20,6 @@ function formatDateTime(value?: string) {
   }
 
   return parsed.toLocaleString("pt-BR", { hour12: false });
-}
-
-function statusClassName(status: AgentCardOverview["status"]) {
-  switch (status) {
-    case "online":
-      return "ops-agent-badge ops-agent-badge--online";
-    case "revisao":
-      return "ops-agent-badge ops-agent-badge--review";
-    case "fila":
-      return "ops-agent-badge ops-agent-badge--queue";
-    case "bloqueado":
-      return "ops-agent-badge ops-agent-badge--blocked";
-    case "erro":
-      return "ops-agent-badge ops-agent-badge--error";
-    default:
-      return "ops-agent-badge ops-agent-badge--idle";
-  }
-}
-
-function normalizePercentualToHeight(percentual: number) {
-  const safe = Number.isFinite(percentual) ? percentual : 0;
-  return `${Math.max(8, Math.min(100, safe))}%`;
-}
-
-function splitByLayer(agents: AgentCardOverview[]) {
-  const grouped = new Map<string, AgentCardOverview[]>();
-
-  for (const agent of agents) {
-    if (!grouped.has(agent.layer)) {
-      grouped.set(agent.layer, []);
-    }
-
-    grouped.get(agent.layer)?.push(agent);
-  }
-
-  return [...grouped.entries()];
 }
 
 export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboardProps) {
@@ -133,8 +93,6 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
     };
   }, []);
 
-  const layeredAgents = useMemo(() => splitByLayer(data.agents), [data.agents]);
-  const chartData = useMemo(() => data.conversionByHour.slice(-12), [data.conversionByHour]);
   const generatedAt = formatDateTime(data.generatedAt);
   const liveClockLabel = liveClock.toLocaleTimeString("pt-BR", { hour12: false });
   const systemBadgeLabel =
@@ -148,8 +106,8 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
     <section className="ops-dashboard">
       <header className="ops-header">
         <div>
-          <p className="section-eyebrow">Painel Operacional de Agentes - SAFETYCARE</p>
-          <h1>Funcionamento online da operacao juridica em saude</h1>
+          <p className="section-eyebrow">Painel Executivo - SAFETYCARE</p>
+          <h1>Futuros clientes com informacoes enviadas</h1>
           <p className="hero-lede">Atualizado em {generatedAt}</p>
         </div>
 
@@ -164,15 +122,15 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
 
       <section className="ops-kpi-grid">
         <article className="ops-kpi-card">
-          <p>Leads Hoje</p>
+          <p>Dados enviados hoje</p>
           <strong>{data.kpis.leadsHoje}</strong>
         </article>
         <article className="ops-kpi-card">
-          <p>Casos em Triagem</p>
+          <p>Em triagem</p>
           <strong>{data.kpis.casosEmTriagem}</strong>
         </article>
         <article className="ops-kpi-card">
-          <p>Score Juridico Medio</p>
+          <p>Score juridico medio</p>
           <strong>{data.kpis.scoreJuridicoMedio}</strong>
         </article>
         <article className="ops-kpi-card">
@@ -186,49 +144,27 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
       </section>
 
       <section className="ops-main-grid">
-        <aside className="ops-orchestrator-card">
-          <div className="ops-orchestrator-head">
-            <p className="section-eyebrow">Orquestrador Central</p>
-            <span className={statusClassName(data.orchestrator.status)}>
-              {data.orchestrator.status === "online" ? "Online" : "Supervisionando"}
-            </span>
-          </div>
-          <h2>{data.orchestrator.name}</h2>
-          <div className="ops-flow-list">
-            {data.orchestrator.flow.map((step) => (
-              <div key={step} className="ops-flow-item">
-                <span>{step}</span>
-              </div>
-            ))}
-          </div>
-        </aside>
-
         <section className="ops-agents-column">
-          {layeredAgents.map(([layer, agents]) => (
-            <article key={layer} className="ops-layer-card">
-              <h3>{layer}</h3>
-              <div className="ops-agent-grid">
-                {agents.map((agent) => (
-                  <article key={agent.key} className="ops-agent-card">
-                    <div className="ops-agent-head">
-                      <p className="ops-agent-name">{agent.name}</p>
-                      <span className={statusClassName(agent.status)}>{agent.statusLabel}</span>
-                    </div>
-                    <p>{agent.summary}</p>
-                    <p className="ops-agent-meta">
-                      Latencia media: {agent.latencyMs} ms | Ultimo processamento:{" "}
-                      {formatDateTime(agent.lastProcessedAt)}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </article>
-          ))}
+          <article className="ops-layer-card">
+            <h3>Clientes aptos para continuidade</h3>
+            <p>Total: {data.futureClients.total}</p>
+            <div className="ops-list">
+              {data.futureClients.items.length > 0 ? (
+                data.futureClients.items.map((item) => (
+                  <p key={item.caseId}>
+                    {item.fullName} | {item.legalStatus} | envio: {formatDateTime(item.submittedAt)}
+                  </p>
+                ))
+              ) : (
+                <p>Nenhum cliente com complementacao enviada no momento.</p>
+              )}
+            </div>
+          </article>
         </section>
 
         <aside className="ops-right-column">
           <article className="ops-right-card">
-            <h3>Fila ao Vivo</h3>
+            <h3>Fila ao vivo</h3>
             <p>Total: {data.queue.total}</p>
             <div className="ops-list">
               {data.queue.items.length > 0 ? (
@@ -244,7 +180,7 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
           </article>
 
           <article className="ops-right-card">
-            <h3>Alertas Criticos</h3>
+            <h3>Alertas criticos</h3>
             <p>Total: {data.alerts.total}</p>
             <div className="ops-list">
               {data.alerts.items.length > 0 ? (
@@ -256,33 +192,6 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
               ) : (
                 <p>Nenhum alerta critico no momento.</p>
               )}
-            </div>
-          </article>
-
-          <article className="ops-right-card">
-            <h3>Casos por Modulo</h3>
-            <div className="ops-list">
-              {data.modules.map((item) => (
-                <p key={item.module}>
-                  {item.module}: {item.total}
-                </p>
-              ))}
-            </div>
-          </article>
-
-          <article className="ops-right-card">
-            <h3>Conversao por Hora</h3>
-            <div className="ops-chart">
-              {chartData.map((point: ConversionByHourItem) => (
-                <div key={point.hour} className="ops-chart-bar-wrap">
-                  <div
-                    className="ops-chart-bar"
-                    style={{ height: normalizePercentualToHeight(point.percentual) }}
-                    title={`${point.hour} - ${point.percentual}%`}
-                  />
-                  <span>{point.hour}</span>
-                </div>
-              ))}
             </div>
           </article>
         </aside>
