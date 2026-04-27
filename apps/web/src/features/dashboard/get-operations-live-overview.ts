@@ -15,7 +15,7 @@ import { getCaseReviewQueue } from "../intake/get-case-review-queue";
 import { getCaseSlaAlerts } from "../intake/get-case-sla-alerts";
 import { getDatabaseClient } from "../../lib/database";
 
-type DashboardAgentStatus = "online" | "revisao" | "fila" | "bloqueado" | "erro" | "inativo";
+export type DashboardAgentStatus = "online" | "revisao" | "fila" | "bloqueado" | "erro" | "inativo";
 
 export type AgentCardOverview = {
   key: string;

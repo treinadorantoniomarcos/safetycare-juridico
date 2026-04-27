@@ -1,33 +1,45 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { AgentsLiveView } from "../../src/components/agents/agents-live-view";
+import { getAgentsOperationalOverview } from "../../src/features/dashboard/get-agents-operational-overview";
+import { hasDashboardSessionFromCookieStore } from "../../src/lib/dashboard-auth";
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+export default async function AgentesPage() {
+  const cookieStore = await cookies();
 
-type AgentesPageProps = {
-  searchParams: SearchParams;
-};
-
-function readSingleParam(value: string | string[] | undefined) {
-  if (!value) {
-    return undefined;
+  if (!hasDashboardSessionFromCookieStore(cookieStore)) {
+    redirect("/painel-executivo/login");
   }
 
-  if (Array.isArray(value)) {
-    return value[0];
+  try {
+    const overview = await getAgentsOperationalOverview();
+
+    return (
+      <main className="brand-shell">
+        <SiteHeader current="agentes" />
+        <AgentsLiveView initialData={overview} />
+      </main>
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "agents_unavailable";
+    const missingDatabaseUrl = message.includes("Missing required environment variable: DATABASE_URL");
+
+    return (
+      <main className="brand-shell">
+        <SiteHeader current="agentes" />
+        <section className="panel-section">
+          <div className="section-heading">
+            <p className="section-eyebrow">Painel de agentes</p>
+            <h1>Painel indisponível no momento.</h1>
+            <p className="hero-lede">
+              {missingDatabaseUrl
+                ? "Configure DATABASE_URL para ativar a visão operacional automática dos agentes."
+                : "Não foi possível carregar os dados operacionais dos agentes agora."}
+            </p>
+          </div>
+        </section>
+      </main>
+    );
   }
-
-  return value;
-}
-
-export default async function AgentesPage({ searchParams }: AgentesPageProps) {
-  const params = await searchParams;
-  const caseId = readSingleParam(params.caseId);
-  const workflowJobId = readSingleParam(params.workflowJobId);
-
-  return (
-    <main className="brand-shell">
-      <SiteHeader current="agentes" />
-      <AgentsLiveView initialCaseId={caseId} initialWorkflowJobId={workflowJobId} />
-    </main>
-  );
 }
