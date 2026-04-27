@@ -1,0 +1,245 @@
+SAFETYCARE - DDL PRINCIPAL (PRODUCAO/HOMOLOGACAO)
+
+Compatibilidade para UUID:
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- =========================
+-- NUCLEO INTAKE/JURIDICO
+-- =========================
+
+CREATE TABLE IF NOT EXISTS leads (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  source text NOT NULL,
+  name text,
+  phone text,
+  raw_message text NOT NULL,
+  status text NOT NULL DEFAULT 'new',
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  received_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS clients (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  lead_id uuid REFERENCES leads(id),
+  full_name text NOT NULL,
+  cpf_hash text,
+  email text,
+  phone text,
+  consent_status text NOT NULL DEFAULT 'pending',
+  consent_payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS cases (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES clients(id),
+  case_type text,
+  priority text NOT NULL DEFAULT 'medium',
+  urgency text NOT NULL DEFAULT 'medium',
+  commercial_status text NOT NULL DEFAULT 'screening',
+  legal_status text NOT NULL DEFAULT 'intake',
+  estimated_value_cents bigint,
+  current_owner_user_id uuid,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS workflow_jobs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id uuid REFERENCES cases(id),
+  job_type text NOT NULL,
+  status text NOT NULL,
+  attempt_count integer NOT NULL DEFAULT 0,
+  run_after timestamptz,
+  correlation_id text NOT NULL,
+  payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS triage_analyses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id uuid NOT NULL REFERENCES cases(id),
+  case_type text NOT NULL,
+  priority text NOT NULL,
+  urgency text NOT NULL,
+  has_damage boolean NOT NULL,
+  legal_potential text NOT NULL,
+  confidence integer NOT NULL,
+  rationale jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS journey_timelines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id uuid NOT NULL REFERENCES cases(id),
+  source text NOT NULL,
+  summary text NOT NULL,
+  risk_level text NOT NULL,
+  confidence integer NOT NULL,
+  timeline jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS clinical_analyses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id uuid NOT NULL REFERENCES cases(id),
+  source text NOT NULL,
+  summary text NOT NULL,
+  risk_level text NOT NULL,
+  confidence integer NOT NULL,
+  findings jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS rights_assessments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id uuid NOT NULL REFERENCES cases(id),
+  source text NOT NULL,
+  summary text NOT NULL,
+  confidence integer NOT NULL,
+  violation_count integer NOT NULL,
+  rights jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS evidence_checklists (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id uuid NOT NULL REFERENCES cases(id),
+  source text NOT NULL,
+  summary text NOT NULL,
+  confidence integer NOT NULL,
+  missing_count integer NOT NULL,
+  items jsonb NOT NULL DEFAULT '{}'::jsonb,
+  required_information_requests jsonb NOT NULL DEFAULT '[]'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS legal_scores (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id uuid NOT NULL REFERENCES cases(id),
+  viability_score integer NOT NULL,
+  complexity text NOT NULL,
+  estimated_value_cents bigint NOT NULL,
+  confidence integer NOT NULL,
+  review_required boolean NOT NULL,
+  review_reasons jsonb NOT NULL DEFAULT '{}'::jsonb,
+  decision text,
+  review_note text,
+  reviewed_by text,
+  reviewed_at timestamptz,
+  rationale jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id uuid REFERENCES cases(id),
+  actor_type text NOT NULL,
+  actor_id text NOT NULL,
+  action text NOT NULL,
+  before_payload jsonb,
+  after_payload jsonb,
+  correlation_id text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cases_status
+  ON cases (commercial_status, legal_status);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_jobs_status
+  ON workflow_jobs (status, run_after);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_workflow_jobs_correlation_type
+  ON workflow_jobs (correlation_id, job_type);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_triage_analyses_case_id
+  ON triage_analyses (case_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_journey_timelines_case_id
+  ON journey_timelines (case_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_clinical_analyses_case_id
+  ON clinical_analyses (case_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_rights_assessments_case_id
+  ON rights_assessments (case_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_evidence_checklists_case_id
+  ON evidence_checklists (case_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_legal_scores_case_id
+  ON legal_scores (case_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_case_id
+  ON audit_logs (case_id, created_at DESC);
+
+-- =========================
+-- NUCLEO PROTECT (PAINEL)
+-- =========================
+
+CREATE TABLE IF NOT EXISTS patients (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  document_id TEXT UNIQUE NOT NULL,
+  birth_date DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hospital_cases (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  patient_id UUID REFERENCES patients(id),
+  admission_date TIMESTAMPTZ DEFAULT NOW(),
+  discharge_date TIMESTAMPTZ,
+  department TEXT NOT NULL,
+  current_risk_score INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS patient_journey (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  case_id UUID REFERENCES hospital_cases(id),
+  event_date TIMESTAMPTZ NOT NULL,
+  event_type TEXT NOT NULL,
+  description TEXT,
+  risk_level TEXT DEFAULT 'low',
+  source_system TEXT,
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS evidence_docs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  case_id UUID REFERENCES hospital_cases(id),
+  doc_type TEXT NOT NULL,
+  file_url TEXT,
+  validation_status TEXT DEFAULT 'pending',
+  gap_details TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS agent_intelligence (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  case_id UUID REFERENCES hospital_cases(id),
+  squad_name TEXT NOT NULL,
+  agent_id TEXT NOT NULL,
+  findings JSONB NOT NULL,
+  recommendation TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS legal_alerts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  case_id UUID REFERENCES hospital_cases(id),
+  severity TEXT NOT NULL,
+  message TEXT NOT NULL,
+  is_resolved BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);

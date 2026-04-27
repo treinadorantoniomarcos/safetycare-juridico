@@ -1,9 +1,15 @@
 import type { ScoreReviewDecisionInput } from "@safetycare/ai-contracts";
 import {
+  agentIntelligenceTable,
   auditLogsTable,
   clinicalAnalysesTable,
   evidenceChecklistsTable,
+  evidenceDocsTable,
+  hospitalCasesTable,
+  legalAlertsTable,
   legalScoresTable,
+  patientJourneyTable,
+  patientsTable,
   rightsAssessmentsTable,
   casesTable,
   clientsTable,
@@ -61,3 +67,16 @@ export type CaseIntakeContextRecord = {
   clientRecord: ClientRecord;
   leadRecord: LeadRecord;
 };
+
+export type PatientRecord = typeof patientsTable.$inferSelect;
+export type NewPatientRecord = typeof patientsTable.$inferInsert;
+export type HospitalCaseRecord = typeof hospitalCasesTable.$inferSelect;
+export type NewHospitalCaseRecord = typeof hospitalCasesTable.$inferInsert;
+export type PatientJourneyRecord = typeof patientJourneyTable.$inferSelect;
+export type NewPatientJourneyRecord = typeof patientJourneyTable.$inferInsert;
+export type EvidenceDocRecord = typeof evidenceDocsTable.$inferSelect;
+export type NewEvidenceDocRecord = typeof evidenceDocsTable.$inferInsert;
+export type AgentIntelligenceRecord = typeof agentIntelligenceTable.$inferSelect;
+export type NewAgentIntelligenceRecord = typeof agentIntelligenceTable.$inferInsert;
+export type LegalAlertRecord = typeof legalAlertsTable.$inferSelect;
+export type NewLegalAlertRecord = typeof legalAlertsTable.$inferInsert;

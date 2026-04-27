@@ -1,6 +1,7 @@
 import {
   bigint,
   boolean,
+  date,
   index,
   integer,
   jsonb,
@@ -228,5 +229,89 @@ export const auditLogsTable = pgTable(
   },
   (table) => ({
     caseIdx: index("idx_audit_logs_case_id").on(table.caseId, table.createdAt)
+  })
+);
+
+export const patientsTable = pgTable("patients", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  documentId: text("document_id").notNull(),
+  birthDate: date("birth_date"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+});
+
+export const hospitalCasesTable = pgTable("hospital_cases", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  patientId: uuid("patient_id").references(() => patientsTable.id),
+  admissionDate: timestamp("admission_date", { withTimezone: true }).notNull().defaultNow(),
+  dischargeDate: timestamp("discharge_date", { withTimezone: true }),
+  department: text("department").notNull(),
+  currentRiskScore: integer("current_risk_score").notNull().default(0),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+});
+
+export const patientJourneyTable = pgTable(
+  "patient_journey",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    caseId: uuid("case_id").references(() => hospitalCasesTable.id),
+    eventDate: timestamp("event_date", { withTimezone: true }).notNull(),
+    eventType: text("event_type").notNull(),
+    description: text("description"),
+    riskLevel: text("risk_level").notNull().default("low"),
+    sourceSystem: text("source_system"),
+    metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    caseEventIdx: index("idx_patient_journey_case_event").on(table.caseId, table.eventDate)
+  })
+);
+
+export const evidenceDocsTable = pgTable(
+  "evidence_docs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    caseId: uuid("case_id").references(() => hospitalCasesTable.id),
+    docType: text("doc_type").notNull(),
+    fileUrl: text("file_url"),
+    validationStatus: text("validation_status").notNull().default("pending"),
+    gapDetails: text("gap_details"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    caseDocIdx: index("idx_evidence_docs_case_created").on(table.caseId, table.createdAt)
+  })
+);
+
+export const agentIntelligenceTable = pgTable(
+  "agent_intelligence",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    caseId: uuid("case_id").references(() => hospitalCasesTable.id),
+    squadName: text("squad_name").notNull(),
+    agentId: text("agent_id").notNull(),
+    findings: jsonb("findings").$type<Record<string, unknown>>().notNull().default({}),
+    recommendation: text("recommendation"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    caseAgentIdx: index("idx_agent_intelligence_case_created").on(table.caseId, table.createdAt)
+  })
+);
+
+export const legalAlertsTable = pgTable(
+  "legal_alerts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    caseId: uuid("case_id").references(() => hospitalCasesTable.id),
+    severity: text("severity").notNull(),
+    message: text("message").notNull(),
+    isResolved: boolean("is_resolved").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    caseResolvedIdx: index("idx_legal_alerts_case_resolved").on(table.caseId, table.isResolved)
   })
 );

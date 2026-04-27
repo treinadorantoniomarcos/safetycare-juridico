@@ -1,10 +1,16 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import {
+  agentIntelligenceTable,
   auditLogsTable,
   clinicalAnalysesTable,
   evidenceChecklistsTable,
+  evidenceDocsTable,
+  hospitalCasesTable,
+  legalAlertsTable,
   legalScoresTable,
+  patientJourneyTable,
+  patientsTable,
   rightsAssessmentsTable,
   casesTable,
   clientsTable,
@@ -25,7 +31,13 @@ export const databaseSchema = {
   rightsAssessmentsTable,
   evidenceChecklistsTable,
   legalScoresTable,
-  auditLogsTable
+  auditLogsTable,
+  patientsTable,
+  hospitalCasesTable,
+  patientJourneyTable,
+  evidenceDocsTable,
+  agentIntelligenceTable,
+  legalAlertsTable
 };
 
 export function createDatabaseClient(connectionString: string) {

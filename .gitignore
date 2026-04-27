@@ -39,3 +39,6 @@ Thumbs.db
 .codex/
 .cursor/
 .gemini/
+
+# Office temporary lock files
+.~lock.*
