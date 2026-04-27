@@ -4,6 +4,7 @@ import { getDatabaseClient } from "../../lib/database";
 const DEFAULT_LIMIT = 50;
 
 export const caseReviewQueueStatuses = [
+  "human_triage_pending",
   "human_review_required",
   "conversion_pending",
   "score_rejected"

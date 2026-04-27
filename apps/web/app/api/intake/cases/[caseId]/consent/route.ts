@@ -84,17 +84,22 @@ export async function POST(request: Request, context: RouteContext) {
 
     let workflowJobStatus = "unchanged";
     const bootstrapJob = await workflowJobs.findLatestByCaseIdAndType(caseId, workflowJobTypes[0]);
+    const isHumanTriagePending = caseWithClient.caseRecord.legalStatus === "human_triage_pending";
 
-    if (consent.status !== "granted") {
+    if (consent.status !== "granted" && !isHumanTriagePending) {
       await cases.updateStatuses(caseId, {
         commercialStatus: "awaiting_consent",
         legalStatus: "awaiting_consent"
       });
     }
 
-    if (consent.status === "granted" && bootstrapJob?.status === "blocked") {
+    if (consent.status === "granted" && bootstrapJob?.status === "blocked" && !isHumanTriagePending) {
       await workflowJobs.requeue(bootstrapJob.id);
       workflowJobStatus = "queued";
+    }
+
+    if (consent.status === "granted" && bootstrapJob?.status === "blocked" && isHumanTriagePending) {
+      workflowJobStatus = "awaiting_human_triage";
     }
 
     await auditLogs.record({

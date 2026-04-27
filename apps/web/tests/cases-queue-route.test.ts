@@ -13,9 +13,18 @@ import { GET } from "../app/api/intake/cases/queue/route";
 describe("GET /api/intake/cases/queue", () => {
   it("returns the review and conversion queue", async () => {
     getCaseReviewQueueMock.mockResolvedValueOnce({
-      statuses: ["human_review_required", "conversion_pending", "score_rejected"],
+      statuses: [
+        "human_triage_pending",
+        "human_review_required",
+        "conversion_pending",
+        "score_rejected"
+      ],
       total: 2,
       summary: [
+        {
+          status: "human_triage_pending",
+          total: 0
+        },
         {
           status: "human_review_required",
           total: 1
@@ -57,7 +66,7 @@ describe("GET /api/intake/cases/queue", () => {
     expect(response.status).toBe(200);
     expect(getCaseReviewQueueMock).toHaveBeenCalledWith(10);
     expect(body.total).toBe(2);
-    expect(body.summary).toHaveLength(3);
+    expect(body.summary).toHaveLength(4);
     expect(body.cases).toHaveLength(2);
     expect(body.correlationId).toEqual(expect.any(String));
   });

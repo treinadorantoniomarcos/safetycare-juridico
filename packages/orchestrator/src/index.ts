@@ -53,6 +53,13 @@ type IntakeBootstrapResult =
       workflowJobId: string;
       caseId: string;
       status: "blocked";
+      nextStage: "awaiting_human_triage";
+      retryAt: string;
+    }
+  | {
+      workflowJobId: string;
+      caseId: string;
+      status: "blocked";
       nextStage: "awaiting_consent";
       retryAt: string;
     };
@@ -160,6 +167,42 @@ export async function runIntakeBootstrap(
 
     const retryAt = buildRetryAt(now);
     const consentStatus = caseWithClient.clientRecord.consentStatus;
+
+    if (caseWithClient.caseRecord.legalStatus === "human_triage_pending") {
+      await workflowJobs.markBlocked(
+        claimedJob.id,
+        {
+          stage: "awaiting_human_triage",
+          consentStatus
+        },
+        retryAt
+      );
+
+      await auditLogs.record({
+        caseId: caseWithClient.caseRecord.id,
+        actorType: "system",
+        actorId: "intake-orchestrator",
+        action: "intake.awaiting_human_triage",
+        correlationId: claimedJob.correlationId,
+        afterPayload: {
+          workflowJobId: claimedJob.id,
+          retryAt: retryAt.toISOString(),
+          consentStatus
+        }
+      });
+
+      logger.warn(
+        `intake_blocked_human_triage caseId=${caseWithClient.caseRecord.id} workflowJobId=${claimedJob.id}`
+      );
+
+      return {
+        workflowJobId: claimedJob.id,
+        caseId: caseWithClient.caseRecord.id,
+        status: "blocked",
+        nextStage: "awaiting_human_triage",
+        retryAt: retryAt.toISOString()
+      };
+    }
 
     if (consentStatus !== "granted") {
       await cases.updateStatuses(caseWithClient.caseRecord.id, {

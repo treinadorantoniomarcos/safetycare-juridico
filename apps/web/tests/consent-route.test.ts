@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   findWithClientByIdMock,
@@ -42,6 +42,10 @@ vi.mock("../src/lib/database", () => ({
 import { POST } from "../app/api/intake/cases/[caseId]/consent/route";
 
 describe("POST /api/intake/cases/[caseId]/consent", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("updates consent and requeues blocked intake jobs", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
@@ -111,5 +115,53 @@ describe("POST /api/intake/cases/[caseId]/consent", () => {
     });
 
     expect(response.status).toBe(400);
+  });
+
+  it("keeps bootstrap blocked when consent is granted but human triage is still pending", async () => {
+    getDatabaseClientMock.mockReturnValue({
+      db: {}
+    });
+    findWithClientByIdMock.mockResolvedValueOnce({
+      caseRecord: {
+        id: "case-2",
+        legalStatus: "human_triage_pending"
+      },
+      clientRecord: {
+        id: "client-2"
+      }
+    });
+    updateConsentMock.mockResolvedValueOnce({
+      id: "client-2",
+      consentStatus: "granted"
+    });
+    findLatestByCaseIdAndTypeMock.mockResolvedValueOnce({
+      id: "job-2",
+      status: "blocked"
+    });
+    recordMock.mockResolvedValueOnce(undefined);
+
+    const request = new Request("http://localhost/api/intake/cases/case-2/consent", {
+      method: "POST",
+      body: JSON.stringify({
+        status: "granted",
+        version: "v1",
+        acceptedAt: "2026-04-25T15:00:00.000Z",
+        captureMethod: "checkbox"
+      }),
+      headers: {
+        "content-type": "application/json"
+      }
+    });
+
+    const response = await POST(request, {
+      params: {
+        caseId: "case-2"
+      }
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.workflowJobStatus).toBe("awaiting_human_triage");
+    expect(requeueMock).not.toHaveBeenCalled();
   });
 });

@@ -86,6 +86,7 @@ export type OperationsLiveOverview = {
 };
 
 const TRIAGE_STATUSES = [
+  "human_triage_pending",
   "triage_pending",
   "triaged",
   "clinical_pending",
@@ -95,6 +96,7 @@ const TRIAGE_STATUSES = [
 ] as const;
 
 const OPERATIONAL_STATUSES_FOR_CLIENT = [
+  "human_triage_pending",
   "triage_pending",
   "triaged",
   "clinical_pending",

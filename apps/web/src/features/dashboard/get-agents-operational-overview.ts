@@ -242,6 +242,15 @@ function phaseForAuditAction(action: string): string | undefined {
     return "human_review";
   }
 
+  if (
+    action === "intake.human_triage_required" ||
+    action === "intake.awaiting_human_triage" ||
+    action === "intake.human_triage_approved" ||
+    action === "intake.human_triage_rejected"
+  ) {
+    return "triage";
+  }
+
   if (action.startsWith("intake.")) {
     return "capture";
   }
@@ -291,6 +300,14 @@ function formatAuditActionDescription(action: string) {
       return "Caso criado no intake";
     case "intake.job_queued":
       return "Fluxo inicial enfileirado";
+    case "intake.human_triage_required":
+      return "Aguardando triagem humana";
+    case "intake.awaiting_human_triage":
+      return "Triagem humana pendente";
+    case "intake.human_triage_approved":
+      return "Triagem humana aprovada";
+    case "intake.human_triage_rejected":
+      return "Triagem humana rejeitada";
     case "intake.awaiting_consent":
       return "Aguardando consentimento";
     case "triage.job_queued":
@@ -625,10 +642,10 @@ export async function getAgentsOperationalOverview(): Promise<AgentsOperationalO
     const scoreWorkflow = workflowStatusFor(item.id, "legal.score");
     const legalExecutionWorkflow = workflowStatusFor(item.id, "legal.execution");
 
-    const triageStatus = mapWorkflowJobStatus(
-      triageWorkflow?.status,
-      triageSet.has(item.id)
-    );
+    const triageStatus =
+      item.legalStatus === "human_triage_pending"
+        ? ("manual" as const)
+        : mapWorkflowJobStatus(triageWorkflow?.status, triageSet.has(item.id));
     const journeyStatus = mapWorkflowJobStatus(
       journeyWorkflow?.status,
       journeySet.has(item.id)

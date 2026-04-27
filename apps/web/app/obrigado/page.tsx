@@ -47,13 +47,16 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
       />
 
       <section className="thanks-panel">
-        <p className="section-eyebrow">Solicitação recebida</p>
-        <h1>Análise técnica iniciada.</h1>
-        <p>Sua jornada foi registrada e entrou na análise inicial do relato e dos documentos.</p>
+        <p className="section-eyebrow">Solicitacao recebida</p>
+        <h1>Cadastro concluido. Triagem humana em andamento.</h1>
+        <p>
+          Sua jornada foi registrada e agora passa por validacao humana inicial. A execucao
+          automatizada dos agentes comeca somente apos essa aprovacao.
+        </p>
 
         <p>
-          Se houver documentos (exames, relatórios, alta hospitalar), mantenha-os organizados para
-          envio na próxima etapa.
+          Se houver documentos (exames, relatorios, alta hospitalar), mantenha-os organizados para
+          envio na proxima etapa.
         </p>
 
         {caseId && workflowJobId ? (
@@ -66,7 +69,7 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
         ) : null}
 
         <Link className="button-ghost thanks-action" href="/">
-          Voltar para a página principal
+          Voltar para a pagina principal
         </Link>
       </section>
     </main>

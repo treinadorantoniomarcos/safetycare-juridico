@@ -33,7 +33,12 @@ describe("POST /api/intake/cases/sla/escalate", () => {
   it("returns counts for dryRun and does not write audit logs", async () => {
     getCaseSlaAlertsMock.mockResolvedValueOnce({
       generatedAt: new Date("2026-04-25T15:00:00.000Z"),
-      statuses: ["human_review_required", "conversion_pending", "legal_execution_pending"],
+      statuses: [
+        "human_triage_pending",
+        "human_review_required",
+        "conversion_pending",
+        "legal_execution_pending"
+      ],
       total: 3,
       breachTotal: 2,
       summary: [],
@@ -98,7 +103,12 @@ describe("POST /api/intake/cases/sla/escalate", () => {
   it("writes one audit log per breached case when dryRun is false", async () => {
     getCaseSlaAlertsMock.mockResolvedValueOnce({
       generatedAt: new Date("2026-04-25T15:00:00.000Z"),
-      statuses: ["human_review_required", "conversion_pending", "legal_execution_pending"],
+      statuses: [
+        "human_triage_pending",
+        "human_review_required",
+        "conversion_pending",
+        "legal_execution_pending"
+      ],
       total: 2,
       breachTotal: 2,
       summary: [],

@@ -93,6 +93,10 @@ function getMonitoringStatus(legalStatus: string): PublicAgentStatus {
   return "not_started";
 }
 
+function isHumanTriagePending(legalStatus: string) {
+  return legalStatus === "human_triage_pending";
+}
+
 export async function GET(request: Request, context: RouteContext) {
   const correlationId = crypto.randomUUID();
   const { caseId } = await Promise.resolve(context.params);
@@ -167,6 +171,7 @@ export async function GET(request: Request, context: RouteContext) {
       score?.reviewRequired === true
         ? "review_required"
         : mapWorkflowJobStatusToAgentStatus(jobStatusByType.get("legal.score"), Boolean(score));
+    const humanTriagePending = isHumanTriagePending(caseRecord.legalStatus);
 
     return NextResponse.json(
       {
@@ -175,10 +180,9 @@ export async function GET(request: Request, context: RouteContext) {
         workflowJobId,
         orchestrator: {
           name: "Safetycare Orchestrator",
-          status: mapWorkflowJobStatusToAgentStatus(
-            jobStatusByType.get("intake.orchestrator.bootstrap"),
-            false
-          ),
+          status: humanTriagePending
+            ? "manual"
+            : mapWorkflowJobStatusToAgentStatus(jobStatusByType.get("intake.orchestrator.bootstrap"), false),
           flow: [
             "capture",
             "triage",
@@ -204,17 +208,23 @@ export async function GET(request: Request, context: RouteContext) {
             layer: "Aquisicao",
             name: "Agente de Captacao",
             status: "completed",
-            summary: "Lead recebido e caso inicializado."
+            summary: humanTriagePending
+              ? "Lead recebido. Aguardando triagem humana para iniciar os agentes."
+              : "Lead recebido e caso inicializado."
           },
           {
             key: "triage",
             layer: "Qualificacao",
             name: "Agente de Triagem",
-            status: mapWorkflowJobStatusToAgentStatus(
-              jobStatusByType.get("triage.classification"),
-              Boolean(triage)
-            ),
-            summary: triage
+            status: humanTriagePending
+              ? "manual"
+              : mapWorkflowJobStatusToAgentStatus(
+                  jobStatusByType.get("triage.classification"),
+                  Boolean(triage)
+                ),
+            summary: humanTriagePending
+              ? "Triagem humana pendente de aprovacao."
+              : triage
               ? `Tipo ${triage.caseType}, prioridade ${triage.priority}, urgencia ${triage.urgency}.`
               : "Aguardando classificacao inicial."
           },

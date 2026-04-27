@@ -4,6 +4,7 @@ import { getDatabaseClient } from "../../lib/database";
 const DEFAULT_LIMIT = 100;
 
 export const caseSlaAlertStatuses = [
+  "human_triage_pending",
   "human_review_required",
   "conversion_pending",
   "legal_execution_pending"
@@ -12,6 +13,7 @@ export const caseSlaAlertStatuses = [
 type CaseSlaAlertStatus = (typeof caseSlaAlertStatuses)[number];
 
 const caseSlaHoursByStatus: Record<CaseSlaAlertStatus, number> = {
+  human_triage_pending: 2,
   human_review_required: 4,
   conversion_pending: 12,
   legal_execution_pending: 24

@@ -45,8 +45,8 @@ export async function createIntakeCase(
         clientId: client.id,
         priority: "medium",
         urgency: "medium",
-        legalStatus: "intake",
-        commercialStatus: "screening"
+        legalStatus: "human_triage_pending",
+        commercialStatus: "screening_pending"
       })
       .returning();
 
@@ -55,10 +55,10 @@ export async function createIntakeCase(
       .values({
         caseId: caseRecord.id,
         jobType: workflowJobTypes[0],
-        status: "queued",
+        status: "blocked",
         correlationId,
         payload: {
-          stage: "intake_received",
+          stage: "awaiting_human_triage",
           source: input.source,
           consentStatus: client.consentStatus
         }
@@ -86,12 +86,13 @@ export async function createIntakeCase(
       caseId: caseRecord.id,
       actorType: "system",
       actorId: "intake-queue",
-      action: "intake.job_queued",
+      action: "intake.human_triage_required",
       correlationId,
       afterPayload: {
         workflowJobId: workflowJob?.id ?? null,
         jobType: workflowJobTypes[0],
-        consentStatus: client.consentStatus
+        consentStatus: client.consentStatus,
+        stage: "awaiting_human_triage"
       }
     });
 

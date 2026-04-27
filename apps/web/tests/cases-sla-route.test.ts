@@ -14,10 +14,21 @@ describe("GET /api/intake/cases/sla", () => {
   it("returns SLA alerts payload", async () => {
     getCaseSlaAlertsMock.mockResolvedValueOnce({
       generatedAt: new Date("2026-04-25T15:00:00.000Z"),
-      statuses: ["human_review_required", "conversion_pending", "legal_execution_pending"],
+      statuses: [
+        "human_triage_pending",
+        "human_review_required",
+        "conversion_pending",
+        "legal_execution_pending"
+      ],
       total: 2,
       breachTotal: 1,
       summary: [
+        {
+          status: "human_triage_pending",
+          total: 0,
+          breachTotal: 0,
+          slaHours: 2
+        },
         {
           status: "human_review_required",
           total: 1,
@@ -66,7 +77,7 @@ describe("GET /api/intake/cases/sla", () => {
     expect(getCaseSlaAlertsMock).toHaveBeenCalledWith(25);
     expect(body.total).toBe(2);
     expect(body.breachTotal).toBe(1);
-    expect(body.summary).toHaveLength(3);
+    expect(body.summary).toHaveLength(4);
     expect(body.alerts).toHaveLength(2);
     expect(body.correlationId).toEqual(expect.any(String));
   });
