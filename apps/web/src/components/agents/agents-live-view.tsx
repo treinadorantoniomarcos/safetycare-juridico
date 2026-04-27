@@ -199,20 +199,23 @@ export function AgentsLiveView({ initialData }: AgentsLiveViewProps) {
             <h3>{layerName}</h3>
             <div className="agent-card-grid">
               {agents.map((agent) => (
-                <article key={agent.key} className="agent-card">
-                  <div className="agent-card-head">
-                    <p className="agent-name">{agent.name}</p>
-                    <span className={phaseBadgeClass(agent.status)}>{phaseStatusLabel(agent.status)}</span>
-                  </div>
-                  <p>{agent.summary}</p>
-                  <p className="requirement-meta">
-                    Latência média: {agent.latencyMs} ms | Último processamento:{" "}
-                    {formatDateTime(agent.lastProcessedAt)}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
+                  <article key={agent.key} className="agent-card">
+                    <div className="agent-card-head">
+                      <p className="agent-name">{agent.name}</p>
+                      <span className={phaseBadgeClass(agent.status)}>{phaseStatusLabel(agent.status)}</span>
+                    </div>
+                    <p>{agent.summary}</p>
+                    <p className="requirement-meta">
+                      Ultima acao: {agent.lastActionDescription ?? "Sem acao registrada"}
+                    </p>
+                    <p className="requirement-meta">
+                      Latencia media: {agent.latencyMs} ms | Data/hora:{" "}
+                      {formatDateTime(agent.lastActionAt ?? agent.lastProcessedAt)}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </section>
         ))}
       </section>
 
@@ -253,7 +256,15 @@ export function AgentsLiveView({ initialData }: AgentsLiveViewProps) {
             <div className="case-phases-list">
               {caseItem.phases.map((phase) => (
                 <div key={`${caseItem.caseId}-${phase.key}`} className="case-phase-item">
-                  <span>{phase.label}</span>
+                  <div>
+                    <span>{phase.label}</span>
+                    <p className="requirement-meta">
+                      Ultima acao: {phase.lastActionDescription ?? "Sem acao registrada"}
+                    </p>
+                    <p className="requirement-meta">
+                      Data/hora: {formatDateTime(phase.lastActionAt)}
+                    </p>
+                  </div>
                   <span className={phaseBadgeClass(phase.status)}>{phaseStatusLabel(phase.status)}</span>
                 </div>
               ))}

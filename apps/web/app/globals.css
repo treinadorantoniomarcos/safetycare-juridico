@@ -642,7 +642,12 @@ h2 {
   gap: 8px;
 }
 
-.case-phase-item span:first-child {
+.case-phase-item > div {
+  display: grid;
+  gap: 2px;
+}
+
+.case-phase-item > div span {
   color: var(--ink-soft);
   font-size: 13px;
 }

@@ -1,5 +1,6 @@
 import {
   agentIntelligenceTable,
+  auditLogsTable,
   casesTable,
   clinicalAnalysesTable,
   evidenceChecklistsTable,
@@ -31,6 +32,8 @@ export type CasePhaseItem = {
   key: string;
   label: string;
   status: CasePhaseStatus;
+  lastActionDescription?: string;
+  lastActionAt?: string;
 };
 
 export type CaseOperationalItem = {
@@ -75,7 +78,13 @@ export type AgentsOperationalOverview = {
     status: CasePhaseStatus;
     flow: string[];
   };
-  agents: Array<Omit<AgentCardOverview, "status"> & { status: CasePhaseStatus }>;
+  agents: Array<
+    Omit<AgentCardOverview, "status"> & {
+      status: CasePhaseStatus;
+      lastActionDescription?: string;
+      lastActionAt?: string;
+    }
+  >;
   intelligence: IntelligenceMetrics;
   phases: PhaseMetricsItem[];
   cases: CaseOperationalItem[];
@@ -213,6 +222,151 @@ function statusToMetricsBucket(status: CasePhaseStatus) {
   return "notStarted";
 }
 
+type WorkflowSnapshot = {
+  status: string;
+  createdAt: Date;
+  payload: unknown;
+};
+
+type LastActionSnapshot = {
+  description: string;
+  at: Date;
+};
+
+function toIsoOrUndefined(value?: Date) {
+  return value ? value.toISOString() : undefined;
+}
+
+function phaseForAuditAction(action: string): string | undefined {
+  if (action === "intake.score_review_recorded") {
+    return "human_review";
+  }
+
+  if (action.startsWith("intake.")) {
+    return "capture";
+  }
+
+  if (action.startsWith("triage.")) {
+    return "triage";
+  }
+
+  if (action.startsWith("journey.")) {
+    return "journey";
+  }
+
+  if (action.startsWith("clinical.")) {
+    return "clinical";
+  }
+
+  if (action.startsWith("rights.")) {
+    return "rights";
+  }
+
+  if (action.startsWith("evidence.")) {
+    return "evidence";
+  }
+
+  if (action.startsWith("score.")) {
+    return "risk_score";
+  }
+
+  if (action.startsWith("conversion.")) {
+    return "conversion";
+  }
+
+  if (action.startsWith("legal_execution.")) {
+    return "legal_execution";
+  }
+
+  if (action.startsWith("sla.")) {
+    return "monitoring";
+  }
+
+  return undefined;
+}
+
+function formatAuditActionDescription(action: string) {
+  switch (action) {
+    case "intake.case_created":
+      return "Caso criado no intake";
+    case "intake.job_queued":
+      return "Fluxo inicial enfileirado";
+    case "intake.awaiting_consent":
+      return "Aguardando consentimento";
+    case "triage.job_queued":
+      return "Triagem enfileirada";
+    case "triage.completed":
+      return "Triagem concluida";
+    case "triage.blocked":
+      return "Triagem bloqueada";
+    case "journey.completed":
+      return "Jornada consolidada";
+    case "journey.blocked":
+      return "Jornada bloqueada";
+    case "clinical.completed":
+      return "Analise clinica concluida";
+    case "clinical.blocked":
+      return "Analise clinica bloqueada";
+    case "rights.completed":
+      return "Direitos avaliados";
+    case "rights.blocked":
+      return "Direitos bloqueados";
+    case "evidence.completed":
+      return "Checklist de prova concluido";
+    case "evidence.blocked":
+      return "Checklist de prova bloqueado";
+    case "score.completed":
+      return "Score juridico concluido";
+    case "score.blocked":
+      return "Score juridico bloqueado";
+    case "intake.score_review_recorded":
+      return "Revisao humana registrada";
+    case "conversion.decision_recorded":
+      return "Decisao comercial registrada";
+    case "legal_execution.started":
+      return "Execucao juridica iniciada";
+    case "legal_execution.blocked":
+      return "Execucao juridica bloqueada";
+    case "sla.escalation_triggered":
+      return "Escalonamento de SLA acionado";
+    case "sla.notification_dispatched":
+      return "Notificacao de SLA enviada";
+    default:
+      return action;
+  }
+}
+
+function formatWorkflowActionDescription(
+  workflowStatus: string,
+  payload: unknown,
+  phaseLabel: string
+) {
+  const payloadRecord =
+    payload && typeof payload === "object" ? (payload as Record<string, unknown>) : undefined;
+  const reason = typeof payloadRecord?.reason === "string" ? payloadRecord.reason : undefined;
+  const message =
+    typeof payloadRecord?.message === "string"
+      ? payloadRecord.message
+      : typeof payloadRecord?.error === "string"
+        ? payloadRecord.error
+        : undefined;
+
+  switch (workflowStatus) {
+    case "queued":
+      return `${phaseLabel} enfileirada`;
+    case "processing":
+      return `${phaseLabel} em processamento`;
+    case "completed":
+      return `${phaseLabel} concluida`;
+    case "blocked":
+      return reason ? `${phaseLabel} bloqueada: ${reason}` : `${phaseLabel} bloqueada`;
+    case "failed":
+      return message ? `${phaseLabel} com falha: ${message}` : `${phaseLabel} com falha`;
+    default:
+      return `${phaseLabel} sem execucao registrada`;
+  }
+}
+
 export async function getAgentsOperationalOverview(): Promise<AgentsOperationalOverview> {
   const { db } = getDatabaseClient();
   const now = new Date();
@@ -244,6 +398,8 @@ export async function getAgentsOperationalOverview(): Promise<AgentsOperationalO
     evidenceRows,
     scoreRows,
     workflowRows,
+    caseAuditRows,
+    globalAuditRows,
     intelligenceTotalRows,
     intelligenceCasesRows,
     intelligenceLast24Rows,
@@ -283,10 +439,30 @@ export async function getAgentsOperationalOverview(): Promise<AgentsOperationalO
             caseId: workflowJobsTable.caseId,
             jobType: workflowJobsTable.jobType,
             status: workflowJobsTable.status,
+            payload: workflowJobsTable.payload,
             createdAt: workflowJobsTable.createdAt
           })
           .from(workflowJobsTable)
-          .where(and(isNotNull(workflowJobsTable.caseId), inArray(workflowJobsTable.caseId, caseIds))),
+          .where(and(isNotNull(workflowJobsTable.caseId), inArray(workflowJobsTable.caseId, caseIds)))
+          .orderBy(desc(workflowJobsTable.createdAt)),
+        db
+          .select({
+            caseId: auditLogsTable.caseId,
+            action: auditLogsTable.action,
+            createdAt: auditLogsTable.createdAt
+          })
+          .from(auditLogsTable)
+          .where(and(isNotNull(auditLogsTable.caseId), inArray(auditLogsTable.caseId, caseIds)))
+          .orderBy(desc(auditLogsTable.createdAt))
+          .limit(500),
+        db
+          .select({
+            action: auditLogsTable.action,
+            createdAt: auditLogsTable.createdAt
+          })
+          .from(auditLogsTable)
+          .orderBy(desc(auditLogsTable.createdAt))
+          .limit(500),
         db.select({ total: count() }).from(agentIntelligenceTable),
         db
           .select({
@@ -319,8 +495,23 @@ export async function getAgentsOperationalOverview(): Promise<AgentsOperationalO
         Promise.resolve([] as Array<{ caseId: string }>),
         Promise.resolve([] as Array<{ caseId: string; reviewRequired: boolean; decision: string | null }>),
         Promise.resolve(
-          [] as Array<{ caseId: string | null; jobType: string; status: string; createdAt: Date }>
+          [] as Array<{
+            caseId: string | null;
+            jobType: string;
+            status: string;
+            payload: unknown;
+            createdAt: Date;
+          }>
         ),
+        Promise.resolve([] as Array<{ caseId: string | null; action: string; createdAt: Date }>),
+        db
+          .select({
+            action: auditLogsTable.action,
+            createdAt: auditLogsTable.createdAt
+          })
+          .from(auditLogsTable)
+          .orderBy(desc(auditLogsTable.createdAt))
+          .limit(500),
         db.select({ total: count() }).from(agentIntelligenceTable),
         db
           .select({
@@ -361,17 +552,27 @@ export async function getAgentsOperationalOverview(): Promise<AgentsOperationalO
     ])
   );
 
-  const latestWorkflowByCaseAndType = new Map<string, string>();
+  const latestWorkflowByCaseAndType = new Map<string, WorkflowSnapshot>();
+  const latestWorkflowByType = new Map<string, WorkflowSnapshot>();
   for (const row of workflowRows) {
     if (!row.caseId) {
       continue;
     }
 
+    const snapshot: WorkflowSnapshot = {
+      status: row.status,
+      payload: row.payload,
+      createdAt: row.createdAt
+    };
     const key = `${row.caseId}:${row.jobType}`;
     const existing = latestWorkflowByCaseAndType.get(key);
 
     if (!existing) {
-      latestWorkflowByCaseAndType.set(key, row.status);
+      latestWorkflowByCaseAndType.set(key, snapshot);
+    }
+
+    if (!latestWorkflowByType.has(row.jobType)) {
+      latestWorkflowByType.set(row.jobType, snapshot);
     }
   }
 
@@ -379,34 +580,76 @@ export async function getAgentsOperationalOverview(): Promise<AgentsOperationalO
     return latestWorkflowByCaseAndType.get(`${caseId}:${jobType}`);
   }
 
+  const latestCasePhaseAction = new Map<string, LastActionSnapshot>();
+  for (const row of caseAuditRows) {
+    if (!row.caseId) {
+      continue;
+    }
+
+    const phaseKey = phaseForAuditAction(row.action);
+    if (!phaseKey) {
+      continue;
+    }
+
+    const key = `${row.caseId}:${phaseKey}`;
+    if (!latestCasePhaseAction.has(key)) {
+      latestCasePhaseAction.set(key, {
+        description: formatAuditActionDescription(row.action),
+        at: row.createdAt
+      });
+    }
+  }
+
+  const latestGlobalPhaseAction = new Map<string, LastActionSnapshot>();
+  for (const row of globalAuditRows) {
+    const phaseKey = phaseForAuditAction(row.action);
+    if (!phaseKey) {
+      continue;
+    }
+
+    if (!latestGlobalPhaseAction.has(phaseKey)) {
+      latestGlobalPhaseAction.set(phaseKey, {
+        description: formatAuditActionDescription(row.action),
+        at: row.createdAt
+      });
+    }
+  }
+
   const cases: CaseOperationalItem[] = recentCases.map((item) => {
     const score = scoreMap.get(item.id);
+    const triageWorkflow = workflowStatusFor(item.id, "triage.classification");
+    const journeyWorkflow = workflowStatusFor(item.id, "journey.timeline");
+    const clinicalWorkflow = workflowStatusFor(item.id, "clinical.analysis");
+    const rightsWorkflow = workflowStatusFor(item.id, "rights.assessment");
+    const evidenceWorkflow = workflowStatusFor(item.id, "evidence.builder");
+    const scoreWorkflow = workflowStatusFor(item.id, "legal.score");
+    const legalExecutionWorkflow = workflowStatusFor(item.id, "legal.execution");
 
     const triageStatus = mapWorkflowJobStatus(
-      workflowStatusFor(item.id, "triage.classification"),
+      triageWorkflow?.status,
       triageSet.has(item.id)
     );
     const journeyStatus = mapWorkflowJobStatus(
-      workflowStatusFor(item.id, "journey.timeline"),
+      journeyWorkflow?.status,
       journeySet.has(item.id)
     );
     const clinicalStatus = mapWorkflowJobStatus(
-      workflowStatusFor(item.id, "clinical.analysis"),
+      clinicalWorkflow?.status,
       clinicalSet.has(item.id)
     );
     const rightsStatus = mapWorkflowJobStatus(
-      workflowStatusFor(item.id, "rights.assessment"),
+      rightsWorkflow?.status,
       rightsSet.has(item.id)
     );
     const evidenceStatus = mapWorkflowJobStatus(
-      workflowStatusFor(item.id, "evidence.builder"),
+      evidenceWorkflow?.status,
       evidenceSet.has(item.id)
     );
 
     const riskScoreStatus =
       score?.reviewRequired === true && !score.decision
         ? "review_required"
-        : mapWorkflowJobStatus(workflowStatusFor(item.id, "legal.score"), Boolean(score));
+        : mapWorkflowJobStatus(scoreWorkflow?.status, Boolean(score));
 
     const humanReviewStatus = statusForHumanReview(
       score?.reviewRequired ?? false,
@@ -415,23 +658,125 @@ export async function getAgentsOperationalOverview(): Promise<AgentsOperationalO
 
     const conversionStatus = statusForConversion(item.commercialStatus, item.legalStatus);
     const legalExecutionStatus = mapWorkflowJobStatus(
-      workflowStatusFor(item.id, "legal.execution"),
+      legalExecutionWorkflow?.status,
       item.legalStatus === "legal_execution_active"
     );
     const monitoringStatus = statusForMonitoring(item.legalStatus);
 
+    function phaseAction(
+      phaseKey: string,
+      phaseLabel: string,
+      workflow?: WorkflowSnapshot
+    ): LastActionSnapshot | undefined {
+      const audit = latestCasePhaseAction.get(`${item.id}:${phaseKey}`);
+      if (audit) {
+        return audit;
+      }
+
+      if (workflow) {
+        return {
+          description: formatWorkflowActionDescription(workflow.status, workflow.payload, phaseLabel),
+          at: workflow.createdAt
+        };
+      }
+
+      return undefined;
+    }
+
+    const captureAction = phaseAction("capture", "Captação");
+    const triageAction = phaseAction("triage", "Triagem", triageWorkflow);
+    const journeyAction = phaseAction("journey", "Jornada", journeyWorkflow);
+    const clinicalAction = phaseAction("clinical", "Análise clínica", clinicalWorkflow);
+    const rightsAction = phaseAction("rights", "Direitos do paciente", rightsWorkflow);
+    const evidenceAction = phaseAction("evidence", "Prova", evidenceWorkflow);
+    const scoreAction = phaseAction("risk_score", "Score jurídico", scoreWorkflow);
+    const humanReviewAction = phaseAction("human_review", "Revisão humana");
+    const conversionAction = phaseAction("conversion", "Conversão");
+    const legalExecutionAction = phaseAction(
+      "legal_execution",
+      "Execução jurídica",
+      legalExecutionWorkflow
+    );
+    const monitoringAction = phaseAction("monitoring", "Monitoramento");
+
     const phases: CasePhaseItem[] = [
-      { key: "capture", label: "Captação", status: "completed" },
-      { key: "triage", label: "Triagem", status: triageStatus },
-      { key: "journey", label: "Jornada", status: journeyStatus },
-      { key: "clinical", label: "Análise Clínica", status: clinicalStatus },
-      { key: "rights", label: "Direitos do Paciente", status: rightsStatus },
-      { key: "evidence", label: "Prova", status: evidenceStatus },
-      { key: "risk_score", label: "Score Jurídico", status: riskScoreStatus },
-      { key: "human_review", label: "Revisão Humana", status: humanReviewStatus },
-      { key: "conversion", label: "Conversão", status: conversionStatus },
-      { key: "legal_execution", label: "Execução Jurídica", status: legalExecutionStatus },
-      { key: "monitoring", label: "Monitoramento", status: monitoringStatus }
+      {
+        key: "capture",
+        label: "Captação",
+        status: "completed",
+        lastActionDescription: captureAction?.description ?? "Caso recebido na operação",
+        lastActionAt: toIsoOrUndefined(captureAction?.at)
+      },
+      {
+        key: "triage",
+        label: "Triagem",
+        status: triageStatus,
+        lastActionDescription: triageAction?.description,
+        lastActionAt: toIsoOrUndefined(triageAction?.at)
+      },
+      {
+        key: "journey",
+        label: "Jornada",
+        status: journeyStatus,
+        lastActionDescription: journeyAction?.description,
+        lastActionAt: toIsoOrUndefined(journeyAction?.at)
+      },
+      {
+        key: "clinical",
+        label: "Análise Clínica",
+        status: clinicalStatus,
+        lastActionDescription: clinicalAction?.description,
+        lastActionAt: toIsoOrUndefined(clinicalAction?.at)
+      },
+      {
+        key: "rights",
+        label: "Direitos do Paciente",
+        status: rightsStatus,
+        lastActionDescription: rightsAction?.description,
+        lastActionAt: toIsoOrUndefined(rightsAction?.at)
+      },
+      {
+        key: "evidence",
+        label: "Prova",
+        status: evidenceStatus,
+        lastActionDescription: evidenceAction?.description,
+        lastActionAt: toIsoOrUndefined(evidenceAction?.at)
+      },
+      {
+        key: "risk_score",
+        label: "Score Jurídico",
+        status: riskScoreStatus,
+        lastActionDescription: scoreAction?.description,
+        lastActionAt: toIsoOrUndefined(scoreAction?.at)
+      },
+      {
+        key: "human_review",
+        label: "Revisão Humana",
+        status: humanReviewStatus,
+        lastActionDescription: humanReviewAction?.description,
+        lastActionAt: toIsoOrUndefined(humanReviewAction?.at)
+      },
+      {
+        key: "conversion",
+        label: "Conversão",
+        status: conversionStatus,
+        lastActionDescription: conversionAction?.description,
+        lastActionAt: toIsoOrUndefined(conversionAction?.at)
+      },
+      {
+        key: "legal_execution",
+        label: "Execução Jurídica",
+        status: legalExecutionStatus,
+        lastActionDescription: legalExecutionAction?.description,
+        lastActionAt: toIsoOrUndefined(legalExecutionAction?.at)
+      },
+      {
+        key: "monitoring",
+        label: "Monitoramento",
+        status: monitoringStatus,
+        lastActionDescription: monitoringAction?.description,
+        lastActionAt: toIsoOrUndefined(monitoringAction?.at)
+      }
     ];
 
     return {
@@ -486,16 +831,90 @@ export async function getAgentsOperationalOverview(): Promise<AgentsOperationalO
     }))
   };
 
+  const globalMostRecentAction = globalAuditRows[0];
+
+  function globalPhaseAction(
+    phaseKey: string,
+    phaseLabel: string,
+    workflowJobType?: string
+  ): LastActionSnapshot | undefined {
+    const audit = latestGlobalPhaseAction.get(phaseKey);
+    if (audit) {
+      return audit;
+    }
+
+    if (workflowJobType) {
+      const workflow = latestWorkflowByType.get(workflowJobType);
+      if (workflow) {
+        return {
+          description: formatWorkflowActionDescription(workflow.status, workflow.payload, phaseLabel),
+          at: workflow.createdAt
+        };
+      }
+    }
+
+    if (globalMostRecentAction) {
+      return {
+        description: formatAuditActionDescription(globalMostRecentAction.action),
+        at: globalMostRecentAction.createdAt
+      };
+    }
+
+    return undefined;
+  }
+
+  function actionForAgent(agentKey: string): LastActionSnapshot | undefined {
+    switch (agentKey) {
+      case "capture":
+        return globalPhaseAction("capture", "Captação", "intake.orchestrator.bootstrap");
+      case "triage":
+        return globalPhaseAction("triage", "Triagem", "triage.classification");
+      case "journey":
+        return globalPhaseAction("journey", "Jornada", "journey.timeline");
+      case "clinical":
+        return globalPhaseAction("clinical", "Análise clínica", "clinical.analysis");
+      case "rights":
+        return globalPhaseAction("rights", "Direitos do paciente", "rights.assessment");
+      case "evidence":
+        return globalPhaseAction("evidence", "Prova", "evidence.builder");
+      case "score":
+        return globalPhaseAction("risk_score", "Score jurídico", "legal.score");
+      case "conversion":
+        return globalPhaseAction("conversion", "Conversão");
+      case "legal_execution":
+        return globalPhaseAction("legal_execution", "Execução jurídica", "legal.execution");
+      case "monitoring":
+        return globalPhaseAction("monitoring", "Monitoramento");
+      case "client":
+        return globalPhaseAction("capture", "Relacionamento");
+      case "growth":
+        return globalMostRecentAction
+          ? {
+              description: formatAuditActionDescription(globalMostRecentAction.action),
+              at: globalMostRecentAction.createdAt
+            }
+          : undefined;
+      default:
+        return undefined;
+    }
+  }
+
   return {
     generatedAt: now.toISOString(),
     orchestrator: {
       ...operations.orchestrator,
       status: mapDashboardAgentStatus(operations.orchestrator.status)
     },
-    agents: operations.agents.map((agent) => ({
-      ...agent,
-      status: mapDashboardAgentStatus(agent.status)
-    })),
+    agents: operations.agents.map((agent) => {
+      const action = actionForAgent(agent.key);
+
+      return {
+        ...agent,
+        status: mapDashboardAgentStatus(agent.status),
+        lastActionDescription: action?.description,
+        lastActionAt: action?.at ? action.at.toISOString() : agent.lastProcessedAt
+      };
+    }),
     intelligence,
     phases,
     cases
