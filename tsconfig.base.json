@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@safetycare/ai-contracts": ["packages/ai-contracts/src/index.ts"],
+      "@safetycare/agents": ["packages/agents/src/index.ts"],
+      "@safetycare/database": ["packages/database/src/index.ts"],
+      "@safetycare/domain": ["packages/domain/src/index.ts"],
+      "@safetycare/integrations": ["packages/integrations/src/index.ts"],
+      "@safetycare/observability": ["packages/observability/src/index.ts"],
+      "@safetycare/orchestrator": ["packages/orchestrator/src/index.ts"]
+    }
+  }
+}

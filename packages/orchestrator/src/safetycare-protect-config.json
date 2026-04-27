@@ -1,0 +1,41 @@
+{
+  "orchestrator_id": "safetycare-protect-engine",
+  "name": "SafetyCare Protect Orchestrator",
+  "version": "1.0.0",
+  "description": "Orquestrador central de defesa jurídica hospitalar",
+  "squads": [
+    {
+      "id": "journey_squad",
+      "agents": ["admission_agent", "timeline_agent", "discharge_agent"],
+      "focus": "Reconstrução cronológica e auditoria de fluxo"
+    },
+    {
+      "id": "evidence_squad",
+      "agents": ["medical_record_analyzer", "consent_validator", "gap_detector"],
+      "focus": "Detecção de lacunas probatórias e conformidade documental"
+    },
+    {
+      "id": "legal_risk_squad",
+      "agents": ["risk_score_agent", "defense_strategy_agent"],
+      "focus": "Cálculo de probabilidade de litígio e força de defesa"
+    }
+  ],
+  "triggers": [
+    {
+      "type": "event",
+      "source": "hospital_admission",
+      "action": "initialize_monitor"
+    },
+    {
+      "type": "threshold",
+      "metric": "risk_score",
+      "value": 70,
+      "action": "trigger_critical_alert"
+    }
+  ],
+  "output_channels": {
+    "database": "supabase",
+    "realtime": "dashboard_ws",
+    "notifications": ["email_juridico", "push_gestor"]
+  }
+}

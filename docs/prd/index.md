@@ -1,0 +1,15 @@
+# SAFETYCARE Juridico PRD Index
+
+- [Goals and Background Context](./goals-and-background-context.md)
+- [Requirements](./requirements.md)
+- [User Interface Design Goals](./user-interface-design-goals.md)
+- [Technical Assumptions](./technical-assumptions.md)
+- [Epic List](./epic-list.md)
+- [Epic 1 Foundation and Intake Orchestration](./epic-1-foundation-and-intake-orchestration.md)
+- [Epic 2 Triage, Journey and Clinical Signal Analysis](./epic-2-triage-journey-and-clinical-signal-analysis.md)
+- [Epic 3 Rights, Evidence and Legal Scoring](./epic-3-rights-evidence-and-legal-scoring.md)
+- [Epic 4 Conversion and Commercial Operations](./epic-4-conversion-and-commercial-operations.md)
+- [Epic 5 Legal Execution, Client Ops and Deadlines](./epic-5-legal-execution-client-ops-and-deadlines.md)
+- [Epic 6 Growth Intelligence and Executive Dashboard](./epic-6-growth-intelligence-and-executive-dashboard.md)
+- [Checklist Results Report](./checklist-results-report.md)
+- [Next Steps](./next-steps.md)

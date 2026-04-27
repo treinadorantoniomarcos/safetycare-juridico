@@ -1,0 +1,23 @@
+{
+  "name": "@safetycare/orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "node -e \"console.log('orchestrator lint placeholder')\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@safetycare/ai-contracts": "*",
+    "@safetycare/agents": "*",
+    "@safetycare/database": "*",
+    "@safetycare/observability": "*"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0",
+    "typescript": "^5.7.0"
+  }
+}
