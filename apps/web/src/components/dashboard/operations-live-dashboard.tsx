@@ -22,6 +22,10 @@ function formatDateTime(value?: string) {
   return parsed.toLocaleString("pt-BR", { hour12: false });
 }
 
+function buildLegalArtifactDownloadUrl(caseId: string, format: "pdf" | "docx") {
+  return `/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=${format}`;
+}
+
 export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboardProps) {
   const [data, setData] = useState<OperationsLiveOverview>(initialData);
   const [liveClock, setLiveClock] = useState(new Date());
@@ -151,9 +155,30 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
             <div className="ops-list">
               {data.futureClients.items.length > 0 ? (
                 data.futureClients.items.map((item) => (
-                  <p key={item.caseId}>
-                    {item.fullName} | {item.legalStatus} | envio: {formatDateTime(item.submittedAt)}
-                  </p>
+                  <div className="ops-client-item" key={item.caseId}>
+                    <div className="ops-client-item__meta">
+                      <p>
+                        {item.fullName} | {item.legalStatus}
+                      </p>
+                      <span>Envio: {formatDateTime(item.submittedAt)} | Caso: {item.caseId.slice(0, 8)}...</span>
+                    </div>
+                    <div className="ops-client-item__actions">
+                      <a
+                        className="button-ghost inline-action"
+                        href={buildLegalArtifactDownloadUrl(item.caseId, "pdf")}
+                        aria-label={`Baixar PDF dos artefatos de ${item.fullName}`}
+                      >
+                        PDF
+                      </a>
+                      <a
+                        className="button-primary inline-action"
+                        href={buildLegalArtifactDownloadUrl(item.caseId, "docx")}
+                        aria-label={`Baixar DOCX dos artefatos de ${item.fullName}`}
+                      >
+                        DOCX
+                      </a>
+                    </div>
+                  </div>
                 ))
               ) : (
                 <p>Nenhum cliente com complementacao enviada no momento.</p>
