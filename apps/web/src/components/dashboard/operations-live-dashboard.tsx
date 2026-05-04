@@ -162,22 +162,25 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
                       </p>
                       <span>Envio: {formatDateTime(item.submittedAt)} | Caso: {item.caseId.slice(0, 8)}...</span>
                     </div>
-                    <div className="ops-client-item__actions">
-                      <a
-                        className="button-ghost inline-action"
-                        href={buildLegalArtifactDownloadUrl(item.caseId, "pdf")}
-                        aria-label={`Baixar PDF dos artefatos de ${item.fullName}`}
-                      >
-                        PDF
-                      </a>
-                      <a
-                        className="button-primary inline-action"
-                        href={buildLegalArtifactDownloadUrl(item.caseId, "docx")}
-                        aria-label={`Baixar DOCX dos artefatos de ${item.fullName}`}
-                      >
-                        DOCX
-                      </a>
-                    </div>
+                    <details className="ops-format-menu">
+                      <summary className="button-primary inline-action ops-format-menu__trigger">Baixar</summary>
+                      <div className="ops-format-menu__panel" role="menu" aria-label="Escolha o formato de download">
+                        <a
+                          className="ops-format-menu__item"
+                          href={buildLegalArtifactDownloadUrl(item.caseId, "pdf")}
+                          aria-label={`Baixar PDF dos artefatos de ${item.fullName}`}
+                        >
+                          PDF
+                        </a>
+                        <a
+                          className="ops-format-menu__item"
+                          href={buildLegalArtifactDownloadUrl(item.caseId, "docx")}
+                          aria-label={`Baixar DOCX dos artefatos de ${item.fullName}`}
+                        >
+                          DOCX
+                        </a>
+                      </div>
+                    </details>
                   </div>
                 ))
               ) : (
