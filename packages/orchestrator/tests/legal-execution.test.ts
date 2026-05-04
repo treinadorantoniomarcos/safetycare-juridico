@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   claimMock,
   findByIdMock,
+  findLegalBriefByCaseIdMock,
   updateStatusesMock,
   markBlockedMock,
   markCompletedMock,
@@ -11,6 +12,7 @@ const {
 } = vi.hoisted(() => ({
   claimMock: vi.fn(),
   findByIdMock: vi.fn(),
+  findLegalBriefByCaseIdMock: vi.fn(),
   updateStatusesMock: vi.fn(),
   markBlockedMock: vi.fn(),
   markCompletedMock: vi.fn(),
@@ -28,6 +30,9 @@ vi.mock("@safetycare/database", () => ({
   CaseRepository: class {
     findById = findByIdMock;
     updateStatuses = updateStatusesMock;
+  },
+  LegalBriefInputRepository: class {
+    findByCaseId = findLegalBriefByCaseIdMock;
   },
   AuditLogRepository: class {
     record = recordMock;
@@ -65,6 +70,28 @@ describe("runLegalExecution", () => {
       id: "case-1",
       legalStatus: "legal_execution_pending"
     });
+    findLegalBriefByCaseIdMock.mockResolvedValueOnce({
+      caseId: "case-1",
+      sourceWorkflowJobId: "brief-job-1",
+      draftScope: "civil_health",
+      patientFullName: "Paciente Exemplo",
+      patientCpf: "12345678901",
+      city: "Curitiba",
+      contact: "41 99999-9999",
+      relationToPatient: "Filho",
+      problemType: "atendimento",
+      currentUrgency: "medium",
+      keyDates: [{ label: "Consulta", date: "2025-05-01" }],
+      objectiveDescription: "Descrição objetiva",
+      materialLosses: "Perdas materiais",
+      moralImpact: "Impacto moral",
+      documentsAttached: ["doc.pdf"],
+      witnesses: ["Testemunha"],
+      mainRequest: "Pedido principal",
+      subsidiaryRequest: "Pedido subsidiário",
+      createdAt: new Date("2025-05-01T00:00:00Z"),
+      updatedAt: new Date("2025-05-01T00:00:00Z")
+    });
     updateStatusesMock.mockResolvedValueOnce({
       id: "case-1",
       legalStatus: "legal_execution_in_progress"
@@ -100,6 +127,34 @@ describe("runLegalExecution", () => {
     const result = await runLegalExecution({} as never, "job-2");
 
     expect(markBlockedMock).toHaveBeenCalledTimes(1);
+    expect(updateStatusesMock).not.toHaveBeenCalled();
+    expect(result.status).toBe("blocked");
+    expect(result.nextStage).toBe("legal_execution_pending");
+  });
+
+  it("blocks legal execution when the legal brief parameters are missing", async () => {
+    claimMock.mockResolvedValueOnce({
+      id: "job-3",
+      caseId: "case-3",
+      correlationId: "corr-3"
+    });
+    findByIdMock.mockResolvedValueOnce({
+      id: "case-3",
+      legalStatus: "legal_execution_pending"
+    });
+    findLegalBriefByCaseIdMock.mockResolvedValueOnce(undefined);
+    markBlockedMock.mockResolvedValueOnce(undefined);
+    recordMock.mockResolvedValue(undefined);
+
+    const result = await runLegalExecution({} as never, "job-3");
+
+    expect(markBlockedMock).toHaveBeenCalledWith(
+      "job-3",
+      expect.objectContaining({
+        reason: "legal_brief_missing"
+      }),
+      expect.any(Date)
+    );
     expect(updateStatusesMock).not.toHaveBeenCalled();
     expect(result.status).toBe("blocked");
     expect(result.nextStage).toBe("legal_execution_pending");

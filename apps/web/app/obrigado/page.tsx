@@ -48,15 +48,15 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
 
       <section className="thanks-panel">
         <p className="section-eyebrow">Solicitacao recebida</p>
-        <h1>Cadastro concluido. Triagem humana em andamento.</h1>
+        <h1>Cadastro concluído. Triagem humana em andamento.</h1>
         <p>
-          Sua jornada foi registrada e agora passa por validacao humana inicial. A analise
-          tecnica do caso comeca somente apos essa aprovacao.
+          Sua jornada foi registrada e agora passa por validação humana inicial. A próxima etapa
+          só será liberada após essa aprovação.
         </p>
 
         <p>
-          Se houver documentos (exames, relatorios, alta hospitalar), mantenha-os organizados para
-          envio na proxima etapa.
+          Quando o caso for liberado, você seguirá para o formulário de parâmetros da peça, onde
+          informará a história, as datas-chave e os pedidos principais.
         </p>
 
         {caseId && workflowJobId ? (
@@ -64,7 +64,7 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
             className="button-primary thanks-action"
             href={`/completar-caso?caseId=${caseId}&workflowJobId=${workflowJobId}`}
           >
-            Completar documentos do caso
+            Abrir formulário de parâmetros
           </Link>
         ) : null}
 

@@ -214,6 +214,74 @@ export const legalScoresTable = pgTable(
   })
 );
 
+export const legalBriefInputsTable = pgTable(
+  "legal_brief_inputs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => casesTable.id),
+    sourceWorkflowJobId: uuid("source_workflow_job_id").references(() => workflowJobsTable.id),
+    draftScope: text("draft_scope").notNull().default("civil_health"),
+    patientFullName: text("patient_full_name").notNull(),
+    patientCpf: text("patient_cpf").notNull(),
+    city: text("city").notNull(),
+    contact: text("contact").notNull(),
+    relationToPatient: text("relation_to_patient").notNull(),
+    problemType: text("problem_type").notNull(),
+    currentUrgency: text("current_urgency").notNull(),
+    keyDates: jsonb("key_dates")
+      .$type<Array<{ label: string; date: string }>>()
+      .notNull()
+      .default([]),
+    objectiveDescription: text("objective_description").notNull(),
+    materialLosses: text("material_losses").notNull(),
+    moralImpact: text("moral_impact").notNull(),
+    documentsAttached: jsonb("documents_attached").$type<string[]>().notNull().default([]),
+    witnesses: jsonb("witnesses").$type<string[]>().notNull().default([]),
+    mainRequest: text("main_request").notNull(),
+    subsidiaryRequest: text("subsidiary_request").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    caseIdx: uniqueIndex("uq_legal_brief_inputs_case_id").on(table.caseId)
+  })
+);
+
+export const legalArtifactsTable = pgTable(
+  "legal_artifacts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => casesTable.id),
+    sourceWorkflowJobId: uuid("source_workflow_job_id").references(() => workflowJobsTable.id),
+    artifactType: text("artifact_type").notNull(),
+    versionNumber: integer("version_number").notNull(),
+    status: text("status").notNull().default("draft"),
+    title: text("title").notNull(),
+    subtitle: text("subtitle").notNull(),
+    summary: text("summary").notNull(),
+    contentMarkdown: text("content_markdown").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    versionIdx: uniqueIndex("uq_legal_artifacts_case_type_version").on(
+      table.caseId,
+      table.artifactType,
+      table.versionNumber
+    ),
+    caseTypeIdx: index("idx_legal_artifacts_case_type").on(
+      table.caseId,
+      table.artifactType,
+      table.versionNumber
+    )
+  })
+);
+
 export const auditLogsTable = pgTable(
   "audit_logs",
   {

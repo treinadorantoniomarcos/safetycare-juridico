@@ -7,6 +7,8 @@ import {
   evidenceDocsTable,
   hospitalCasesTable,
   legalAlertsTable,
+  legalBriefInputsTable,
+  legalArtifactsTable,
   legalScoresTable,
   patientJourneyTable,
   patientsTable,
@@ -53,6 +55,10 @@ export type EvidenceChecklistRecord = typeof evidenceChecklistsTable.$inferSelec
 export type NewEvidenceChecklistRecord = typeof evidenceChecklistsTable.$inferInsert;
 export type LegalScoreRecord = typeof legalScoresTable.$inferSelect;
 export type NewLegalScoreRecord = typeof legalScoresTable.$inferInsert;
+export type LegalBriefInputRecord = typeof legalBriefInputsTable.$inferSelect;
+export type NewLegalBriefInputRecord = typeof legalBriefInputsTable.$inferInsert;
+export type LegalArtifactRecord = typeof legalArtifactsTable.$inferSelect;
+export type NewLegalArtifactRecord = typeof legalArtifactsTable.$inferInsert;
 export type LegalScoreHumanReviewInput = ScoreReviewDecisionInput & {
   reviewedAt?: Date;
 };

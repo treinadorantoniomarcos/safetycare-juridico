@@ -20,6 +20,7 @@ import {
   AuditLogRepository,
   CaseRepository,
   EvidenceChecklistRepository,
+  LegalBriefInputRepository,
   LegalScoreRepository,
   RightsAssessmentRepository,
   type DatabaseClient,
@@ -1276,6 +1277,7 @@ export async function runLegalExecution(
 ): Promise<LegalExecutionJobResult> {
   const workflowJobs = new WorkflowJobRepository(db);
   const cases = new CaseRepository(db);
+  const legalBriefInputs = new LegalBriefInputRepository(db);
   const auditLogs = new AuditLogRepository(db);
 
   const claimedJob = await workflowJobs.claim(workflowJobId);
@@ -1303,8 +1305,8 @@ export async function runLegalExecution(
       throw new Error("workflow_job_case_not_found");
     }
 
-    if (caseRecord.legalStatus !== "legal_execution_pending") {
-      const retryAt = buildRetryAt(new Date());
+      if (caseRecord.legalStatus !== "legal_execution_pending") {
+        const retryAt = buildRetryAt(new Date());
 
       await workflowJobs.markBlocked(
         claimedJob.id,
@@ -1332,34 +1334,81 @@ export async function runLegalExecution(
 
       logger.warn(`legal_execution_blocked caseId=${caseRecord.id} workflowJobId=${claimedJob.id}`);
 
-      return {
-        workflowJobId: claimedJob.id,
-        caseId: caseRecord.id,
-        status: "blocked",
-        nextStage: "legal_execution_pending",
-        retryAt: retryAt.toISOString()
-      };
-    }
+        return {
+          workflowJobId: claimedJob.id,
+          caseId: caseRecord.id,
+          status: "blocked",
+          nextStage: "legal_execution_pending",
+          retryAt: retryAt.toISOString()
+        };
+      }
 
-    await cases.updateStatuses(caseRecord.id, {
-      legalStatus: "legal_execution_in_progress"
-    });
+      const legalBriefInput = await legalBriefInputs.findByCaseId(caseRecord.id);
+
+      if (!legalBriefInput) {
+        const retryAt = buildRetryAt(new Date());
+
+        await workflowJobs.markBlocked(
+          claimedJob.id,
+          {
+            stage: "legal_execution_pending",
+            reason: "legal_brief_missing",
+            currentLegalStatus: caseRecord.legalStatus
+          },
+          retryAt
+        );
+
+        await auditLogs.record({
+          caseId: caseRecord.id,
+          actorType: "system",
+          actorId: "legal-executor",
+          action: "legal_execution.blocked",
+          correlationId: claimedJob.correlationId,
+          afterPayload: {
+            workflowJobId: claimedJob.id,
+            retryAt: retryAt.toISOString(),
+            reason: "legal_brief_missing",
+            currentLegalStatus: caseRecord.legalStatus
+          }
+        });
+
+        logger.warn(`legal_execution_blocked_missing_brief caseId=${caseRecord.id} workflowJobId=${claimedJob.id}`);
+
+        return {
+          workflowJobId: claimedJob.id,
+          caseId: caseRecord.id,
+          status: "blocked",
+          nextStage: "legal_execution_pending",
+          retryAt: retryAt.toISOString()
+        };
+      }
+
+      await cases.updateStatuses(caseRecord.id, {
+        legalStatus: "legal_execution_in_progress"
+      });
 
     await workflowJobs.markCompleted(claimedJob.id, {
       stage: "legal_execution_in_progress"
     });
 
-    await auditLogs.record({
-      caseId: caseRecord.id,
-      actorType: "system",
-      actorId: "legal-executor",
-      action: "legal_execution.started",
-      correlationId: claimedJob.correlationId,
-      afterPayload: {
-        workflowJobId: claimedJob.id,
-        nextStage: "legal_execution_in_progress"
-      }
-    });
+      await auditLogs.record({
+        caseId: caseRecord.id,
+        actorType: "system",
+        actorId: "legal-executor",
+        action: "legal_execution.started",
+        correlationId: claimedJob.correlationId,
+        afterPayload: {
+          workflowJobId: claimedJob.id,
+          nextStage: "legal_execution_in_progress",
+          legalBrief: {
+            problemType: legalBriefInput.problemType,
+            urgency: legalBriefInput.currentUrgency,
+            keyDatesCount: legalBriefInput.keyDates.length,
+            documentsAttachedCount: legalBriefInput.documentsAttached.length,
+            witnessesCount: legalBriefInput.witnesses.length
+          }
+        }
+      });
 
     logger.info(
       `legal_execution_started caseId=${caseRecord.id} workflowJobId=${claimedJob.id}`
@@ -1416,6 +1465,9 @@ export async function drainLegalScoreQueue(db: DatabaseClient, limit: number) {
 export async function drainLegalExecutionQueue(db: DatabaseClient, limit: number) {
   return drainQueue(db, legalExecutionJobType, limit, (jobId) => runLegalExecution(db, jobId));
 }
+
+export { buildCivilHealthLegalDraft } from "./legal-draft";
+export { buildCivilHealthSupportingDocumentPack } from "./legal-supporting-documents";
 
 async function drainQueue<T>(
   db: DatabaseClient,

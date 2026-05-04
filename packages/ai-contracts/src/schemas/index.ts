@@ -10,6 +10,12 @@ export {
 } from "./evidence-checklist.schema";
 export { journeyEventSchema, journeyTimelineSchema } from "./journey-timeline.schema";
 export { legalScoreSchema } from "./legal-score.schema";
+export { legalBriefInputSchema, legalBriefKeyDateSchema } from "./legal-brief-input.schema";
+export { legalDraftSchema } from "./legal-draft.schema";
+export {
+  legalDocumentPackSchema,
+  legalSupportingDocumentTypeSchema
+} from "./legal-document-pack.schema";
 export { leadIntakeSchema } from "./lead-intake.schema";
 export { scoreReviewDecisionSchema } from "./score-review-decision.schema";
 export { rightsAssessmentItemSchema, rightsAssessmentSchema } from "./rights-assessment.schema";

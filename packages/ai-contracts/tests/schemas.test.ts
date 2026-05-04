@@ -9,6 +9,7 @@ import {
   journeyTimelineSchema,
   legalScoreSchema,
   leadIntakeSchema,
+  legalDocumentPackSchema,
   scoreReviewDecisionSchema,
   rightsAssessmentSchema,
   triageClassificationSchema
@@ -388,6 +389,43 @@ describe("legalScoreSchema", () => {
 
     expect(result.reviewRequired).toBe(true);
     expect(result.complexity).toBe("high");
+  });
+});
+
+describe("legalDocumentPackSchema", () => {
+  it("accepts a valid supporting document pack", () => {
+    const result = legalDocumentPackSchema.parse({
+      draftScope: "civil_health",
+      title: "Modelos complementares",
+      subtitle: "Procuração e contrato parametrizados",
+      summary: "Pacote complementar para revisão humana.",
+      documents: [
+        {
+          key: "procurao_civel_saude",
+          type: "power_of_attorney",
+          title: "Procuração",
+          subtitle: "Mandato cível e extrajudicial",
+          summary: "Modelo de procuração com poderes gerais e especiais.",
+          placeholders: ["outorgante_nome", "numero_dos_autos"],
+          reviewNotes: ["Conferir poderes especiais antes da assinatura."],
+          markdown: "PROCURAÇÃO\n"
+        },
+        {
+          key: "contrato_honorarios_civel_saude",
+          type: "fee_agreement",
+          title: "Contrato de prestação de serviços e honorários advocatícios",
+          subtitle: "Modelo parametrizado",
+          summary: "Minuta de contrato com campos variáveis para honorários.",
+          placeholders: ["contratante_nome", "valor_total_dos_honorarios"],
+          reviewNotes: ["Definir valores e foro na revisão humana."],
+          markdown: "CONTRATO\n"
+        }
+      ],
+      generatedAt: "2026-05-04T12:00:00.000Z"
+    });
+
+    expect(result.documents).toHaveLength(2);
+    expect(result.documents[0]?.type).toBe("power_of_attorney");
   });
 });
 

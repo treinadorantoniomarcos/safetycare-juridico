@@ -25,6 +25,18 @@ export const triageUrgencyLevels = ["low", "medium", "high", "critical"] as cons
 export const triageLegalPotentialLevels = ["low", "medium", "high"] as const;
 export const journeyRiskLevels = ["low", "medium", "high", "critical"] as const;
 export const clinicalRiskLevels = ["low", "medium", "high", "critical"] as const;
+export const legalBriefProblemTypes = [
+  "atendimento",
+  "plano",
+  "hospital",
+  "medico",
+  "clinica",
+  "medicamento",
+  "cirurgia",
+  "uti",
+  "reembolso",
+  "outro"
+] as const;
 export const clinicalFindingTypes = [
   "delay",
   "protocol_failure",

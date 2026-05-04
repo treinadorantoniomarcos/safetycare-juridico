@@ -1,0 +1,452 @@
+import {
+  legalBriefInputSchema,
+  type LegalDocumentPack,
+  type LegalDraft,
+  workflowJobTypes,
+  type LegalBriefInput
+} from "@safetycare/ai-contracts";
+import {
+  AuditLogRepository,
+  CaseRepository,
+  LegalArtifactRepository,
+  LegalBriefInputRepository,
+  WorkflowJobRepository
+} from "@safetycare/database";
+import {
+  buildCivilHealthLegalDraft,
+  buildCivilHealthSupportingDocumentPack
+} from "@safetycare/orchestrator";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { getDatabaseClient } from "../../../../../../../src/lib/database";
+
+type RouteContext = {
+  params:
+    | {
+        caseId: string;
+      }
+    | Promise<{
+        caseId: string;
+      }>;
+};
+
+type LegalBriefSubmission = Omit<LegalBriefInput, "caseId" | "workflowJobId"> & {
+  submittedAt: string;
+  updatedAt: string;
+};
+
+type LegalBriefDraftResponse = LegalDraft;
+
+type LegalSupportingDocumentPackResponse = LegalDocumentPack;
+
+type LegalBriefReadyResponse = {
+  status: "ready";
+  submission: LegalBriefSubmission | null;
+  draft: LegalBriefDraftResponse | null;
+  supportingDocumentPack: LegalSupportingDocumentPackResponse | null;
+};
+
+type LegalBriefAcceptedResponse = {
+  status: "accepted";
+  submission: LegalBriefSubmission;
+  draft: LegalBriefDraftResponse;
+  supportingDocumentPack: LegalSupportingDocumentPackResponse;
+  legalExecutionJobId: string | null;
+  legalExecutionJobStatus: string;
+};
+
+const workflowJobIdSchema = z.string().uuid();
+
+function normalizeWorkflowJobId(url: URL) {
+  const workflowJobId = url.searchParams.get("workflowJobId");
+  return workflowJobId?.trim();
+}
+
+function isValidPublicCaseAccessToken(
+  caseId: string,
+  workflowJob: {
+    caseId: string | null;
+    jobType: string;
+  }
+) {
+  return workflowJob.caseId === caseId && workflowJob.jobType === workflowJobTypes[0];
+}
+
+function isBriefLocked(legalStatus: string) {
+  return legalStatus === "human_triage_pending" || legalStatus === "awaiting_consent";
+}
+
+function isBriefClosed(caseRecord: { commercialStatus: string; legalStatus: string }) {
+  return caseRecord.commercialStatus === "closed_lost" || caseRecord.legalStatus === "closed_lost";
+}
+
+function toIsoDate(value: Date | string | null | undefined) {
+  if (!value) {
+    return new Date().toISOString();
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+}
+
+function formatSubmission(record: {
+  draftScope: string;
+  patientFullName: string;
+  patientCpf: string;
+  city: string;
+  contact: string;
+  relationToPatient: string;
+  problemType: string;
+  currentUrgency: string;
+  keyDates: Array<{ label: string; date: string }>;
+  objectiveDescription: string;
+  materialLosses: string;
+  moralImpact: string;
+  documentsAttached: string[];
+  witnesses: string[];
+  mainRequest: string;
+  subsidiaryRequest: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}): LegalBriefSubmission {
+  return {
+    draftScope: "civil_health",
+    patientFullName: record.patientFullName,
+    patientCpf: record.patientCpf,
+    city: record.city,
+    contact: record.contact,
+    relationToPatient: record.relationToPatient,
+    problemType: record.problemType as LegalBriefInput["problemType"],
+    currentUrgency: record.currentUrgency as LegalBriefInput["currentUrgency"],
+    keyDates: record.keyDates,
+    objectiveDescription: record.objectiveDescription,
+    materialLosses: record.materialLosses,
+    moralImpact: record.moralImpact,
+    documentsAttached: record.documentsAttached,
+    witnesses: record.witnesses,
+    mainRequest: record.mainRequest,
+    subsidiaryRequest: record.subsidiaryRequest,
+    submittedAt: toIsoDate(record.createdAt),
+    updatedAt: toIsoDate(record.updatedAt)
+  };
+}
+
+export async function GET(request: Request, context: RouteContext) {
+  const correlationId = crypto.randomUUID();
+  const { caseId } = await Promise.resolve(context.params);
+  const workflowJobId = normalizeWorkflowJobId(new URL(request.url));
+
+  if (!workflowJobId) {
+    return NextResponse.json(
+      {
+        correlationId,
+        error: "workflow_job_id_required"
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const parsedWorkflowJobId = workflowJobIdSchema.safeParse(workflowJobId);
+
+    if (!parsedWorkflowJobId.success) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "invalid_workflow_job_id"
+        },
+        { status: 400 }
+      );
+    }
+
+    const { db } = getDatabaseClient();
+    const cases = new CaseRepository(db);
+    const workflowJobs = new WorkflowJobRepository(db);
+    const legalBriefInputs = new LegalBriefInputRepository(db);
+
+    const caseRecord = await cases.findById(caseId);
+
+    if (!caseRecord) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "case_not_found"
+        },
+        { status: 404 }
+      );
+    }
+
+    const workflowJob = await workflowJobs.findById(parsedWorkflowJobId.data);
+
+    if (!workflowJob || !isValidPublicCaseAccessToken(caseId, workflowJob)) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "invalid_case_access"
+        },
+        { status: 403 }
+      );
+    }
+
+    if (isBriefClosed(caseRecord)) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "case_closed"
+        },
+        { status: 409 }
+      );
+    }
+
+    if (isBriefLocked(caseRecord.legalStatus)) {
+      return NextResponse.json(
+        {
+          correlationId,
+          status: "processing",
+          caseId,
+          workflowJobId,
+          message: "A etapa de parâmetros ainda não foi liberada pela análise humana."
+        },
+        { status: 202 }
+      );
+    }
+
+    const submission = await legalBriefInputs.findByCaseId(caseId);
+    const formattedSubmission = submission ? formatSubmission(submission) : null;
+
+    return NextResponse.json(
+      {
+        correlationId,
+        status: "ready",
+        caseId,
+        workflowJobId,
+        submission: formattedSubmission,
+        draft: formattedSubmission ? buildCivilHealthLegalDraft(formattedSubmission) : null,
+        supportingDocumentPack: formattedSubmission
+          ? buildCivilHealthSupportingDocumentPack(formattedSubmission)
+          : null
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const isDatabaseUrlMissing = message.includes("Missing required environment variable: DATABASE_URL");
+
+    return NextResponse.json(
+      {
+        correlationId,
+        error: isDatabaseUrlMissing ? "database_not_configured" : "legal_brief_fetch_failed",
+        ...(process.env.NODE_ENV === "development" ? { detail: message || "unknown_error" } : {})
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request, context: RouteContext) {
+  const correlationId = crypto.randomUUID();
+  const { caseId } = await Promise.resolve(context.params);
+
+  let payload: unknown;
+
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json(
+      {
+        correlationId,
+        error: "invalid_json"
+      },
+      { status: 400 }
+    );
+  }
+
+  const parsedPayload = legalBriefInputSchema.safeParse(payload);
+
+  if (!parsedPayload.success) {
+    return NextResponse.json(
+      {
+        correlationId,
+        error: "invalid_payload",
+        details: parsedPayload.error.issues
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const { db } = getDatabaseClient();
+    const cases = new CaseRepository(db);
+    const workflowJobs = new WorkflowJobRepository(db);
+    const legalBriefInputs = new LegalBriefInputRepository(db);
+    const legalArtifacts = new LegalArtifactRepository(db);
+    const auditLogs = new AuditLogRepository(db);
+
+    const caseRecord = await cases.findById(caseId);
+
+    if (!caseRecord) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "case_not_found"
+        },
+        { status: 404 }
+      );
+    }
+
+    const workflowJob = await workflowJobs.findById(parsedPayload.data.workflowJobId);
+
+    if (!workflowJob || !isValidPublicCaseAccessToken(caseId, workflowJob)) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "invalid_case_access"
+        },
+        { status: 403 }
+      );
+    }
+
+    if (isBriefClosed(caseRecord)) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "case_closed"
+        },
+        { status: 409 }
+      );
+    }
+
+    if (isBriefLocked(caseRecord.legalStatus)) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "brief_not_ready"
+        },
+        { status: 409 }
+      );
+    }
+
+    const existingSubmission = await legalBriefInputs.findByCaseId(caseId);
+
+    const savedSubmission = await legalBriefInputs.upsert({
+      caseId,
+      sourceWorkflowJobId: parsedPayload.data.workflowJobId,
+      draftScope: parsedPayload.data.draftScope,
+      patientFullName: parsedPayload.data.patientFullName,
+      patientCpf: parsedPayload.data.patientCpf,
+      city: parsedPayload.data.city,
+      contact: parsedPayload.data.contact,
+      relationToPatient: parsedPayload.data.relationToPatient,
+      problemType: parsedPayload.data.problemType,
+      currentUrgency: parsedPayload.data.currentUrgency,
+      keyDates: parsedPayload.data.keyDates,
+      objectiveDescription: parsedPayload.data.objectiveDescription,
+      materialLosses: parsedPayload.data.materialLosses,
+      moralImpact: parsedPayload.data.moralImpact,
+      documentsAttached: parsedPayload.data.documentsAttached,
+      witnesses: parsedPayload.data.witnesses,
+      mainRequest: parsedPayload.data.mainRequest,
+      subsidiaryRequest: parsedPayload.data.subsidiaryRequest
+    });
+
+    const legalExecutionJob = await workflowJobs.findLatestByCaseIdAndType(
+      caseId,
+      workflowJobTypes[7]
+    );
+
+    let legalExecutionJobStatus = legalExecutionJob?.status ?? "missing";
+    const formattedSavedSubmission = formatSubmission(savedSubmission);
+    const generatedDraft = buildCivilHealthLegalDraft(formattedSavedSubmission);
+    const supportingDocumentPack = buildCivilHealthSupportingDocumentPack(formattedSavedSubmission);
+
+    await legalArtifacts.createVersion({
+      caseId,
+      sourceWorkflowJobId: parsedPayload.data.workflowJobId,
+      artifactType: "civil_health_draft",
+      status: "draft",
+      title: generatedDraft.title,
+      subtitle: generatedDraft.subtitle,
+      summary: generatedDraft.summary,
+      contentMarkdown: generatedDraft.markdown,
+      metadata: {
+        draftScope: generatedDraft.draftScope,
+        source: "public_legal_brief_form",
+        documentCount: supportingDocumentPack.documents.length
+      }
+    });
+
+    for (const document of supportingDocumentPack.documents) {
+      await legalArtifacts.createVersion({
+        caseId,
+        sourceWorkflowJobId: parsedPayload.data.workflowJobId,
+        artifactType: document.type,
+        status: "draft",
+        title: document.title,
+        subtitle: document.subtitle,
+        summary: document.summary,
+        contentMarkdown: document.markdown,
+        metadata: {
+          draftScope: supportingDocumentPack.draftScope,
+          source: "public_legal_brief_form",
+          documentKey: document.key
+        }
+      });
+    }
+
+    if (
+      legalExecutionJob &&
+      legalExecutionJob.status !== "completed" &&
+      legalExecutionJob.status !== "processing"
+    ) {
+      const requeuedJob = await workflowJobs.requeue(legalExecutionJob.id);
+      legalExecutionJobStatus = requeuedJob?.status ?? "queued";
+    }
+
+    await auditLogs.record({
+      caseId,
+      actorType: "user",
+      actorId: "public-legal-brief-form",
+      action: "intake.legal_brief_submitted",
+      correlationId,
+      beforePayload: existingSubmission ? formatSubmission(existingSubmission) : null,
+        afterPayload: {
+          ...formattedSavedSubmission,
+          caseId,
+          sourceWorkflowJobId: parsedPayload.data.workflowJobId,
+          savedArtifactTypes: [
+            "civil_health_draft",
+            ...supportingDocumentPack.documents.map((document) => document.type)
+          ],
+          legalExecutionJobId: legalExecutionJob?.id ?? null,
+          legalExecutionJobStatus
+        }
+    });
+
+    return NextResponse.json(
+      {
+        correlationId,
+        status: "accepted",
+        caseId,
+        workflowJobId: parsedPayload.data.workflowJobId,
+        legalExecutionJobId: legalExecutionJob?.id ?? null,
+        legalExecutionJobStatus,
+        submission: formattedSavedSubmission,
+        draft: generatedDraft,
+        supportingDocumentPack
+      },
+      { status: 202 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const isDatabaseUrlMissing = message.includes("Missing required environment variable: DATABASE_URL");
+
+    return NextResponse.json(
+      {
+        correlationId,
+        error: isDatabaseUrlMissing ? "database_not_configured" : "legal_brief_submission_failed",
+        ...(process.env.NODE_ENV === "development" ? { detail: message || "unknown_error" } : {})
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -1,5 +1,5 @@
 import { SiteHeader } from "../../src/components/brand/site-header";
-import { CaseCompletionForm } from "../../src/components/intake/case-completion-form";
+import { LegalBriefForm } from "../../src/components/intake/legal-brief-form";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -30,11 +30,13 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
 
       <section className="thanks-panel">
         <p className="section-eyebrow">Etapa 2 de 2</p>
-        <h1>Complementação de informações</h1>
+        <h1>Formulário de parâmetros da peça</h1>
         <p>
-          Preencha os dados abaixo para continuar a avaliação inicial do seu atendimento.
+          Liberado após a análise humana, este formulário organiza os dados objetivos do caso para
+          revisão e adaptação da peça civil ou de saúde. O modelo serve apenas como parâmetro e
+          continua sujeito à validação humana.
         </p>
-        <CaseCompletionForm caseId={caseId} workflowJobId={workflowJobId} />
+        <LegalBriefForm caseId={caseId} workflowJobId={workflowJobId} />
       </section>
     </main>
   );

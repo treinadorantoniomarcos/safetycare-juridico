@@ -16,6 +16,7 @@ export {
   triagePriorityLevels,
   triageUrgencyLevels,
   journeyRiskLevels,
+  legalBriefProblemTypes,
   scoreReviewDecisions,
   workflowJobTypes
 } from "./constants";
@@ -32,6 +33,13 @@ export type {
 } from "./schemas/evidence-checklist.schema";
 export type { JourneyEvent, JourneyTimelineResult } from "./schemas/journey-timeline.schema";
 export type { LegalScoreResult, StrategicLegalGuidance } from "./schemas/legal-score.schema";
+export type { LegalBriefInput, LegalBriefKeyDate } from "./schemas/legal-brief-input.schema";
+export type { LegalDraft, LegalDraftSection } from "./schemas/legal-draft.schema";
+export type {
+  LegalDocumentPack,
+  LegalSupportingDocument,
+  LegalSupportingDocumentType
+} from "./schemas/legal-document-pack.schema";
 export type { LeadIntakeInput } from "./schemas/lead-intake.schema";
 export type { ScoreReviewDecisionInput } from "./schemas/score-review-decision.schema";
 export type {
