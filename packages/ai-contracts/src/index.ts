@@ -32,8 +32,16 @@ export type {
   EvidenceChecklistResult
 } from "./schemas/evidence-checklist.schema";
 export type { JourneyEvent, JourneyTimelineResult } from "./schemas/journey-timeline.schema";
+export type {
+  LegalArtifactRevisionInput,
+  LegalArtifactType
+} from "./schemas/legal-artifact-revision.schema";
 export type { LegalScoreResult, StrategicLegalGuidance } from "./schemas/legal-score.schema";
-export type { LegalBriefInput, LegalBriefKeyDate } from "./schemas/legal-brief-input.schema";
+export type {
+  LegalBriefInput,
+  LegalBriefKeyDate,
+  LegalBriefUploadedDocument
+} from "./schemas/legal-brief-input.schema";
 export type { LegalDraft, LegalDraftSection } from "./schemas/legal-draft.schema";
 export type {
   LegalDocumentPack,

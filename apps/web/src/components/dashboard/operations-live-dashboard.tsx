@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DashboardLogoutButton } from "./dashboard-logout-button";
 import type { OperationsLiveOverview } from "../../features/dashboard/get-operations-live-overview";
@@ -118,6 +119,9 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
         <div className="ops-header-right">
           <p className="ops-clock">{liveClockLabel}</p>
           <span className={systemBadgeClassName}>{systemBadgeLabel}</span>
+          <Link className="button-ghost inline-action" href="/">
+            Cadastro publico
+          </Link>
           <DashboardLogoutButton />
         </div>
       </header>
@@ -156,12 +160,18 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
               {data.futureClients.items.length > 0 ? (
                 data.futureClients.items.map((item) => (
                   <div className="ops-client-item" key={item.caseId}>
-                    <div className="ops-client-item__meta">
+                  <div className="ops-client-item__meta">
                       <p>
                         {item.fullName} | {item.legalStatus}
                       </p>
                       <span>Envio: {formatDateTime(item.submittedAt)} | Caso: {item.caseId.slice(0, 8)}...</span>
                     </div>
+                    <Link
+                      className="button-ghost inline-action"
+                      href={`/painel-executivo/cases/${item.caseId}`}
+                    >
+                      Analisar etapa 2
+                    </Link>
                     <details className="ops-format-menu">
                       <summary className="button-primary inline-action ops-format-menu__trigger">Baixar</summary>
                       <div className="ops-format-menu__panel" role="menu" aria-label="Escolha o formato de download">

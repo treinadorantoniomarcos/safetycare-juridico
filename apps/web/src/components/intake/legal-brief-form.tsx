@@ -6,12 +6,17 @@ import {
   type LegalDraft,
   triageUrgencyLevels,
   type LegalBriefInput,
-  type LegalBriefKeyDate
+  type LegalBriefKeyDate,
+  type LegalBriefUploadedDocument
 } from "@safetycare/ai-contracts";
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 type LegalBriefProblemType = (typeof legalBriefProblemTypes)[number];
 type LegalBriefUrgencyLevel = (typeof triageUrgencyLevels)[number];
+type UploadedDocument = LegalBriefUploadedDocument;
+
+const MAX_UPLOADED_DOCUMENTS = 10;
+const MAX_UPLOADED_DOCUMENT_SIZE_BYTES = 12 * 1024 * 1024;
 
 type LegalBriefFormState = Omit<LegalBriefInput, "caseId" | "workflowJobId" | "draftScope">;
 
@@ -57,6 +62,7 @@ function createEmptyState(): LegalBriefFormState {
     objectiveDescription: "",
     materialLosses: "",
     moralImpact: "",
+    uploadedDocuments: [],
     documentsAttached: [""],
     witnesses: [""],
     mainRequest: "",
@@ -81,6 +87,7 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
     objectiveDescription: submission.objectiveDescription,
     materialLosses: submission.materialLosses,
     moralImpact: submission.moralImpact,
+    uploadedDocuments: submission.uploadedDocuments,
     documentsAttached: submission.documentsAttached.length > 0 ? submission.documentsAttached : [""],
     witnesses: submission.witnesses.length > 0 ? submission.witnesses : [""],
     mainRequest: submission.mainRequest,
@@ -99,6 +106,50 @@ function trimDates(values: LegalBriefKeyDate[]) {
       date: value.date.trim()
     }))
     .filter((value) => value.label.length > 0 && value.date.length > 0);
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes <= 0) {
+    return "0 B";
+  }
+
+  const units = ["B", "KB", "MB", "GB"];
+  let size = bytes;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+function isPreviewableImage(mimeType: string) {
+  return mimeType.startsWith("image/");
+}
+
+function isPdfDocument(mimeType: string) {
+  return mimeType === "application/pdf";
+}
+
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("file_read_failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function createUploadedDocument(file: File, dataUrl: string): UploadedDocument {
+  return {
+    name: file.name,
+    mimeType: file.type || "application/octet-stream",
+    size: file.size,
+    dataUrl,
+    uploadedAt: new Date().toISOString()
+  };
 }
 
 function formatDateTime(value: string) {
@@ -214,6 +265,40 @@ function renderSupportingDocumentPack(pack: LegalDocumentPack) {
         ))}
       </div>
     </section>
+  );
+}
+
+function renderUploadedDocumentCard(document: UploadedDocument, onRemove: () => void) {
+  return (
+    <article className="uploaded-document-card" key={`${document.name}-${document.uploadedAt}`}>
+      <div className="uploaded-document-card__head">
+        <div>
+          <p className="section-eyebrow">Arquivo enviado</p>
+          <h4>{document.name}</h4>
+          <p className="section-note">
+            {document.mimeType} | {formatFileSize(document.size)}
+          </p>
+        </div>
+        <button type="button" className="button-ghost inline-action inline-action--danger" onClick={onRemove}>
+          Remover
+        </button>
+      </div>
+
+      <div className="uploaded-document-preview">
+        {isPreviewableImage(document.mimeType) ? (
+          <img src={document.dataUrl} alt={document.name} />
+        ) : isPdfDocument(document.mimeType) ? (
+          <iframe title={document.name} src={document.dataUrl} />
+        ) : (
+          <div className="uploaded-document-preview__fallback">
+            <p>Pré-visualização não disponível para este formato.</p>
+            <a className="button-ghost inline-action" href={document.dataUrl} download={document.name}>
+              Baixar arquivo
+            </a>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -358,6 +443,57 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
     }));
   }
 
+  function removeUploadedDocument(index: number) {
+    setFormState((prev) => ({
+      ...prev,
+      uploadedDocuments:
+        prev.uploadedDocuments.length === 0
+          ? prev.uploadedDocuments
+          : prev.uploadedDocuments.filter((_, currentIndex) => currentIndex !== index)
+    }));
+  }
+
+  async function handleUploadedDocumentsChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const files = Array.from(input.files ?? []);
+    input.value = "";
+
+    if (files.length === 0) {
+      return;
+    }
+
+    if (formState.uploadedDocuments.length + files.length > MAX_UPLOADED_DOCUMENTS) {
+      setError(`Você pode anexar no máximo ${MAX_UPLOADED_DOCUMENTS} arquivos nesta etapa.`);
+      return;
+    }
+
+    for (const file of files) {
+      if (file.size > MAX_UPLOADED_DOCUMENT_SIZE_BYTES) {
+        setError(
+          `O arquivo ${file.name} excede o limite de ${formatFileSize(MAX_UPLOADED_DOCUMENT_SIZE_BYTES)}.`
+        );
+        return;
+      }
+    }
+
+    try {
+      const uploaded = await Promise.all(
+        files.map(async (file) => {
+          const dataUrl = await fileToDataUrl(file);
+          return createUploadedDocument(file, dataUrl);
+        })
+      );
+
+      setFormState((prev) => ({
+        ...prev,
+        uploadedDocuments: [...prev.uploadedDocuments, ...uploaded]
+      }));
+      setError(null);
+    } catch {
+      setError("Não foi possível ler um dos arquivos selecionados.");
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -415,6 +551,7 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           objectiveDescription: formState.objectiveDescription.trim(),
           materialLosses: formState.materialLosses.trim(),
           moralImpact: formState.moralImpact.trim(),
+          uploadedDocuments: formState.uploadedDocuments,
           documentsAttached: trimList(formState.documentsAttached),
           witnesses: trimList(formState.witnesses),
           mainRequest: formState.mainRequest.trim(),
@@ -802,6 +939,38 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           >
             Adicionar documento
           </button>
+        </div>
+
+        <div className="uploaded-documents-section">
+          <div className="form-section-head form-section-head--compact">
+            <h4>Arquivos enviados</h4>
+            <p className="section-note">
+              Anexe PDF, imagens ou documentos do caso. Estes arquivos serão vistos pelo humano na
+              tela de revisão antes da liberação para os agentes.
+            </p>
+          </div>
+
+          <label className="field">
+            <span>Selecionar arquivos</span>
+            <input
+              type="file"
+              accept="application/pdf,image/*,.doc,.docx"
+              multiple
+              onChange={handleUploadedDocumentsChange}
+            />
+          </label>
+
+          {formState.uploadedDocuments.length > 0 ? (
+            <div className="uploaded-documents-grid">
+              {formState.uploadedDocuments.map((document, index) =>
+                renderUploadedDocumentCard(document, () => removeUploadedDocument(index))
+              )}
+            </div>
+          ) : (
+            <p className="review-empty-state">
+              Nenhum arquivo enviado ainda. Você pode continuar apenas com os documentos textuais.
+            </p>
+          )}
         </div>
 
         <div className="repeatable-list">

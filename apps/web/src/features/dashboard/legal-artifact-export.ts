@@ -1,9 +1,9 @@
 import type { LegalArtifactRecord } from "@safetycare/database";
 
-const legalArtifactOrder = ["civil_health_draft", "power_of_attorney", "fee_agreement"] as const;
-type LegalArtifactType = (typeof legalArtifactOrder)[number];
+export const legalArtifactOrder = ["civil_health_draft", "power_of_attorney", "fee_agreement"] as const;
+export type LegalArtifactType = (typeof legalArtifactOrder)[number];
 
-const legalArtifactLabels: Record<LegalArtifactType, string> = {
+export const legalArtifactLabels: Record<LegalArtifactType, string> = {
   civil_health_draft: "Minuta preliminar",
   power_of_attorney: "Procuração",
   fee_agreement: "Contrato de prestação de serviços e honorários"
@@ -133,6 +133,34 @@ function buildArtifactDocumentBundle(
   generatedAt: string
 ): LegalArtifactExportBundle {
   const orderedArtifacts = orderArtifacts(artifacts);
+
+  if (orderedArtifacts.length === 1) {
+    const [artifact] = orderedArtifacts;
+
+    if (artifact) {
+      return {
+        caseId,
+        generatedAt,
+        title: artifact.title,
+        subtitle: artifact.subtitle,
+        summary: artifact.summary,
+        documents: orderedArtifacts.map((currentArtifact) => ({
+          artifactType: currentArtifact.artifactType,
+          artifactLabel: legalArtifactLabels[currentArtifact.artifactType],
+          versionNumber: currentArtifact.versionNumber,
+          status: currentArtifact.status,
+          title: currentArtifact.title,
+          subtitle: currentArtifact.subtitle,
+          summary: currentArtifact.summary,
+          metadata: currentArtifact.metadata ?? {},
+          contentMarkdown: stripDuplicateLeadingTitle(
+            currentArtifact.contentMarkdown,
+            currentArtifact.title
+          )
+        }))
+      };
+    }
+  }
 
   return {
     caseId,

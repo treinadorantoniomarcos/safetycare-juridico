@@ -436,6 +436,12 @@ h2 {
   line-height: 1.1;
 }
 
+.form-section-head--compact h4 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
 .section-note {
   margin: 0;
   color: var(--ink-soft);
@@ -446,6 +452,74 @@ h2 {
 .repeatable-list {
   display: grid;
   gap: 10px;
+}
+
+.uploaded-documents-section {
+  border: 1px solid #dbe5f0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.uploaded-documents-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.uploaded-document-card {
+  border: 1px solid #d9e2ef;
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.uploaded-document-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.uploaded-document-card__head h4 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.uploaded-document-preview {
+  border: 1px solid #dbe5f0;
+  border-radius: 12px;
+  background: #f8fbff;
+  min-height: 220px;
+  overflow: hidden;
+}
+
+.uploaded-document-preview img,
+.uploaded-document-preview iframe {
+  display: block;
+  width: 100%;
+  height: 320px;
+  border: 0;
+}
+
+.uploaded-document-preview img {
+  object-fit: contain;
+  background: #fff;
+}
+
+.uploaded-document-preview__fallback {
+  min-height: 220px;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  text-align: center;
+  color: var(--ink-soft);
 }
 
 .repeatable-grid {
@@ -643,6 +717,245 @@ h2 {
   color: var(--ink-soft);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.legal-review-page {
+  gap: 18px;
+}
+
+.review-metadata {
+  display: grid;
+  gap: 10px;
+}
+
+.review-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-pill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.legal-review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.legal-review-grid > .legal-review-actions-card {
+  grid-column: 1 / -1;
+}
+
+.review-kv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.review-kv {
+  border: 1px solid #d9e2ef;
+  border-radius: 12px;
+  background: #fbfdff;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.review-kv span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--metal);
+}
+
+.review-kv strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.review-block {
+  display: grid;
+  gap: 8px;
+}
+
+.review-block h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.review-paragraph {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.review-list {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.review-empty-state {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.review-artifact-list {
+  display: grid;
+  gap: 10px;
+}
+
+.review-artifact-item {
+  border: 1px solid #d9e2ef;
+  border-radius: 12px;
+  background: #fbfdff;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.legal-artifact-editor {
+  gap: 14px;
+}
+
+.legal-artifact-editor__list {
+  display: grid;
+  gap: 14px;
+}
+
+.legal-artifact-editor__card {
+  gap: 14px;
+}
+
+.legal-artifact-editor__fields {
+  display: grid;
+  gap: 12px;
+}
+
+.legal-artifact-editor__summary-field textarea,
+.legal-artifact-editor__markdown-field textarea {
+  min-height: 120px;
+}
+
+.legal-artifact-editor__markdown-field textarea {
+  min-height: 420px;
+}
+
+.legal-artifact-editor__actions,
+.legal-artifact-editor__bundle-actions {
+  align-items: center;
+}
+
+.legal-artifact-editor__history {
+  background: #fafdff;
+}
+
+.legal-artifact-editor__history-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.legal-artifact-editor__history-item {
+  border: 1px solid #d9e2ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.review-attachment-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.review-attachment-card {
+  border: 1px solid #d9e2ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.review-attachment-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.review-attachment-card__head h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.review-attachment-preview {
+  border: 1px solid #dbe5f0;
+  border-radius: 12px;
+  background: #f8fbff;
+  min-height: 220px;
+  overflow: hidden;
+}
+
+.review-attachment-preview img,
+.review-attachment-preview iframe {
+  display: block;
+  width: 100%;
+  height: 320px;
+  border: 0;
+}
+
+.review-attachment-preview img {
+  object-fit: contain;
+  background: #fff;
+}
+
+.review-attachment-fallback {
+  min-height: 220px;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.review-download-row,
+.review-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.legal-review-actions-card {
+  grid-column: 1 / -1;
+}
+
+.legal-review-actions-form {
+  display: grid;
+  gap: 12px;
+}
+
+.legal-review-back-link {
+  width: fit-content;
 }
 
 .supporting-document-markdown {
@@ -1278,6 +1591,10 @@ h2 {
   color: var(--ink-soft);
 }
 
+.ops-client-item .button-ghost.inline-action {
+  justify-self: start;
+}
+
 .ops-format-menu {
   position: relative;
   width: fit-content;
@@ -1688,6 +2005,15 @@ h2 {
 
   .protect-kpi-grid {
     grid-template-columns: 1fr;
+  }
+
+  .legal-review-grid,
+  .review-kv-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .legal-review-grid > .legal-review-actions-card {
+    grid-column: auto;
   }
 
   .case-snapshot {

@@ -5,9 +5,6 @@ const {
   findWorkflowJobByIdMock,
   findBriefByCaseIdMock,
   upsertBriefMock,
-  createLegalArtifactMock,
-  findLatestByCaseIdAndTypeMock,
-  requeueWorkflowJobMock,
   recordAuditLogMock,
   getDatabaseClientMock
 } = vi.hoisted(() => ({
@@ -15,9 +12,6 @@ const {
   findWorkflowJobByIdMock: vi.fn(),
   findBriefByCaseIdMock: vi.fn(),
   upsertBriefMock: vi.fn(),
-  createLegalArtifactMock: vi.fn(),
-  findLatestByCaseIdAndTypeMock: vi.fn(),
-  requeueWorkflowJobMock: vi.fn(),
   recordAuditLogMock: vi.fn(),
   getDatabaseClientMock: vi.fn()
 }));
@@ -28,15 +22,10 @@ vi.mock("@safetycare/database", () => ({
   },
   WorkflowJobRepository: class {
     findById = findWorkflowJobByIdMock;
-    findLatestByCaseIdAndType = findLatestByCaseIdAndTypeMock;
-    requeue = requeueWorkflowJobMock;
   },
   LegalBriefInputRepository: class {
     findByCaseId = findBriefByCaseIdMock;
     upsert = upsertBriefMock;
-  },
-  LegalArtifactRepository: class {
-    createVersion = createLegalArtifactMock;
   },
   AuditLogRepository: class {
     record = recordAuditLogMock;
@@ -110,6 +99,15 @@ describe("Public legal brief route", () => {
       objectiveDescription: "Paciente teve negativa de cobertura para tratamento essencial.",
       materialLosses: "Gastos com exames e consultas particulares.",
       moralImpact: "Angústia, insegurança e agravamento do quadro clínico.",
+      uploadedDocuments: [
+        {
+          name: "negativa-plano.pdf",
+          mimeType: "application/pdf",
+          size: 12,
+          dataUrl: "data:application/pdf;base64,JVBERi0xLjQK",
+          uploadedAt: new Date("2025-05-03T12:00:00Z").toISOString()
+        }
+      ],
       documentsAttached: ["negativa.pdf"],
       witnesses: ["João Silva"],
       mainRequest: "Custeio integral do tratamento.",
@@ -130,6 +128,7 @@ describe("Public legal brief route", () => {
     expect(response.status).toBe(200);
     expect(body.status).toBe("ready");
     expect(body.submission.patientFullName).toBe("Ana Souza");
+    expect(body.submission.uploadedDocuments).toHaveLength(1);
     expect(body.draft.title).toContain("Minuta preliminar");
     expect(body.supportingDocumentPack.title).toBe("Modelos complementares");
     expect(body.supportingDocumentPack.documents).toHaveLength(2);
@@ -149,20 +148,7 @@ describe("Public legal brief route", () => {
       caseId,
       jobType: "intake.orchestrator.bootstrap"
     });
-    findLatestByCaseIdAndTypeMock.mockResolvedValueOnce({
-      id: "workflow-legal-execution",
-      caseId,
-      jobType: "legal.execution",
-      status: "blocked"
-    });
-    requeueWorkflowJobMock.mockResolvedValueOnce({
-      id: "workflow-legal-execution",
-      status: "queued"
-    });
     findBriefByCaseIdMock.mockResolvedValueOnce(undefined);
-    createLegalArtifactMock.mockResolvedValue({
-      id: "artifact-1"
-    });
     upsertBriefMock.mockResolvedValueOnce({
       caseId,
       sourceWorkflowJobId: workflowJobId,
@@ -178,6 +164,15 @@ describe("Public legal brief route", () => {
       objectiveDescription: "Medicamento foi negado pelo plano.",
       materialLosses: "Compra particular e deslocamentos.",
       moralImpact: "Risco clínico e sofrimento intenso.",
+      uploadedDocuments: [
+        {
+          name: "receita.pdf",
+          mimeType: "application/pdf",
+          size: 10,
+          dataUrl: "data:application/pdf;base64,JVBERi0xLjQK",
+          uploadedAt: new Date("2025-05-03T12:00:00Z").toISOString()
+        }
+      ],
       documentsAttached: ["receita.pdf"],
       witnesses: ["Carlos Mendes"],
       mainRequest: "Fornecimento imediato do medicamento.",
@@ -210,6 +205,15 @@ describe("Public legal brief route", () => {
           objectiveDescription: "Medicamento foi negado pelo plano.",
           materialLosses: "Compra particular e deslocamentos.",
           moralImpact: "Risco clínico e sofrimento intenso.",
+          uploadedDocuments: [
+            {
+              name: "receita.pdf",
+              mimeType: "application/pdf",
+              size: 10,
+              dataUrl: "data:application/pdf;base64,JVBERi0xLjQK",
+              uploadedAt: new Date("2025-05-03T12:00:00Z").toISOString()
+            }
+          ],
           documentsAttached: ["receita.pdf"],
           witnesses: ["Carlos Mendes"],
           mainRequest: "Fornecimento imediato do medicamento.",
@@ -226,10 +230,9 @@ describe("Public legal brief route", () => {
     expect(response.status).toBe(202);
     expect(body.status).toBe("accepted");
     expect(upsertBriefMock).toHaveBeenCalledTimes(1);
-    expect(createLegalArtifactMock).toHaveBeenCalledTimes(3);
-    expect(requeueWorkflowJobMock).toHaveBeenCalledWith("workflow-legal-execution");
     expect(recordAuditLogMock).toHaveBeenCalledTimes(1);
     expect(body.draft.sections.length).toBeGreaterThan(0);
+    expect(body.submission.uploadedDocuments).toHaveLength(1);
     expect(body.supportingDocumentPack.documents).toHaveLength(2);
   });
 });

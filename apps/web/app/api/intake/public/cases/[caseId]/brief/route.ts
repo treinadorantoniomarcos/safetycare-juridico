@@ -1,14 +1,13 @@
 import {
   legalBriefInputSchema,
+  workflowJobTypes,
   type LegalDocumentPack,
   type LegalDraft,
-  workflowJobTypes,
   type LegalBriefInput
 } from "@safetycare/ai-contracts";
 import {
   AuditLogRepository,
   CaseRepository,
-  LegalArtifactRepository,
   LegalBriefInputRepository,
   WorkflowJobRepository
 } from "@safetycare/database";
@@ -44,15 +43,6 @@ type LegalBriefReadyResponse = {
   submission: LegalBriefSubmission | null;
   draft: LegalBriefDraftResponse | null;
   supportingDocumentPack: LegalSupportingDocumentPackResponse | null;
-};
-
-type LegalBriefAcceptedResponse = {
-  status: "accepted";
-  submission: LegalBriefSubmission;
-  draft: LegalBriefDraftResponse;
-  supportingDocumentPack: LegalSupportingDocumentPackResponse;
-  legalExecutionJobId: string | null;
-  legalExecutionJobStatus: string;
 };
 
 const workflowJobIdSchema = z.string().uuid();
@@ -102,6 +92,13 @@ function formatSubmission(record: {
   objectiveDescription: string;
   materialLosses: string;
   moralImpact: string;
+  uploadedDocuments: Array<{
+    name: string;
+    mimeType: string;
+    size: number;
+    dataUrl: string;
+    uploadedAt: string;
+  }>;
   documentsAttached: string[];
   witnesses: string[];
   mainRequest: string;
@@ -122,6 +119,7 @@ function formatSubmission(record: {
     objectiveDescription: record.objectiveDescription,
     materialLosses: record.materialLosses,
     moralImpact: record.moralImpact,
+    uploadedDocuments: record.uploadedDocuments ?? [],
     documentsAttached: record.documentsAttached,
     witnesses: record.witnesses,
     mainRequest: record.mainRequest,
@@ -279,7 +277,6 @@ export async function POST(request: Request, context: RouteContext) {
     const cases = new CaseRepository(db);
     const workflowJobs = new WorkflowJobRepository(db);
     const legalBriefInputs = new LegalBriefInputRepository(db);
-    const legalArtifacts = new LegalArtifactRepository(db);
     const auditLogs = new AuditLogRepository(db);
 
     const caseRecord = await cases.findById(caseId);
@@ -343,64 +340,16 @@ export async function POST(request: Request, context: RouteContext) {
       objectiveDescription: parsedPayload.data.objectiveDescription,
       materialLosses: parsedPayload.data.materialLosses,
       moralImpact: parsedPayload.data.moralImpact,
+      uploadedDocuments: parsedPayload.data.uploadedDocuments,
       documentsAttached: parsedPayload.data.documentsAttached,
       witnesses: parsedPayload.data.witnesses,
       mainRequest: parsedPayload.data.mainRequest,
       subsidiaryRequest: parsedPayload.data.subsidiaryRequest
     });
 
-    const legalExecutionJob = await workflowJobs.findLatestByCaseIdAndType(
-      caseId,
-      workflowJobTypes[7]
-    );
-
-    let legalExecutionJobStatus = legalExecutionJob?.status ?? "missing";
     const formattedSavedSubmission = formatSubmission(savedSubmission);
     const generatedDraft = buildCivilHealthLegalDraft(formattedSavedSubmission);
     const supportingDocumentPack = buildCivilHealthSupportingDocumentPack(formattedSavedSubmission);
-
-    await legalArtifacts.createVersion({
-      caseId,
-      sourceWorkflowJobId: parsedPayload.data.workflowJobId,
-      artifactType: "civil_health_draft",
-      status: "draft",
-      title: generatedDraft.title,
-      subtitle: generatedDraft.subtitle,
-      summary: generatedDraft.summary,
-      contentMarkdown: generatedDraft.markdown,
-      metadata: {
-        draftScope: generatedDraft.draftScope,
-        source: "public_legal_brief_form",
-        documentCount: supportingDocumentPack.documents.length
-      }
-    });
-
-    for (const document of supportingDocumentPack.documents) {
-      await legalArtifacts.createVersion({
-        caseId,
-        sourceWorkflowJobId: parsedPayload.data.workflowJobId,
-        artifactType: document.type,
-        status: "draft",
-        title: document.title,
-        subtitle: document.subtitle,
-        summary: document.summary,
-        contentMarkdown: document.markdown,
-        metadata: {
-          draftScope: supportingDocumentPack.draftScope,
-          source: "public_legal_brief_form",
-          documentKey: document.key
-        }
-      });
-    }
-
-    if (
-      legalExecutionJob &&
-      legalExecutionJob.status !== "completed" &&
-      legalExecutionJob.status !== "processing"
-    ) {
-      const requeuedJob = await workflowJobs.requeue(legalExecutionJob.id);
-      legalExecutionJobStatus = requeuedJob?.status ?? "queued";
-    }
 
     await auditLogs.record({
       caseId,
@@ -409,17 +358,12 @@ export async function POST(request: Request, context: RouteContext) {
       action: "intake.legal_brief_submitted",
       correlationId,
       beforePayload: existingSubmission ? formatSubmission(existingSubmission) : null,
-        afterPayload: {
-          ...formattedSavedSubmission,
-          caseId,
-          sourceWorkflowJobId: parsedPayload.data.workflowJobId,
-          savedArtifactTypes: [
-            "civil_health_draft",
-            ...supportingDocumentPack.documents.map((document) => document.type)
-          ],
-          legalExecutionJobId: legalExecutionJob?.id ?? null,
-          legalExecutionJobStatus
-        }
+      afterPayload: {
+        ...formattedSavedSubmission,
+        caseId,
+        sourceWorkflowJobId: parsedPayload.data.workflowJobId,
+        savedArtifactTypes: []
+      }
     });
 
     return NextResponse.json(
@@ -428,8 +372,6 @@ export async function POST(request: Request, context: RouteContext) {
         status: "accepted",
         caseId,
         workflowJobId: parsedPayload.data.workflowJobId,
-        legalExecutionJobId: legalExecutionJob?.id ?? null,
-        legalExecutionJobStatus,
         submission: formattedSavedSubmission,
         draft: generatedDraft,
         supportingDocumentPack

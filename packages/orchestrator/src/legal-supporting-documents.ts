@@ -189,7 +189,7 @@ export function buildCivilHealthSupportingDocumentPack(
     draftScope: "civil_health",
     title: "Modelos complementares",
     subtitle: "Procuração e contrato de honorarios parametrizados para revisao humana",
-    summary: `Pacote complementar com ${documents.length} modelo(s) para ${problemTypeLabel} e urgencia ${urgencyLabel}.`,
+    summary: `Pacote complementar com ${documents.length} modelo(s) para ${problemTypeLabel} e urgencia ${urgencyLabel}, considerando ${input.uploadedDocuments.length} arquivo(s) enviados.`,
     documents,
     generatedAt: new Date().toISOString()
   });

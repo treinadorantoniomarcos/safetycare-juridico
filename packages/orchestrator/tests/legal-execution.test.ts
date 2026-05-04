@@ -4,6 +4,7 @@ const {
   claimMock,
   findByIdMock,
   findLegalBriefByCaseIdMock,
+  createVersionMock,
   updateStatusesMock,
   markBlockedMock,
   markCompletedMock,
@@ -13,6 +14,7 @@ const {
   claimMock: vi.fn(),
   findByIdMock: vi.fn(),
   findLegalBriefByCaseIdMock: vi.fn(),
+  createVersionMock: vi.fn(),
   updateStatusesMock: vi.fn(),
   markBlockedMock: vi.fn(),
   markCompletedMock: vi.fn(),
@@ -33,6 +35,9 @@ vi.mock("@safetycare/database", () => ({
   },
   LegalBriefInputRepository: class {
     findByCaseId = findLegalBriefByCaseIdMock;
+  },
+  LegalArtifactRepository: class {
+    createVersion = createVersionMock;
   },
   AuditLogRepository: class {
     record = recordMock;
@@ -85,6 +90,7 @@ describe("runLegalExecution", () => {
       objectiveDescription: "Descrição objetiva",
       materialLosses: "Perdas materiais",
       moralImpact: "Impacto moral",
+      uploadedDocuments: [],
       documentsAttached: ["doc.pdf"],
       witnesses: ["Testemunha"],
       mainRequest: "Pedido principal",
@@ -104,9 +110,17 @@ describe("runLegalExecution", () => {
     expect(updateStatusesMock).toHaveBeenCalledWith("case-1", {
       legalStatus: "legal_execution_in_progress"
     });
-    expect(markCompletedMock).toHaveBeenCalledWith("job-1", {
-      stage: "legal_execution_in_progress"
-    });
+    expect(markCompletedMock).toHaveBeenCalledWith(
+      "job-1",
+      expect.objectContaining({
+        stage: "legal_execution_in_progress",
+        generatedArtifactTypes: [
+          "civil_health_draft",
+          "power_of_attorney",
+          "fee_agreement"
+        ]
+      })
+    );
     expect(result.status).toBe("completed");
     expect(result.nextStage).toBe("legal_execution_in_progress");
   });

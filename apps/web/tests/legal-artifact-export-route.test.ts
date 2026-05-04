@@ -105,4 +105,23 @@ describe("legal artifact export route", () => {
     expect(response.headers.get("content-disposition")).toContain(`safetycare-legal-artifacts-${caseId}.docx`);
     expect(docxBuffer.subarray(0, 2).toString("ascii")).toBe("PK");
   });
+
+  it("returns a single-document filename when artifactType is requested", async () => {
+    const response = await GET(
+      new Request(
+        `http://localhost/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=pdf&artifactType=power_of_attorney`
+      ),
+      {
+        params: { caseId }
+      }
+    );
+
+    const pdfBuffer = Buffer.from(await response.arrayBuffer());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-disposition")).toContain(
+      `safetycare-legal-artifact-${caseId}-power_of_attorney.pdf`
+    );
+    expect(pdfBuffer.subarray(0, 5).toString("ascii")).toBe("%PDF-");
+  });
 });

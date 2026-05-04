@@ -21,8 +21,10 @@ import {
   CaseRepository,
   EvidenceChecklistRepository,
   LegalBriefInputRepository,
+  LegalArtifactRepository,
   LegalScoreRepository,
   RightsAssessmentRepository,
+  type LegalBriefInputRecord,
   type DatabaseClient,
   ClinicalAnalysisRepository,
   JourneyTimelineRepository,
@@ -30,6 +32,10 @@ import {
   WorkflowJobRepository
 } from "@safetycare/database";
 import { createLogger } from "@safetycare/observability";
+import { buildCivilHealthLegalDraft } from "./legal-draft";
+import { buildCivilHealthSupportingDocumentPack } from "./legal-supporting-documents";
+
+type CivilHealthBriefInput = Parameters<typeof buildCivilHealthLegalDraft>[0];
 
 const logger = createLogger("orchestrator");
 
@@ -1278,6 +1284,7 @@ export async function runLegalExecution(
   const workflowJobs = new WorkflowJobRepository(db);
   const cases = new CaseRepository(db);
   const legalBriefInputs = new LegalBriefInputRepository(db);
+  const legalArtifacts = new LegalArtifactRepository(db);
   const auditLogs = new AuditLogRepository(db);
 
   const claimedJob = await workflowJobs.claim(workflowJobId);
@@ -1383,13 +1390,55 @@ export async function runLegalExecution(
         };
       }
 
+      const formattedSubmission = formatLegalBriefInput(legalBriefInput);
+      const generatedDraft = buildCivilHealthLegalDraft(formattedSubmission);
+      const supportingDocumentPack = buildCivilHealthSupportingDocumentPack(formattedSubmission);
+
+      await legalArtifacts.createVersion({
+        caseId: caseRecord.id,
+        sourceWorkflowJobId: legalBriefInput.sourceWorkflowJobId,
+        artifactType: "civil_health_draft",
+        status: "final",
+        title: generatedDraft.title,
+        subtitle: generatedDraft.subtitle,
+        summary: generatedDraft.summary,
+        contentMarkdown: generatedDraft.markdown,
+        metadata: {
+          draftScope: generatedDraft.draftScope,
+          source: "legal_execution_agent",
+          documentCount: supportingDocumentPack.documents.length
+        }
+      });
+
+      for (const document of supportingDocumentPack.documents) {
+        await legalArtifacts.createVersion({
+          caseId: caseRecord.id,
+          sourceWorkflowJobId: legalBriefInput.sourceWorkflowJobId,
+          artifactType: document.type,
+          status: "final",
+          title: document.title,
+          subtitle: document.subtitle,
+          summary: document.summary,
+          contentMarkdown: document.markdown,
+          metadata: {
+            draftScope: supportingDocumentPack.draftScope,
+            source: "legal_execution_agent",
+            documentKey: document.key
+          }
+        });
+      }
+
       await cases.updateStatuses(caseRecord.id, {
         legalStatus: "legal_execution_in_progress"
       });
 
-    await workflowJobs.markCompleted(claimedJob.id, {
-      stage: "legal_execution_in_progress"
-    });
+      await workflowJobs.markCompleted(claimedJob.id, {
+        stage: "legal_execution_in_progress",
+        generatedArtifactTypes: [
+          "civil_health_draft",
+          ...supportingDocumentPack.documents.map((document) => document.type)
+        ]
+      });
 
       await auditLogs.record({
         caseId: caseRecord.id,
@@ -1400,6 +1449,10 @@ export async function runLegalExecution(
         afterPayload: {
           workflowJobId: claimedJob.id,
           nextStage: "legal_execution_in_progress",
+          generatedArtifactTypes: [
+            "civil_health_draft",
+            ...supportingDocumentPack.documents.map((document) => document.type)
+          ],
           legalBrief: {
             problemType: legalBriefInput.problemType,
             urgency: legalBriefInput.currentUrgency,
@@ -1424,6 +1477,28 @@ export async function runLegalExecution(
     await handleWorkflowFailure(workflowJobs, claimedJob.id, error);
     throw error;
   }
+}
+
+function formatLegalBriefInput(record: LegalBriefInputRecord): CivilHealthBriefInput {
+  return {
+    draftScope: "civil_health" as const,
+    patientFullName: record.patientFullName,
+    patientCpf: record.patientCpf,
+    city: record.city,
+    contact: record.contact,
+    relationToPatient: record.relationToPatient,
+    problemType: record.problemType as CivilHealthBriefInput["problemType"],
+    currentUrgency: record.currentUrgency as CivilHealthBriefInput["currentUrgency"],
+    keyDates: record.keyDates,
+    objectiveDescription: record.objectiveDescription,
+    materialLosses: record.materialLosses,
+    moralImpact: record.moralImpact,
+    uploadedDocuments: record.uploadedDocuments ?? [],
+    documentsAttached: record.documentsAttached,
+    witnesses: record.witnesses,
+    mainRequest: record.mainRequest,
+    subsidiaryRequest: record.subsidiaryRequest
+  };
 }
 
 export async function drainIntakeBootstrapQueue(

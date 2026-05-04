@@ -10,7 +10,15 @@ export {
 } from "./evidence-checklist.schema";
 export { journeyEventSchema, journeyTimelineSchema } from "./journey-timeline.schema";
 export { legalScoreSchema } from "./legal-score.schema";
-export { legalBriefInputSchema, legalBriefKeyDateSchema } from "./legal-brief-input.schema";
+export {
+  legalArtifactRevisionSchema,
+  legalArtifactTypeSchema
+} from "./legal-artifact-revision.schema";
+export {
+  legalBriefInputSchema,
+  legalBriefKeyDateSchema,
+  legalBriefUploadedDocumentSchema
+} from "./legal-brief-input.schema";
 export { legalDraftSchema } from "./legal-draft.schema";
 export {
   legalDocumentPackSchema,

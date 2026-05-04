@@ -10,6 +10,7 @@ import {
   legalScoreSchema,
   leadIntakeSchema,
   legalDocumentPackSchema,
+  legalArtifactRevisionSchema,
   scoreReviewDecisionSchema,
   rightsAssessmentSchema,
   triageClassificationSchema
@@ -426,6 +427,23 @@ describe("legalDocumentPackSchema", () => {
 
     expect(result.documents).toHaveLength(2);
     expect(result.documents[0]?.type).toBe("power_of_attorney");
+  });
+});
+
+describe("legalArtifactRevisionSchema", () => {
+  it("accepts a valid revision payload", () => {
+    const result = legalArtifactRevisionSchema.parse({
+      artifactType: "power_of_attorney",
+      title: "Procuração revisada",
+      subtitle: "Mandato cível e extrajudicial",
+      summary: "Texto ajustado manualmente pela equipe humana.",
+      contentMarkdown: "PROCURAÇÃO\n\nTexto ajustado.",
+      reviewerId: "revisor-1",
+      note: "Ajuste de redação"
+    });
+
+    expect(result.artifactType).toBe("power_of_attorney");
+    expect(result.title).toBe("Procuração revisada");
   });
 });
 

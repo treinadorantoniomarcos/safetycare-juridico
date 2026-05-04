@@ -26,6 +26,7 @@ export class LegalBriefInputRepository {
           objectiveDescription: input.objectiveDescription,
           materialLosses: input.materialLosses,
           moralImpact: input.moralImpact,
+          uploadedDocuments: input.uploadedDocuments,
           documentsAttached: input.documentsAttached,
           witnesses: input.witnesses,
           mainRequest: input.mainRequest,

@@ -12,6 +12,14 @@ import {
   uuid
 } from "drizzle-orm/pg-core";
 
+type LegalBriefUploadedDocumentRecord = {
+  name: string;
+  mimeType: string;
+  size: number;
+  dataUrl: string;
+  uploadedAt: string;
+};
+
 export const leadsTable = pgTable("leads", {
   id: uuid("id").defaultRandom().primaryKey(),
   source: text("source").notNull(),
@@ -237,6 +245,10 @@ export const legalBriefInputsTable = pgTable(
     objectiveDescription: text("objective_description").notNull(),
     materialLosses: text("material_losses").notNull(),
     moralImpact: text("moral_impact").notNull(),
+    uploadedDocuments: jsonb("uploaded_documents")
+      .$type<LegalBriefUploadedDocumentRecord[]>()
+      .notNull()
+      .default([]),
     documentsAttached: jsonb("documents_attached").$type<string[]>().notNull().default([]),
     witnesses: jsonb("witnesses").$type<string[]>().notNull().default([]),
     mainRequest: text("main_request").notNull(),

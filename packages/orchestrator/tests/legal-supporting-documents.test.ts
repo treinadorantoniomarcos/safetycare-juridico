@@ -15,6 +15,7 @@ describe("buildCivilHealthSupportingDocumentPack", () => {
       objectiveDescription: "Descricao objetiva do caso.",
       materialLosses: "Perdas materiais informadas.",
       moralImpact: "Impacto moral informado.",
+      uploadedDocuments: [],
       documentsAttached: ["doc.pdf"],
       witnesses: ["Testemunha"],
       mainRequest: "Pedido principal.",

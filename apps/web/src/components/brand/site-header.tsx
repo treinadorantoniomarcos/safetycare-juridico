@@ -9,6 +9,9 @@ function linkClass(active: boolean) {
 }
 
 export function SiteHeader({ current = "home" }: SiteHeaderProps) {
+  const dashboardHref =
+    current === "dashboard" ? "/painel-executivo" : "https://bright-orbit-nexus.lovable.app";
+
   return (
     <header className="brand-header">
       <Link href="/" className="brand-mark">
@@ -25,7 +28,7 @@ export function SiteHeader({ current = "home" }: SiteHeaderProps) {
         <Link href="/faq" className={linkClass(current === "faq")}>
           FAQ
         </Link>
-        <Link href="/painel-executivo" className={linkClass(current === "dashboard")}>
+        <Link href={dashboardHref} className={linkClass(current === "dashboard")}>
           Dashboard
         </Link>
       </nav>

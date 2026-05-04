@@ -52,6 +52,15 @@ describe("legal artifact export", () => {
     );
   });
 
+  it("uses the artifact title when exporting a single document", () => {
+    const bundle = buildLegalArtifactExportBundle(caseId, [makeArtifact("power_of_attorney", "ProcuraÃ§Ã£o", 1)]);
+
+    expect(bundle.title).toBe("ProcuraÃ§Ã£o");
+    expect(bundle.subtitle).toBe("Subtitulo 1");
+    expect(bundle.documents).toHaveLength(1);
+    expect(bundle.documents[0]?.artifactType).toBe("power_of_attorney");
+  });
+
   it("builds a pdf buffer with a valid header", () => {
     const bundle = buildLegalArtifactExportBundle(caseId, artifacts);
     const pdfBuffer = createLegalArtifactPdfBuffer(bundle);
