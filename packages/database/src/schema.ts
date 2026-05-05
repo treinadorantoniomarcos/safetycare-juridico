@@ -327,6 +327,7 @@ export const patientsTable = pgTable("patients", {
   name: text("name").notNull(),
   documentId: text("document_id").notNull(),
   birthDate: date("birth_date"),
+  isProtected: boolean("is_protected").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -338,6 +339,7 @@ export const hospitalCasesTable = pgTable("hospital_cases", {
   department: text("department").notNull(),
   currentRiskScore: integer("current_risk_score").notNull().default(0),
   status: text("status").notNull().default("active"),
+  isProtected: boolean("is_protected").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -352,6 +354,7 @@ export const patientJourneyTable = pgTable(
     riskLevel: text("risk_level").notNull().default("low"),
     sourceSystem: text("source_system"),
     metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+    isProtected: boolean("is_protected").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
@@ -368,6 +371,7 @@ export const evidenceDocsTable = pgTable(
     fileUrl: text("file_url"),
     validationStatus: text("validation_status").notNull().default("pending"),
     gapDetails: text("gap_details"),
+    isProtected: boolean("is_protected").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
@@ -384,6 +388,7 @@ export const agentIntelligenceTable = pgTable(
     agentId: text("agent_id").notNull(),
     findings: jsonb("findings").$type<Record<string, unknown>>().notNull().default({}),
     recommendation: text("recommendation"),
+    isProtected: boolean("is_protected").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
@@ -399,6 +404,7 @@ export const legalAlertsTable = pgTable(
     severity: text("severity").notNull(),
     message: text("message").notNull(),
     isResolved: boolean("is_resolved").notNull().default(false),
+    isProtected: boolean("is_protected").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({

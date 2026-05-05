@@ -51,7 +51,9 @@ export async function GET(request: Request, context: RouteContext) {
           status: hospitalCasesTable.status,
           department: hospitalCasesTable.department,
           riskScore: hospitalCasesTable.currentRiskScore,
-          patientName: patientsTable.name
+          isProtected: hospitalCasesTable.isProtected,
+          patientName: patientsTable.name,
+          patientProtected: patientsTable.isProtected
         })
         .from(hospitalCasesTable)
         .leftJoin(patientsTable, eq(hospitalCasesTable.patientId, patientsTable.id))
@@ -62,7 +64,8 @@ export async function GET(request: Request, context: RouteContext) {
           eventDate: patientJourneyTable.eventDate,
           eventType: patientJourneyTable.eventType,
           description: patientJourneyTable.description,
-          riskLevel: patientJourneyTable.riskLevel
+          riskLevel: patientJourneyTable.riskLevel,
+          isProtected: patientJourneyTable.isProtected
         })
         .from(patientJourneyTable)
         .where(eq(patientJourneyTable.caseId, caseId))
@@ -72,7 +75,8 @@ export async function GET(request: Request, context: RouteContext) {
         .select({
           docType: evidenceDocsTable.docType,
           validationStatus: evidenceDocsTable.validationStatus,
-          gapDetails: evidenceDocsTable.gapDetails
+          gapDetails: evidenceDocsTable.gapDetails,
+          isProtected: evidenceDocsTable.isProtected
         })
         .from(evidenceDocsTable)
         .where(eq(evidenceDocsTable.caseId, caseId))
@@ -84,7 +88,8 @@ export async function GET(request: Request, context: RouteContext) {
           agentId: agentIntelligenceTable.agentId,
           findings: agentIntelligenceTable.findings,
           recommendation: agentIntelligenceTable.recommendation,
-          createdAt: agentIntelligenceTable.createdAt
+          createdAt: agentIntelligenceTable.createdAt,
+          isProtected: agentIntelligenceTable.isProtected
         })
         .from(agentIntelligenceTable)
         .where(eq(agentIntelligenceTable.caseId, caseId))
@@ -95,7 +100,8 @@ export async function GET(request: Request, context: RouteContext) {
           severity: legalAlertsTable.severity,
           message: legalAlertsTable.message,
           isResolved: legalAlertsTable.isResolved,
-          createdAt: legalAlertsTable.createdAt
+          createdAt: legalAlertsTable.createdAt,
+          isProtected: legalAlertsTable.isProtected
         })
         .from(legalAlertsTable)
         .where(eq(legalAlertsTable.caseId, caseId))
