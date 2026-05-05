@@ -88,6 +88,8 @@ function buildPowerOfAttorneyDocument(
     ],
     reviewNotes: [
       "Ajustar a qualificacao do outorgante antes da assinatura, especialmente se o contratante nao for o proprio paciente.",
+      "Conferir se nome, CPF, RG, e-mail, WhatsApp e endereco do paciente estao completos e coerentes com o contrato.",
+      "Conferir se nome, CPF, RG, e-mail, WhatsApp e endereco do solicitante estao completos e coerentes com o contrato.",
       "Conferir se os poderes especiais estao adequados ao tipo de medida que sera proposta.",
       "Definir se o cartorio ou o tribunal exigira firma reconhecida."
     ],
@@ -168,6 +170,8 @@ function buildFeeAgreementDocument(
     ],
     reviewNotes: [
       "Definir valor, parcela inicial, vencimentos e eventual percentual de exito antes da assinatura.",
+      "Conferir se nome, CPF, RG, e-mail, WhatsApp e endereco do paciente estao corretos.",
+      "Conferir se nome, CPF, RG, e-mail, WhatsApp e endereco do contratante estao corretos.",
       "Conferir se o regime de reembolso de despesas e a multa contratual estao adequados ao caso concreto.",
       "Ajustar o foro e o escopo da contratacao conforme a estrategia humanamente aprovada."
     ],

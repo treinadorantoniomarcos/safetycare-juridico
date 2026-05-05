@@ -218,8 +218,8 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
                 <p className="section-eyebrow">Dados principais</p>
                 <h3>Identificacao e contexto</h3>
                 <p className="section-note">
-                  O humano deve conferir a narrativa, a linha do tempo e a consistencia dos pedidos
-                  antes da liberacao.
+                  O humano deve conferir a narrativa, a linha do tempo, os dados do solicitante e
+                  a consistencia dos pedidos antes da liberacao.
                 </p>
               </div>
 
@@ -251,6 +251,58 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
                 <div className="review-kv">
                   <span>Urgencia</span>
                   <strong>{submission.currentUrgency}</strong>
+                </div>
+              </div>
+
+              <div className="review-block">
+                <h4>Dados adicionais do paciente</h4>
+                <div className="review-kv-grid">
+                  <div className="review-kv">
+                    <span>Endereço</span>
+                    <strong>{submission.patientAddress}</strong>
+                  </div>
+                  <div className="review-kv">
+                    <span>RG</span>
+                    <strong>{submission.patientRg}</strong>
+                  </div>
+                  <div className="review-kv">
+                    <span>WhatsApp</span>
+                    <strong>{submission.patientWhatsapp}</strong>
+                  </div>
+                  <div className="review-kv">
+                    <span>E-mail</span>
+                    <strong>{submission.patientEmail}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="review-block">
+                <h4>Dados de quem está preenchendo</h4>
+                <div className="review-kv-grid">
+                  <div className="review-kv">
+                    <span>Nome completo</span>
+                    <strong>{submission.contactFullName}</strong>
+                  </div>
+                  <div className="review-kv">
+                    <span>CPF</span>
+                    <strong>{submission.contactCpf}</strong>
+                  </div>
+                  <div className="review-kv">
+                    <span>RG</span>
+                    <strong>{submission.contactRg}</strong>
+                  </div>
+                  <div className="review-kv">
+                    <span>E-mail</span>
+                    <strong>{submission.contactEmail}</strong>
+                  </div>
+                  <div className="review-kv">
+                    <span>WhatsApp</span>
+                    <strong>{submission.contactWhatsapp}</strong>
+                  </div>
+                  <div className="review-kv">
+                    <span>Endereço</span>
+                    <strong>{submission.contactAddress}</strong>
+                  </div>
                 </div>
               </div>
             </section>

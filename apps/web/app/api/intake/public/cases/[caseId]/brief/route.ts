@@ -71,7 +71,17 @@ function formatSubmission(record: {
   patientCpf: string;
   city: string;
   contact: string;
+  patientAddress: string;
+  patientWhatsapp: string;
+  patientEmail: string;
+  patientRg: string;
   relationToPatient: string;
+  contactFullName: string;
+  contactAddress: string;
+  contactWhatsapp: string;
+  contactEmail: string;
+  contactCpf: string;
+  contactRg: string;
   problemType: string;
   currentUrgency: string;
   keyDates: Array<{ label: string; date: string }>;
@@ -98,7 +108,17 @@ function formatSubmission(record: {
     patientCpf: record.patientCpf,
     city: record.city,
     contact: record.contact,
+    patientAddress: record.patientAddress ?? "",
+    patientWhatsapp: record.patientWhatsapp ?? "",
+    patientEmail: record.patientEmail ?? "",
+    patientRg: record.patientRg ?? "",
     relationToPatient: record.relationToPatient,
+    contactFullName: record.contactFullName ?? "",
+    contactAddress: record.contactAddress ?? "",
+    contactWhatsapp: record.contactWhatsapp ?? "",
+    contactEmail: record.contactEmail ?? "",
+    contactCpf: record.contactCpf ?? "",
+    contactRg: record.contactRg ?? "",
     problemType: record.problemType as LegalBriefInput["problemType"],
     currentUrgency: record.currentUrgency as LegalBriefInput["currentUrgency"],
     keyDates: record.keyDates,
@@ -319,7 +339,17 @@ export async function POST(request: Request, context: RouteContext) {
       patientCpf: parsedPayload.data.patientCpf,
       city: parsedPayload.data.city,
       contact: parsedPayload.data.contact,
+      patientAddress: parsedPayload.data.patientAddress,
+      patientWhatsapp: parsedPayload.data.patientWhatsapp,
+      patientEmail: parsedPayload.data.patientEmail,
+      patientRg: parsedPayload.data.patientRg,
       relationToPatient: parsedPayload.data.relationToPatient,
+      contactFullName: parsedPayload.data.contactFullName,
+      contactAddress: parsedPayload.data.contactAddress,
+      contactWhatsapp: parsedPayload.data.contactWhatsapp,
+      contactEmail: parsedPayload.data.contactEmail,
+      contactCpf: parsedPayload.data.contactCpf,
+      contactRg: parsedPayload.data.contactRg,
       problemType: parsedPayload.data.problemType,
       currentUrgency: parsedPayload.data.currentUrgency,
       keyDates: parsedPayload.data.keyDates,

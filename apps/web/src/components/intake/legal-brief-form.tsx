@@ -55,7 +55,17 @@ function createEmptyState(): LegalBriefFormState {
     patientCpf: "",
     city: "",
     contact: "",
+    patientAddress: "",
+    patientWhatsapp: "",
+    patientEmail: "",
+    patientRg: "",
     relationToPatient: "",
+    contactFullName: "",
+    contactAddress: "",
+    contactWhatsapp: "",
+    contactEmail: "",
+    contactCpf: "",
+    contactRg: "",
     problemType: "atendimento",
     currentUrgency: "medium",
     keyDates: [{ label: "", date: "" }],
@@ -80,7 +90,17 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
     patientCpf: submission.patientCpf,
     city: submission.city,
     contact: submission.contact,
+    patientAddress: submission.patientAddress ?? "",
+    patientWhatsapp: submission.patientWhatsapp ?? "",
+    patientEmail: submission.patientEmail ?? "",
+    patientRg: submission.patientRg ?? "",
     relationToPatient: submission.relationToPatient,
+    contactFullName: submission.contactFullName ?? "",
+    contactAddress: submission.contactAddress ?? "",
+    contactWhatsapp: submission.contactWhatsapp ?? "",
+    contactEmail: submission.contactEmail ?? "",
+    contactCpf: submission.contactCpf ?? "",
+    contactRg: submission.contactRg ?? "",
     problemType: submission.problemType,
     currentUrgency: submission.currentUrgency,
     keyDates: submission.keyDates.length > 0 ? submission.keyDates : [{ label: "", date: "" }],
@@ -507,7 +527,17 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
       formState.patientCpf,
       formState.city,
       formState.contact,
+      formState.patientAddress,
+      formState.patientWhatsapp,
+      formState.patientEmail,
+      formState.patientRg,
       formState.relationToPatient,
+      formState.contactFullName,
+      formState.contactAddress,
+      formState.contactWhatsapp,
+      formState.contactEmail,
+      formState.contactCpf,
+      formState.contactRg,
       formState.objectiveDescription,
       formState.materialLosses,
       formState.moralImpact,
@@ -544,7 +574,17 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           patientCpf: formState.patientCpf.trim(),
           city: formState.city.trim(),
           contact: formState.contact.trim(),
+          patientAddress: formState.patientAddress.trim(),
+          patientWhatsapp: formState.patientWhatsapp.trim(),
+          patientEmail: formState.patientEmail.trim(),
+          patientRg: formState.patientRg.trim(),
           relationToPatient: formState.relationToPatient.trim(),
+          contactFullName: formState.contactFullName.trim(),
+          contactAddress: formState.contactAddress.trim(),
+          contactWhatsapp: formState.contactWhatsapp.trim(),
+          contactEmail: formState.contactEmail.trim(),
+          contactCpf: formState.contactCpf.trim(),
+          contactRg: formState.contactRg.trim(),
           problemType: formState.problemType,
           currentUrgency: formState.currentUrgency,
           keyDates,
@@ -643,8 +683,9 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           <p className="section-eyebrow">Dados principais</p>
           <h3>Identificação do paciente e do solicitante</h3>
           <p className="section-note">
-            Informe os dados que serão usados como base para a adaptação da peça. O contato pode
-            ser telefone, WhatsApp ou e-mail.
+            Informe os dados que serão usados como base para a adaptação da peça. Os dados de
+            quem está preenchendo também serão usados na revisão humana e na preparação da
+            procuração e do contrato.
           </p>
         </div>
 
@@ -691,7 +732,7 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           </label>
 
           <label className="field">
-            <span>Contato</span>
+            <span>Contato principal</span>
             <input
               type="text"
               name="contact"
@@ -716,6 +757,176 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
             }
           />
         </label>
+      </section>
+
+      <section className="form-section-card">
+        <div className="form-section-head">
+          <p className="section-eyebrow">Paciente</p>
+          <h3>Dados adicionais do paciente</h3>
+          <p className="section-note">
+            Esses campos ajudam a equipe humana a confirmar a identidade do paciente e a ajustar
+            a procuração, o contrato e a peça principal.
+          </p>
+        </div>
+
+        <div className="field-grid">
+          <label className="field">
+            <span>Endereço</span>
+            <input
+              type="text"
+              name="patientAddress"
+              autoComplete="street-address"
+              placeholder="Rua, número, bairro, cidade e UF"
+              value={formState.patientAddress}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, patientAddress: event.target.value }))
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span>RG</span>
+            <input
+              type="text"
+              name="patientRg"
+              placeholder="Documento de identidade"
+              value={formState.patientRg}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, patientRg: event.target.value }))
+              }
+            />
+          </label>
+        </div>
+
+        <div className="field-grid">
+          <label className="field">
+            <span>WhatsApp</span>
+            <input
+              type="tel"
+              name="patientWhatsapp"
+              autoComplete="tel"
+              placeholder="(00) 00000-0000"
+              value={formState.patientWhatsapp}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, patientWhatsapp: event.target.value }))
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span>E-mail</span>
+            <input
+              type="email"
+              name="patientEmail"
+              autoComplete="email"
+              placeholder="nome@exemplo.com"
+              value={formState.patientEmail}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, patientEmail: event.target.value }))
+              }
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="form-section-card">
+        <div className="form-section-head">
+          <p className="section-eyebrow">Solicitante</p>
+          <h3>Dados de quem está preenchendo</h3>
+          <p className="section-note">
+            Esses dados ajudam a equipe humana a confirmar quem está enviando a história e serão
+            usados como referência para a procuração e o contrato.
+          </p>
+        </div>
+
+        <div className="field-grid">
+          <label className="field">
+            <span>Nome completo</span>
+            <input
+              type="text"
+              name="contactFullName"
+              autoComplete="name"
+              placeholder="Nome completo do solicitante"
+              value={formState.contactFullName}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, contactFullName: event.target.value }))
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span>CPF</span>
+            <input
+              type="text"
+              name="contactCpf"
+              inputMode="numeric"
+              placeholder="000.000.000-00"
+              value={formState.contactCpf}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, contactCpf: event.target.value }))
+              }
+            />
+          </label>
+        </div>
+
+        <div className="field-grid">
+          <label className="field">
+            <span>RG</span>
+            <input
+              type="text"
+              name="contactRg"
+              placeholder="Documento de identidade"
+              value={formState.contactRg}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, contactRg: event.target.value }))
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span>E-mail</span>
+            <input
+              type="email"
+              name="contactEmail"
+              autoComplete="email"
+              placeholder="nome@exemplo.com"
+              value={formState.contactEmail}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, contactEmail: event.target.value }))
+              }
+            />
+          </label>
+        </div>
+
+        <div className="field-grid">
+          <label className="field">
+            <span>WhatsApp</span>
+            <input
+              type="tel"
+              name="contactWhatsapp"
+              autoComplete="tel"
+              placeholder="(00) 00000-0000"
+              value={formState.contactWhatsapp}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, contactWhatsapp: event.target.value }))
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span>Endereço</span>
+            <input
+              type="text"
+              name="contactAddress"
+              autoComplete="street-address"
+              placeholder="Rua, número, bairro, cidade e UF"
+              value={formState.contactAddress}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, contactAddress: event.target.value }))
+              }
+            />
+          </label>
+        </div>
       </section>
 
       <section className="form-section-card">

@@ -11,6 +11,7 @@ import {
   leadIntakeSchema,
   legalDocumentPackSchema,
   legalArtifactRevisionSchema,
+  legalBriefInputSchema,
   scoreReviewDecisionSchema,
   rightsAssessmentSchema,
   triageClassificationSchema
@@ -390,6 +391,46 @@ describe("legalScoreSchema", () => {
 
     expect(result.reviewRequired).toBe(true);
     expect(result.complexity).toBe("high");
+  });
+});
+
+describe("legalBriefInputSchema", () => {
+  it("accepts a valid civil health brief payload", () => {
+    const result = legalBriefInputSchema.parse({
+      caseId: "11111111-1111-4111-8111-111111111111",
+      workflowJobId: "22222222-2222-4222-8222-222222222222",
+      draftScope: "civil_health",
+      patientFullName: "Ana Souza",
+      patientCpf: "12345678901",
+      city: "Curitiba",
+      contact: "(41) 99999-9999",
+      patientAddress: "Rua do Paciente, 123, Curitiba-PR",
+      patientWhatsapp: "(41) 97777-6666",
+      patientEmail: "ana.souza@example.com",
+      patientRg: "9876543",
+      relationToPatient: "Filha",
+      contactFullName: "Maria Souza",
+      contactAddress: "Rua A, 123, Centro, Curitiba-PR",
+      contactWhatsapp: "(41) 98888-7777",
+      contactEmail: "maria.souza@example.com",
+      contactCpf: "22233344455",
+      contactRg: "1234567",
+      problemType: "plano",
+      currentUrgency: "high",
+      keyDates: [{ label: "Negativa do plano", date: "2025-05-02" }],
+      objectiveDescription: "Paciente teve negativa de cobertura para tratamento essencial.",
+      materialLosses: "Gastos com exames e consultas particulares.",
+      moralImpact: "Angustia, inseguranca e agravamento do quadro clinico.",
+      uploadedDocuments: [],
+      documentsAttached: ["negativa.pdf"],
+      witnesses: ["Joao Silva"],
+      mainRequest: "Custeio integral do tratamento.",
+      subsidiaryRequest: "Tutela de urgencia para cobertura imediata."
+    });
+
+    expect(result.contactFullName).toBe("Maria Souza");
+    expect(result.contactEmail).toBe("maria.souza@example.com");
+    expect(result.patientEmail).toBe("ana.souza@example.com");
   });
 });
 

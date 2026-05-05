@@ -92,7 +92,17 @@ describe("Public legal brief route", () => {
       patientCpf: "12345678901",
       city: "Curitiba",
       contact: "41 99999-9999",
+      patientAddress: "Rua do Paciente, 123, Curitiba-PR",
+      patientWhatsapp: "(41) 97777-6666",
+      patientEmail: "ana.souza@example.com",
+      patientRg: "9876543",
       relationToPatient: "Filha",
+      contactFullName: "Maria Souza",
+      contactAddress: "Rua A, 123, Centro, Curitiba-PR",
+      contactWhatsapp: "(41) 98888-7777",
+      contactEmail: "maria.souza@example.com",
+      contactCpf: "22233344455",
+      contactRg: "1234567",
       problemType: "plano",
       currentUrgency: "high",
       keyDates: [{ label: "Negativa do plano", date: "2025-05-02" }],
@@ -128,6 +138,7 @@ describe("Public legal brief route", () => {
     expect(response.status).toBe(200);
     expect(body.status).toBe("ready");
     expect(body.submission.patientFullName).toBe("Ana Souza");
+    expect(body.submission.contactFullName).toBe("Maria Souza");
     expect(body.submission.uploadedDocuments).toHaveLength(1);
     expect(body.draft.title).toContain("Minuta preliminar");
     expect(body.supportingDocumentPack.title).toBe("Modelos complementares");
@@ -157,7 +168,17 @@ describe("Public legal brief route", () => {
       patientCpf: "12345678901",
       city: "Curitiba",
       contact: "41 98888-7777",
+      patientAddress: "Rua do Paciente, 456, Curitiba-PR",
+      patientWhatsapp: "(41) 96666-5555",
+      patientEmail: "maria.costa@example.com",
+      patientRg: "1234568",
       relationToPatient: "Mãe",
+      contactFullName: "João Costa",
+      contactAddress: "Rua B, 456, Centro, Curitiba-PR",
+      contactWhatsapp: "(41) 97777-6666",
+      contactEmail: "joao.costa@example.com",
+      contactCpf: "33344455566",
+      contactRg: "7654321",
       problemType: "medicamento",
       currentUrgency: "critical",
       keyDates: [{ label: "Negativa do remédio", date: "2025-05-02" }],
@@ -198,7 +219,17 @@ describe("Public legal brief route", () => {
           patientCpf: "12345678901",
           city: "Curitiba",
           contact: "41 98888-7777",
+          patientAddress: "Rua do Paciente, 456, Curitiba-PR",
+          patientWhatsapp: "(41) 96666-5555",
+          patientEmail: "maria.costa@example.com",
+          patientRg: "1234568",
           relationToPatient: "Mãe",
+          contactFullName: "João Costa",
+          contactAddress: "Rua B, 456, Centro, Curitiba-PR",
+          contactWhatsapp: "(41) 97777-6666",
+          contactEmail: "joao.costa@example.com",
+          contactCpf: "33344455566",
+          contactRg: "7654321",
           problemType: "medicamento",
           currentUrgency: "critical",
           keyDates: [{ label: "Negativa do remédio", date: "2025-05-02" }],
@@ -233,6 +264,8 @@ describe("Public legal brief route", () => {
     expect(recordAuditLogMock).toHaveBeenCalledTimes(1);
     expect(body.draft.sections.length).toBeGreaterThan(0);
     expect(body.submission.uploadedDocuments).toHaveLength(1);
+    expect(body.submission.patientEmail).toBe("maria.costa@example.com");
+    expect(body.submission.contactEmail).toBe("joao.costa@example.com");
     expect(body.supportingDocumentPack.documents).toHaveLength(2);
   });
 });
