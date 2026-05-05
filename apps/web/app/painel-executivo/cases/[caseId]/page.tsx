@@ -432,6 +432,12 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
                   >
                     Baixar DOCX
                   </a>
+                  <a
+                    className="button-ghost inline-action"
+                    href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`}
+                  >
+                    Baixar DOC
+                  </a>
                 </div>
               ) : null}
             </section>

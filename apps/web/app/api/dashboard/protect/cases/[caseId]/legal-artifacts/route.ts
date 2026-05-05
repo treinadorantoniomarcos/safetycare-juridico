@@ -7,6 +7,7 @@ import { AuditLogRepository, CaseRepository, LegalArtifactRepository } from "@sa
 import { NextResponse } from "next/server";
 import {
   buildLegalArtifactExportBundle,
+  createLegalArtifactDocBuffer,
   createLegalArtifactDocxBuffer,
   createLegalArtifactPdfBuffer,
   type LegalArtifactExportFormat
@@ -38,7 +39,7 @@ function resolveExportFormat(value: string | null): LegalArtifactExportFormat | 
 
   const normalized = value.trim().toLowerCase();
 
-  if (normalized === "pdf" || normalized === "docx") {
+  if (normalized === "pdf" || normalized === "docx" || normalized === "doc") {
     return normalized;
   }
 
@@ -144,12 +145,19 @@ export async function GET(request: Request, context: RouteContext) {
     }));
 
     const bundle = buildLegalArtifactExportBundle(caseId, normalizedArtifacts);
-    const body = format === "pdf" ? createLegalArtifactPdfBuffer(bundle) : createLegalArtifactDocxBuffer(bundle);
+    const body =
+      format === "pdf"
+        ? createLegalArtifactPdfBuffer(bundle)
+        : format === "docx"
+          ? createLegalArtifactDocxBuffer(bundle)
+          : createLegalArtifactDocBuffer(bundle);
 
     const contentType =
       format === "pdf"
         ? "application/pdf"
-        : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        : format === "docx"
+          ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          : "application/msword";
 
     return new Response(body, {
       status: 200,

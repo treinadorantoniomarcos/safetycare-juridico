@@ -106,6 +106,22 @@ describe("legal artifact export route", () => {
     expect(docxBuffer.subarray(0, 2).toString("ascii")).toBe("PK");
   });
 
+  it("returns a doc download when the requested format is doc", async () => {
+    const response = await GET(
+      new Request(`http://localhost/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`),
+      {
+        params: { caseId }
+      }
+    );
+
+    const docBuffer = Buffer.from(await response.arrayBuffer());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/msword");
+    expect(response.headers.get("content-disposition")).toContain(`safetycare-legal-artifacts-${caseId}.doc`);
+    expect(docBuffer.toString("utf8")).toContain("<html");
+  });
+
   it("returns a single-document filename when artifactType is requested", async () => {
     const response = await GET(
       new Request(

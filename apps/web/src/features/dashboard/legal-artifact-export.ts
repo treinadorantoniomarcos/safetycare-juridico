@@ -32,7 +32,7 @@ type PdfPage = {
   lines: PdfLine[];
 };
 
-export type LegalArtifactExportFormat = "pdf" | "docx";
+export type LegalArtifactExportFormat = "pdf" | "docx" | "doc";
 
 export type LegalArtifactExportBundle = {
   caseId: string;
@@ -330,6 +330,63 @@ function escapeXml(value: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+function escapeHtml(value: string) {
+  return escapeXml(value);
+}
+
+function renderBlockAsHtml(block: ExportBlock) {
+  if (block.kind === "heading") {
+    const tag = block.level === 1 ? "h1" : block.level === 2 ? "h2" : "h3";
+    return `<${tag}>${escapeHtml(block.text)}</${tag}>`;
+  }
+
+  if (block.kind === "bullet") {
+    return `<ul><li>${escapeHtml(block.text)}</li></ul>`;
+  }
+
+  if (block.kind === "blank") {
+    return "<div class=\"block-spacer\"></div>";
+  }
+
+  if (block.kind === "pageBreak") {
+    return '<div class="page-break"></div>';
+  }
+
+  return `<p>${escapeHtml(block.text).replace(/\n/g, "<br />")}</p>`;
+}
+
+function blocksToHtmlDocument(bundle: LegalArtifactExportBundle) {
+  const bodyHtml = buildExportBlocks(bundle).map((block) => renderBlockAsHtml(block)).join("\n");
+
+  return [
+    "<!DOCTYPE html>",
+    '<html lang="pt-BR">',
+    "<head>",
+    '<meta charset="utf-8" />',
+    '<meta http-equiv="X-UA-Compatible" content="IE=edge" />',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+    "<title>SAFETYCARE - Artefatos juridicos</title>",
+    "<style>",
+    "body{font-family:Calibri,Arial,sans-serif;color:#1f2733;font-size:12pt;line-height:1.45;margin:32px;}",
+    "h1{font-size:22pt;margin:0 0 14px;}",
+    "h2{font-size:16pt;margin:18px 0 10px;}",
+    "h3{font-size:13pt;margin:16px 0 8px;}",
+    "p{margin:0 0 10px;white-space:pre-wrap;}",
+    "ul{margin:0 0 10px 22px;padding:0;}",
+    "li{margin:0 0 6px;}",
+    ".block-spacer{height:10px;}",
+    ".page-break{page-break-before:always;break-before:page;}",
+    ".meta{color:#5f6b7a;font-size:10.5pt;}",
+    "</style>",
+    "</head>",
+    "<body>",
+    `<div class="meta">Caso: ${escapeHtml(bundle.caseId)} | Gerado em: ${escapeHtml(bundle.generatedAt)}</div>`,
+    bodyHtml,
+    "</body>",
+    "</html>"
+  ].join("");
 }
 
 function layoutBlocksAsPdfPages(blocks: ExportBlock[]) {
@@ -684,4 +741,8 @@ export function createLegalArtifactPdfBuffer(bundle: LegalArtifactExportBundle) 
 
 export function createLegalArtifactDocxBuffer(bundle: LegalArtifactExportBundle) {
   return blocksToDocxXml(buildExportBlocks(bundle));
+}
+
+export function createLegalArtifactDocBuffer(bundle: LegalArtifactExportBundle) {
+  return Buffer.from(blocksToHtmlDocument(bundle), "utf8");
 }

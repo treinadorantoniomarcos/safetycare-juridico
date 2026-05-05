@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildLegalArtifactExportBundle,
+  createLegalArtifactDocBuffer,
   createLegalArtifactDocxBuffer,
   createLegalArtifactPdfBuffer
 } from "../src/features/dashboard/legal-artifact-export";
@@ -75,5 +76,14 @@ describe("legal artifact export", () => {
 
     expect(docxBuffer.subarray(0, 2).toString("ascii")).toBe("PK");
     expect(docxBuffer.toString("utf8")).toContain("[Content_Types].xml");
+  });
+
+  it("builds a doc buffer with a word compatible html document", () => {
+    const bundle = buildLegalArtifactExportBundle(caseId, artifacts);
+    const docBuffer = createLegalArtifactDocBuffer(bundle);
+
+    expect(docBuffer.toString("utf8")).toContain("<html");
+    expect(docBuffer.toString("utf8")).toContain("SAFETYCARE - Artefatos juridicos");
+    expect(docBuffer.toString("utf8")).toContain("Pacote de artefatos juridicos");
   });
 });

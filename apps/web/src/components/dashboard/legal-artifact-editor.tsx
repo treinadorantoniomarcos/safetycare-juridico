@@ -46,7 +46,7 @@ function formatDateTime(value?: string | null) {
   return parsed.toLocaleString("pt-BR", { hour12: false });
 }
 
-function buildDownloadUrl(caseId: string, format: "pdf" | "docx", artifactType?: string) {
+function buildDownloadUrl(caseId: string, format: "pdf" | "docx" | "doc", artifactType?: string) {
   const searchParams = new URLSearchParams({ format });
 
   if (artifactType) {
@@ -228,8 +228,8 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
         <p className="section-eyebrow">Artefatos gerados</p>
         <h3>Editar, salvar e baixar</h3>
         <p className="section-note">
-          As alteracoes criam uma nova versao no banco. Os downloads em PDF e DOCX sempre usam a
-          versao mais recente.
+          As alteracoes criam uma nova versao no banco. Os downloads em PDF, DOCX e DOC sempre usam
+          a versao mais recente.
         </p>
       </div>
 
@@ -245,6 +245,12 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
           href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=docx`}
         >
           Baixar pacote DOCX
+        </a>
+        <a
+          className="button-ghost inline-action"
+          href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`}
+        >
+          Baixar pacote DOC
         </a>
       </div>
 
@@ -369,6 +375,12 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
                   href={buildDownloadUrl(caseId, "docx", group.artifactType)}
                 >
                   Baixar DOCX
+                </a>
+                <a
+                  className="button-ghost inline-action"
+                  href={buildDownloadUrl(caseId, "doc", group.artifactType)}
+                >
+                  Baixar DOC
                 </a>
               </div>
 

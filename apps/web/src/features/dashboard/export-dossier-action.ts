@@ -17,6 +17,7 @@ export async function exportDossierAction(caseId: string) {
     success: true,
     downloadUrl: `/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=pdf`,
     docxDownloadUrl: `/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=docx`,
+    docDownloadUrl: `/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`,
     message: "Pacote juridico gerado com sucesso pelo Squad de Defesa."
   };
 }

@@ -23,7 +23,7 @@ function formatDateTime(value?: string) {
   return parsed.toLocaleString("pt-BR", { hour12: false });
 }
 
-function buildLegalArtifactDownloadUrl(caseId: string, format: "pdf" | "docx") {
+function buildLegalArtifactDownloadUrl(caseId: string, format: "pdf" | "docx" | "doc") {
   return `/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=${format}`;
 }
 
@@ -216,6 +216,13 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
                           aria-label={`Baixar DOCX dos artefatos de ${item.fullName}`}
                         >
                           DOCX
+                        </a>
+                        <a
+                          className="ops-format-menu__item"
+                          href={buildLegalArtifactDownloadUrl(item.caseId, "doc")}
+                          aria-label={`Baixar DOC dos artefatos de ${item.fullName}`}
+                        >
+                          DOC
                         </a>
                       </div>
                     </details>
