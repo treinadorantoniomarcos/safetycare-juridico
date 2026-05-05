@@ -178,11 +178,12 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
 
       <section className="panel-section legal-review-page">
         <div className="section-heading">
-          <p className="section-eyebrow">Revisao humana da etapa 2</p>
-          <h1>Casos com parametros da peça</h1>
+          <p className="section-eyebrow">Decisão humana</p>
+          <h1>Liberação ou bloqueio da etapa 2</h1>
           <p className="hero-lede">
-            Abra o texto, os documentos declarados e as previsoes da minuta. Depois da aprovacao,
-            os agentes podem gerar a peça juridica, a procuração e o contrato.
+            Abra a história, os anexos e a minuta preliminar. A liberação aciona os agentes para
+            gerar a peça jurídica, a procuração e o contrato. O bloqueio mantém o caso em
+            revisão.
           </p>
         </div>
 

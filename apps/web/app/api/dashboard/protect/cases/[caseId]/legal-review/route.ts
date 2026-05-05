@@ -1,4 +1,4 @@
-import { scoreReviewDecisionSchema, workflowJobTypes } from "@safetycare/ai-contracts";
+import { legalBriefReviewDecisionSchema, workflowJobTypes } from "@safetycare/ai-contracts";
 import {
   AuditLogRepository,
   CaseRepository,
@@ -57,7 +57,7 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const validation = scoreReviewDecisionSchema.safeParse(payload);
+  const validation = legalBriefReviewDecisionSchema.safeParse(payload);
 
   if (!validation.success) {
     return NextResponse.json(
@@ -184,6 +184,73 @@ export async function POST(request: Request, context: RouteContext) {
           caseId,
           decision,
           caseStatus: updatedCase,
+          workflowJob: workflowJob
+            ? {
+                id: workflowJob.id,
+                jobType: workflowJob.jobType,
+                status: workflowJob.status
+              }
+          : null
+        },
+        { status: 200 }
+      );
+    }
+
+    if (decision === "request_changes") {
+      if (!note) {
+        return NextResponse.json(
+          {
+            correlationId,
+            error: "note_required"
+          },
+          { status: 400 }
+        );
+      }
+
+      const caseStatus = await cases.updateStatuses(caseId, {
+        commercialStatus: "conversion_pending",
+        legalStatus: "conversion_pending"
+      });
+
+      if (!caseStatus) {
+        throw new Error("case_status_update_failed");
+      }
+
+      const latestJob = await workflowJobs.findLatestByCaseIdAndType(caseId, workflowJobTypes[7]);
+      const runAfter = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+
+      const workflowJob = latestJob
+        ? await workflowJobs.markBlocked(latestJob.id, latestJob.payload, runAfter)
+        : undefined;
+
+      await auditLogs.record({
+        caseId,
+        actorType: "user",
+        actorId: reviewerId,
+        action: "intake.legal_brief_review_requested_changes",
+        correlationId,
+        beforePayload: beforeStatus,
+        afterPayload: {
+          decision,
+          note,
+          legalBriefId: brief.id,
+          caseStatus,
+          workflowJob: workflowJob
+            ? {
+                id: workflowJob.id,
+                jobType: workflowJob.jobType,
+                status: workflowJob.status
+              }
+            : null
+        }
+      });
+
+      return NextResponse.json(
+        {
+          correlationId,
+          caseId,
+          decision,
+          caseStatus,
           workflowJob: workflowJob
             ? {
                 id: workflowJob.id,

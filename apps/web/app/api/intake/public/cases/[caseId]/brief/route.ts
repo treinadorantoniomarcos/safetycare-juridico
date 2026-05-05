@@ -1,6 +1,5 @@
 import {
   legalBriefInputSchema,
-  workflowJobTypes,
   type LegalDocumentPack,
   type LegalDraft,
   type LegalBriefInput
@@ -18,6 +17,11 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDatabaseClient } from "../../../../../../../src/lib/database";
+import {
+  isBriefClosed,
+  isBriefLocked,
+  isValidPublicCaseAccessToken
+} from "../../../../../../../src/features/intake/public-legal-brief-access";
 
 type RouteContext = {
   params:
@@ -50,24 +54,6 @@ const workflowJobIdSchema = z.string().uuid();
 function normalizeWorkflowJobId(url: URL) {
   const workflowJobId = url.searchParams.get("workflowJobId");
   return workflowJobId?.trim();
-}
-
-function isValidPublicCaseAccessToken(
-  caseId: string,
-  workflowJob: {
-    caseId: string | null;
-    jobType: string;
-  }
-) {
-  return workflowJob.caseId === caseId && workflowJob.jobType === workflowJobTypes[0];
-}
-
-function isBriefLocked(legalStatus: string) {
-  return legalStatus === "human_triage_pending" || legalStatus === "awaiting_consent";
-}
-
-function isBriefClosed(caseRecord: { commercialStatus: string; legalStatus: string }) {
-  return caseRecord.commercialStatus === "closed_lost" || caseRecord.legalStatus === "closed_lost";
 }
 
 function toIsoDate(value: Date | string | null | undefined) {

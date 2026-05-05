@@ -6,6 +6,7 @@ const {
   findLatestByCaseIdAndTypeMock,
   createOrGetMock,
   requeueMock,
+  markBlockedMock,
   updateStatusesMock,
   recordAuditLogMock,
   getDatabaseClientMock,
@@ -17,6 +18,7 @@ const {
   findLatestByCaseIdAndTypeMock: vi.fn(),
   createOrGetMock: vi.fn(),
   requeueMock: vi.fn(),
+  markBlockedMock: vi.fn(),
   updateStatusesMock: vi.fn(),
   recordAuditLogMock: vi.fn(),
   getDatabaseClientMock: vi.fn(),
@@ -39,6 +41,7 @@ vi.mock("@safetycare/database", () => ({
     findLatestByCaseIdAndType = findLatestByCaseIdAndTypeMock;
     createOrGet = createOrGetMock;
     requeue = requeueMock;
+    markBlocked = markBlockedMock;
   }
 }));
 
@@ -159,5 +162,63 @@ describe("POST /api/dashboard/protect/cases/[caseId]/legal-review", () => {
     });
     expect(createOrGetMock).not.toHaveBeenCalled();
     expect(requeueMock).not.toHaveBeenCalled();
+  });
+
+  it("requests complement and reopens the case for the client", async () => {
+    findCaseByIdMock.mockResolvedValueOnce({
+      id: caseId,
+      commercialStatus: "legal_execution_pending",
+      legalStatus: "legal_execution_pending"
+    });
+    findBriefByCaseIdMock.mockResolvedValueOnce({
+      id: "brief-1"
+    });
+    findLatestByCaseIdAndTypeMock.mockResolvedValueOnce({
+      id: "job-2",
+      jobType: "legal.execution",
+      status: "queued",
+      payload: {
+        stage: "legal_execution_pending"
+      }
+    });
+    updateStatusesMock.mockResolvedValueOnce({
+      id: caseId,
+      commercialStatus: "conversion_pending",
+      legalStatus: "conversion_pending"
+    });
+    markBlockedMock.mockResolvedValueOnce({
+      id: "job-2",
+      jobType: "legal.execution",
+      status: "blocked"
+    });
+    recordAuditLogMock.mockResolvedValueOnce({ id: "audit-3" });
+
+    const response = await POST(
+      new Request(`http://localhost/api/dashboard/protect/cases/${caseId}/legal-review`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          decision: "request_changes",
+          reviewerId: "revisor-3",
+          note: "Faltam exames e comprovantes."
+        })
+      }),
+      {
+        params: Promise.resolve({ caseId })
+      }
+    );
+
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.decision).toBe("request_changes");
+    expect(updateStatusesMock).toHaveBeenCalledWith(caseId, {
+      commercialStatus: "conversion_pending",
+      legalStatus: "conversion_pending"
+    });
+    expect(markBlockedMock).toHaveBeenCalledTimes(1);
+    expect(createOrGetMock).not.toHaveBeenCalled();
   });
 });

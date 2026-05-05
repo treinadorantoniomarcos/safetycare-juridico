@@ -64,4 +64,5 @@ export const evidenceChecklistStatuses = ["present", "missing", "partial"] as co
 export const evidenceChecklistImportanceLevels = ["low", "medium", "high", "critical"] as const;
 export const legalComplexityLevels = ["low", "medium", "high"] as const;
 export const scoreReviewDecisions = ["approve", "reject"] as const;
+export const legalBriefReviewDecisions = ["approve", "reject", "request_changes"] as const;
 export const conversionDecisions = ["signed", "lost"] as const;

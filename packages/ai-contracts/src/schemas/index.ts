@@ -19,6 +19,7 @@ export {
   legalBriefKeyDateSchema,
   legalBriefUploadedDocumentSchema
 } from "./legal-brief-input.schema";
+export { legalBriefReviewDecisionSchema } from "./legal-brief-review-decision.schema";
 export { legalDraftSchema } from "./legal-draft.schema";
 export {
   legalDocumentPackSchema,

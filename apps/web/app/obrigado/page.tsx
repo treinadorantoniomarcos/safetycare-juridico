@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { ConversionPixel } from "../../src/components/intake/conversion-pixel";
+import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -30,6 +31,8 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
   const utmCampaign = readSingleParam(params.utm_campaign);
   const utmContent = readSingleParam(params.utm_content);
   const utmTerm = readSingleParam(params.utm_term);
+  const legalBriefAccess = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
+  const canOpenLegalBrief = legalBriefAccess.status === "ready";
 
   return (
     <main className="brand-shell">
@@ -59,14 +62,21 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
           informará a história, as datas-chave e os pedidos principais.
         </p>
 
-        {caseId && workflowJobId ? (
+        {canOpenLegalBrief ? (
           <Link
             className="button-primary thanks-action"
             href={`/completar-caso?caseId=${caseId}&workflowJobId=${workflowJobId}`}
           >
             Abrir formulário de parâmetros
           </Link>
-        ) : null}
+        ) : (
+          <div className="thanks-meta">
+            <p>
+              {legalBriefAccess.message ??
+                "A próxima etapa será liberada após a validação humana."}
+            </p>
+          </div>
+        )}
 
         <Link className="button-ghost thanks-action" href="/">
           Voltar para a pagina principal

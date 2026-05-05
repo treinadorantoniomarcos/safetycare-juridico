@@ -8,6 +8,7 @@ export {
   evidenceChecklistStatuses,
   intakeActorTypes,
   legalComplexityLevels,
+  legalBriefReviewDecisions,
   leadSources,
   patientRightKeys,
   patientRightStatuses,
@@ -36,6 +37,7 @@ export type {
   LegalArtifactRevisionInput,
   LegalArtifactType
 } from "./schemas/legal-artifact-revision.schema";
+export type { LegalBriefReviewDecisionInput } from "./schemas/legal-brief-review-decision.schema";
 export type { LegalScoreResult, StrategicLegalGuidance } from "./schemas/legal-score.schema";
 export type {
   LegalBriefInput,

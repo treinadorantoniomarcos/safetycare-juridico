@@ -9,7 +9,11 @@ type LegalBriefReviewActionsProps = {
   defaultReviewerId: string;
 };
 
-function buildRequestBody(decision: "approve" | "reject", reviewerId: string, note: string) {
+function buildRequestBody(
+  decision: "approve" | "reject" | "request_changes",
+  reviewerId: string,
+  note: string
+) {
   return {
     decision,
     reviewerId,
@@ -29,19 +33,25 @@ export function LegalBriefReviewActions({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  async function submitDecision(decision: "approve" | "reject") {
+  async function submitDecision(decision: "approve" | "reject" | "request_changes") {
     setError(null);
     setSuccess(null);
 
     const normalizedReviewerId = reviewerId.trim();
+    const normalizedNote = note.trim();
 
     if (!normalizedReviewerId) {
       setError("Informe a identificacao do revisor.");
       return;
     }
 
+    if (decision === "request_changes" && !normalizedNote) {
+      setError("Descreva o que precisa ser complementado.");
+      return;
+    }
+
     try {
-      const requestBody = buildRequestBody(decision, normalizedReviewerId, note.trim());
+      const requestBody = buildRequestBody(decision, normalizedReviewerId, normalizedNote);
 
       const response = await fetch(`/api/dashboard/protect/cases/${caseId}/legal-review`, {
         method: "POST",
@@ -55,7 +65,7 @@ export function LegalBriefReviewActions({
         | { error?: string; detail?: string; correlationId?: string }
         | {
             caseStatus?: { legalStatus?: string };
-            decision?: "approve" | "reject";
+            decision?: "approve" | "reject" | "request_changes";
           };
 
       if (!response.ok) {
@@ -69,6 +79,11 @@ export function LegalBriefReviewActions({
             setError("A etapa 2 ainda nao foi preenchida pelo cliente.");
             return;
           }
+
+          if (payload.error === "note_required") {
+            setError("Descreva o motivo da complementacao antes de enviar.");
+            return;
+          }
         }
 
         setError("Nao foi possivel registrar a decisao. Tente novamente.");
@@ -77,8 +92,10 @@ export function LegalBriefReviewActions({
 
       setSuccess(
         decision === "approve"
-          ? "Liberacao registrada. Os agentes podem gerar a minuta, a procuração e o contrato."
-          : "Revisao registrada. O caso permanece em analise."
+          ? "Etapa 2 liberada. Os agentes podem gerar a minuta, a procuração e o contrato."
+          : decision === "request_changes"
+            ? "Complementacao solicitada. O caso voltou para ajuste."
+            : "Etapa 2 bloqueada. O caso permanece em analise."
       );
 
       startTransition(() => {
@@ -93,10 +110,11 @@ export function LegalBriefReviewActions({
     <section className="form-section-card legal-review-actions-card">
       <div className="form-section-head">
         <p className="section-eyebrow">Decisao humana</p>
-        <h3>Liberar para execucao juridica</h3>
+        <h3>Liberacao, bloqueio ou complementacao da etapa 2</h3>
         <p className="section-note">
-          O status atual do caso e {currentLegalStatus}. A aprovacao libera a geracao dos artefatos
-          juridicos pelos agentes.
+          O status atual do caso e {currentLegalStatus}. A liberacao autoriza a geracao dos
+          artefatos juridicos pelos agentes; a complementacao reabre a etapa para ajustes; o
+          bloqueio mantem o caso em analise.
         </p>
       </div>
 
@@ -118,12 +136,12 @@ export function LegalBriefReviewActions({
         </label>
 
         <label className="field">
-          <span>Observacao opcional</span>
+          <span>Observacao / complementacao</span>
           <textarea
             rows={3}
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Motivo da aprovacao ou ajustes apontados"
+            placeholder="Informe o que precisa ser complementado, ou o motivo da liberacao/bloqueio"
           />
         </label>
 
@@ -138,10 +156,23 @@ export function LegalBriefReviewActions({
             onClick={(event) => {
               if (isPending) {
                 event.preventDefault();
+                return;
               }
             }}
           >
-            {isPending ? "Liberando..." : "Aprovar e liberar"}
+            {isPending ? "Liberando..." : "Liberar etapa 2"}
+          </button>
+
+          <button
+            type="button"
+            className="button-ghost inline-action"
+            disabled={isPending}
+            onClick={(event) => {
+              event.preventDefault();
+              void submitDecision("request_changes");
+            }}
+          >
+            Solicitar complementacao
           </button>
 
           <button
@@ -153,7 +184,7 @@ export function LegalBriefReviewActions({
               void submitDecision("reject");
             }}
           >
-            Rejeitar para ajuste
+            Bloquear etapa 2
           </button>
         </div>
       </form>
