@@ -235,6 +235,12 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
 
       <div className="review-download-row legal-artifact-editor__bundle-actions">
         <a
+          className="button-ghost inline-action legal-artifact-editor__download-link"
+          href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`}
+        >
+          Baixar pacote DOC
+        </a>
+        <a
           className="button-ghost inline-action"
           href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=pdf`}
         >
@@ -245,12 +251,6 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
           href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=docx`}
         >
           Baixar pacote DOCX
-        </a>
-        <a
-          className="button-ghost inline-action"
-          href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`}
-        >
-          Baixar pacote DOC
         </a>
       </div>
 
@@ -366,6 +366,12 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
                 </button>
                 <a
                   className="button-ghost inline-action"
+                  href={buildDownloadUrl(caseId, "doc", group.artifactType)}
+                >
+                  Baixar DOC
+                </a>
+                <a
+                  className="button-ghost inline-action"
                   href={buildDownloadUrl(caseId, "pdf", group.artifactType)}
                 >
                   Baixar PDF
@@ -375,12 +381,6 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
                   href={buildDownloadUrl(caseId, "docx", group.artifactType)}
                 >
                   Baixar DOCX
-                </a>
-                <a
-                  className="button-ghost inline-action"
-                  href={buildDownloadUrl(caseId, "doc", group.artifactType)}
-                >
-                  Baixar DOC
                 </a>
               </div>
 

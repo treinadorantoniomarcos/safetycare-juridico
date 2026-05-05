@@ -422,6 +422,12 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
                 <div className="review-download-row">
                   <a
                     className="button-ghost inline-action"
+                    href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`}
+                  >
+                    Baixar DOC
+                  </a>
+                  <a
+                    className="button-ghost inline-action"
                     href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=pdf`}
                   >
                     Baixar PDF
@@ -431,12 +437,6 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
                     href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=docx`}
                   >
                     Baixar DOCX
-                  </a>
-                  <a
-                    className="button-ghost inline-action"
-                    href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`}
-                  >
-                    Baixar DOC
                   </a>
                 </div>
               ) : null}

@@ -1658,9 +1658,20 @@ h2 {
   transition: background 180ms ease, transform 180ms ease;
 }
 
+.ops-format-menu__item--preferred,
+.legal-artifact-editor__download-link {
+  background: #e9f7ee;
+  color: #235d35;
+}
+
 .ops-format-menu__item:hover {
   background: rgba(19, 36, 66, 0.08);
   transform: translateY(-1px);
+}
+
+.ops-format-menu__item--preferred:hover,
+.legal-artifact-editor__download-link:hover {
+  background: #d8f0df;
 }
 
 .ops-chart {

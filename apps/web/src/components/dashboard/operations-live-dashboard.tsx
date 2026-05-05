@@ -204,6 +204,13 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
                       <summary className="button-primary inline-action ops-format-menu__trigger">Baixar</summary>
                       <div className="ops-format-menu__panel" role="menu" aria-label="Escolha o formato de download">
                         <a
+                          className="ops-format-menu__item ops-format-menu__item--preferred"
+                          href={buildLegalArtifactDownloadUrl(item.caseId, "doc")}
+                          aria-label={`Baixar DOC dos artefatos de ${item.fullName}`}
+                        >
+                          DOC para editar
+                        </a>
+                        <a
                           className="ops-format-menu__item"
                           href={buildLegalArtifactDownloadUrl(item.caseId, "pdf")}
                           aria-label={`Baixar PDF dos artefatos de ${item.fullName}`}
@@ -216,13 +223,6 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
                           aria-label={`Baixar DOCX dos artefatos de ${item.fullName}`}
                         >
                           DOCX
-                        </a>
-                        <a
-                          className="ops-format-menu__item"
-                          href={buildLegalArtifactDownloadUrl(item.caseId, "doc")}
-                          aria-label={`Baixar DOC dos artefatos de ${item.fullName}`}
-                        >
-                          DOC
                         </a>
                       </div>
                     </details>
