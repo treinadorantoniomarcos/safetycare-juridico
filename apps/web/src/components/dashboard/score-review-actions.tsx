@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type ScoreReviewActionsProps = {
@@ -9,7 +9,11 @@ type ScoreReviewActionsProps = {
   defaultReviewerId: string;
 };
 
-function buildRequestBody(decision: "approve" | "reject", reviewerId: string, note: string) {
+function buildRequestBody(
+  decision: "approve" | "request_changes" | "reject",
+  reviewerId: string,
+  note: string
+) {
   return {
     decision,
     reviewerId,
@@ -23,13 +27,17 @@ export function ScoreReviewActions({
   defaultReviewerId
 }: ScoreReviewActionsProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewerId, setReviewerId] = useState(defaultReviewerId);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  async function submitDecision(decision: "approve" | "reject") {
+  async function submitDecision(decision: "approve" | "request_changes" | "reject") {
+    if (isSubmitting) {
+      return;
+    }
+
     setError(null);
     setSuccess(null);
 
@@ -40,6 +48,13 @@ export function ScoreReviewActions({
       setError("Informe a identificacao do revisor.");
       return;
     }
+
+    if (decision === "request_changes" && !normalizedNote) {
+      setError("Descreva o que precisa ser complementado.");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch(`/api/intake/cases/${caseId}/score/review`, {
@@ -54,7 +69,7 @@ export function ScoreReviewActions({
         | { error?: string; detail?: string; correlationId?: string }
         | {
             caseStatus?: { legalStatus?: string };
-            decision?: "approve" | "reject";
+            decision?: "approve" | "request_changes" | "reject";
           };
 
       if (!response.ok) {
@@ -68,6 +83,11 @@ export function ScoreReviewActions({
             setError("Nao foi possivel localizar o score do caso.");
             return;
           }
+
+          if (payload.error === "note_required") {
+            setError("Descreva o motivo da complementacao antes de enviar.");
+            return;
+          }
         }
 
         setError("Nao foi possivel registrar a decisao. Tente novamente.");
@@ -76,15 +96,17 @@ export function ScoreReviewActions({
 
       setSuccess(
         decision === "approve"
-          ? "Score aprovado. O caso pode seguir para conversao."
-          : "Score bloqueado. O caso foi encerrado nesta etapa."
+          ? "Score aprovado. O caso pode seguir para a etapa 2."
+          : decision === "request_changes"
+            ? "Complementacao solicitada. O caso voltou para ajuste."
+            : "Score bloqueado. O caso foi encerrado nesta etapa."
       );
 
-      startTransition(() => {
-        router.refresh();
-      });
+      router.refresh();
     } catch {
       setError("Falha de conexao ao registrar a decisao.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -92,7 +114,7 @@ export function ScoreReviewActions({
     <section className="form-section-card legal-review-actions-card">
       <div className="form-section-head">
         <p className="section-eyebrow">Decisao humana</p>
-        <h3>Liberação ou bloqueio do score jurídico</h3>
+        <h3>Liberacao ou bloqueio do score juridico</h3>
         <p className="section-note">
           O status atual do caso e {currentLegalStatus}. A aprovacao libera a conversao; o bloqueio
           encerra o caso nesta etapa.
@@ -103,7 +125,6 @@ export function ScoreReviewActions({
         className="legal-review-actions-form"
         onSubmit={(event) => {
           event.preventDefault();
-          void submitDecision("approve");
         }}
       >
         <label className="field">
@@ -122,7 +143,7 @@ export function ScoreReviewActions({
             rows={3}
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Informe o motivo da aprovacao ou do bloqueio"
+            placeholder="Informe o motivo da aprovacao, complementacao ou bloqueio"
           />
         </label>
 
@@ -131,28 +152,36 @@ export function ScoreReviewActions({
 
         <div className="review-action-row">
           <button
-            type="submit"
+            type="button"
             className="button-primary inline-action"
-            disabled={isPending}
-            onClick={(event) => {
-              if (isPending) {
-                event.preventDefault();
-              }
+            disabled={isSubmitting}
+            onClick={() => {
+              void submitDecision("approve");
             }}
           >
-            {isPending ? "Liberando..." : "Aprovar score"}
+            {isSubmitting ? "Liberando..." : "Continuar para etapa 2"}
+          </button>
+
+          <button
+            type="button"
+            className="button-ghost inline-action"
+            disabled={isSubmitting}
+            onClick={() => {
+              void submitDecision("request_changes");
+            }}
+          >
+            Solicitar complementacao
           </button>
 
           <button
             type="button"
             className="button-ghost inline-action inline-action--danger"
-            disabled={isPending}
-            onClick={(event) => {
-              event.preventDefault();
+            disabled={isSubmitting}
+            onClick={() => {
               void submitDecision("reject");
             }}
           >
-            Bloquear score
+            Nao cabe acao juridica
           </button>
         </div>
       </form>

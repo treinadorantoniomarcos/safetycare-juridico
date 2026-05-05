@@ -457,4 +457,14 @@ describe("scoreReviewDecisionSchema", () => {
 
     expect(result.decision).toBe("approve");
   });
+
+  it("accepts request_changes review decision payload", () => {
+    const result = scoreReviewDecisionSchema.parse({
+      decision: "request_changes",
+      reviewerId: "user-456",
+      note: "Faltam exames e comprovantes."
+    });
+
+    expect(result.decision).toBe("request_changes");
+  });
 });

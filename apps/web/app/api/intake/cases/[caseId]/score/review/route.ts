@@ -14,8 +14,8 @@ type RouteContext = {
       }>;
 };
 
-function getCaseStatusesForDecision(decision: "approve" | "reject") {
-  if (decision === "approve") {
+function getCaseStatusesForDecision(decision: "approve" | "request_changes" | "reject") {
+  if (decision === "approve" || decision === "request_changes") {
     return {
       commercialStatus: "conversion_pending",
       legalStatus: "conversion_pending"
@@ -105,6 +105,16 @@ export async function POST(request: Request, context: RouteContext) {
       note: validation.data.note?.trim() ? validation.data.note.trim() : ""
     };
 
+    if (validation.data.decision === "request_changes" && !decisionInput.note) {
+      return NextResponse.json(
+        {
+          correlationId,
+          error: "note_required"
+        },
+        { status: 400 }
+      );
+    }
+
     const reviewedScore = await legalScores.applyHumanReviewDecision(caseId, decisionInput);
     const nextStatuses = getCaseStatusesForDecision(validation.data.decision);
     const caseStatus = await cases.updateStatuses(caseId, nextStatuses);
@@ -113,7 +123,12 @@ export async function POST(request: Request, context: RouteContext) {
       caseId,
       actorType: "user",
       actorId: validation.data.reviewerId,
-      action: "intake.score_review_recorded",
+      action:
+        validation.data.decision === "approve"
+          ? "intake.score_review_approved"
+          : validation.data.decision === "request_changes"
+            ? "intake.score_review_requested_changes"
+            : "intake.score_review_rejected",
       correlationId,
       beforePayload: {
         score: scoreRecord,

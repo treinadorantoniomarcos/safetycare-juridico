@@ -147,6 +147,64 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     expect(body.caseStatus.commercialStatus).toBe("score_rejected");
   });
 
+  it("requests changes and moves the case back to conversion_pending", async () => {
+    getDatabaseClientMock.mockReturnValue({
+      db: {}
+    });
+    findCaseByIdMock.mockResolvedValueOnce({
+      id: "case-1",
+      commercialStatus: "triaged",
+      legalStatus: "human_review_required"
+    });
+    findScoreByCaseIdMock.mockResolvedValueOnce({
+      caseId: "case-1",
+      viabilityScore: 66,
+      reviewRequired: true
+    });
+    applyHumanReviewDecisionMock.mockResolvedValueOnce({
+      caseId: "case-1",
+      reviewRequired: true,
+      humanReviewDecision: "request_changes"
+    });
+    updateStatusesMock.mockResolvedValueOnce({
+      id: "case-1",
+      commercialStatus: "conversion_pending",
+      legalStatus: "conversion_pending"
+    });
+    recordMock.mockResolvedValueOnce(undefined);
+
+    const request = new Request("http://localhost/api/intake/cases/case-1/score/review", {
+      method: "POST",
+      body: JSON.stringify({
+        decision: "request_changes",
+        reviewerId: "reviewer-3",
+        note: "Faltam exames complementares."
+      }),
+      headers: {
+        "content-type": "application/json"
+      }
+    });
+
+    const response = await POST(request, {
+      params: {
+        caseId: "case-1"
+      }
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(applyHumanReviewDecisionMock).toHaveBeenCalledWith("case-1", {
+      decision: "request_changes",
+      reviewerId: "reviewer-3",
+      note: "Faltam exames complementares."
+    });
+    expect(updateStatusesMock).toHaveBeenCalledWith("case-1", {
+      commercialStatus: "conversion_pending",
+      legalStatus: "conversion_pending"
+    });
+    expect(body.caseStatus.legalStatus).toBe("conversion_pending");
+  });
+
   it("returns 404 when the case does not exist", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type LegalBriefReviewActionsProps = {
@@ -27,13 +27,17 @@ export function LegalBriefReviewActions({
   defaultReviewerId
 }: LegalBriefReviewActionsProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewerId, setReviewerId] = useState(defaultReviewerId);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   async function submitDecision(decision: "approve" | "reject" | "request_changes") {
+    if (isSubmitting) {
+      return;
+    }
+
     setError(null);
     setSuccess(null);
 
@@ -49,6 +53,8 @@ export function LegalBriefReviewActions({
       setError("Descreva o que precisa ser complementado.");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const requestBody = buildRequestBody(decision, normalizedReviewerId, normalizedNote);
@@ -98,11 +104,11 @@ export function LegalBriefReviewActions({
             : "Etapa 2 bloqueada. O caso permanece em analise."
       );
 
-      startTransition(() => {
-        router.refresh();
-      });
+      router.refresh();
     } catch {
       setError("Falha de conexao ao registrar a decisao.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -122,7 +128,6 @@ export function LegalBriefReviewActions({
         className="legal-review-actions-form"
         onSubmit={(event) => {
           event.preventDefault();
-          void submitDecision("approve");
         }}
       >
         <label className="field">
@@ -150,25 +155,21 @@ export function LegalBriefReviewActions({
 
         <div className="review-action-row">
           <button
-            type="submit"
+            type="button"
             className="button-primary inline-action"
-            disabled={isPending}
-            onClick={(event) => {
-              if (isPending) {
-                event.preventDefault();
-                return;
-              }
+            disabled={isSubmitting}
+            onClick={() => {
+              void submitDecision("approve");
             }}
           >
-            {isPending ? "Liberando..." : "Liberar etapa 2"}
+            {isSubmitting ? "Liberando..." : "Liberar etapa 2"}
           </button>
 
           <button
             type="button"
             className="button-ghost inline-action"
-            disabled={isPending}
-            onClick={(event) => {
-              event.preventDefault();
+            disabled={isSubmitting}
+            onClick={() => {
               void submitDecision("request_changes");
             }}
           >
@@ -178,9 +179,8 @@ export function LegalBriefReviewActions({
           <button
             type="button"
             className="button-ghost inline-action inline-action--danger"
-            disabled={isPending}
-            onClick={(event) => {
-              event.preventDefault();
+            disabled={isSubmitting}
+            onClick={() => {
               void submitDecision("reject");
             }}
           >

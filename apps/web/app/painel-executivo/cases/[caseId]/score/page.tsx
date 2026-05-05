@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { SiteHeader } from "../../../../../src/components/brand/site-header";
 import { CaseReviewStageNav } from "../../../../../src/components/dashboard/case-review-stage-nav";
+import { getLegalScoreClassification } from "../../../../../src/features/dashboard/legal-score-classification";
 import { ScoreReviewActions } from "../../../../../src/components/dashboard/score-review-actions";
 import { getScoreReviewCase } from "../../../../../src/features/dashboard/get-score-review-case";
 import { hasDashboardSessionFromCookieStore } from "../../../../../src/lib/dashboard-auth";
@@ -86,6 +87,28 @@ export default async function ScoreReviewPage({ params }: PageProps) {
   }
 
   const reviewerIdDefault = process.env.DASHBOARD_AUTH_USER ?? "painel-executivo";
+  const scoreClassification = getLegalScoreClassification(
+    reviewCase.score
+      ? {
+          viabilityScore: reviewCase.score.viabilityScore,
+          reviewRequired: reviewCase.score.reviewRequired
+        }
+      : null
+  );
+  const scoreLegend = [
+    {
+      key: "green",
+      label: "Pode continuar"
+    },
+    {
+      key: "yellow",
+      label: "Precisa complementar"
+    },
+    {
+      key: "red",
+      label: "Nao cabe acao juridica"
+    }
+  ] as const;
 
   return (
     <main className="brand-shell">
@@ -225,11 +248,38 @@ export default async function ScoreReviewPage({ params }: PageProps) {
               <h3>Analise de viabilidade juridica</h3>
             </div>
 
-            {reviewCase.score ? (
-              <>
-                <div className="review-kv-grid">
-                  <div className="review-kv">
-                    <span>Score</span>
+          {reviewCase.score ? (
+            <>
+              <div className={`score-status-card score-status-card--${scoreClassification.key}`}>
+                <div className="score-status-card__current">
+                  <span className="score-status-card__dot" aria-hidden="true" />
+                  <div>
+                    <p className="section-eyebrow">Classificacao rapida</p>
+                    <h4>{scoreClassification.label}</h4>
+                    <p className="review-paragraph">{scoreClassification.description}</p>
+                  </div>
+                </div>
+                <div className="score-status-legend" aria-label="Legenda da classificacao do score">
+                  {scoreLegend.map((item) => (
+                    <div
+                      key={item.key}
+                      className={`score-status-legend__item score-status-legend__item--${item.key} ${
+                        item.key === scoreClassification.key ? "score-status-legend__item--active" : ""
+                      }`}
+                    >
+                      <span
+                        className={`score-status-legend__dot score-status-legend__dot--${item.key}`}
+                        aria-hidden="true"
+                      />
+                      <span>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="review-kv-grid">
+                <div className="review-kv">
+                  <span>Score</span>
                     <strong>{reviewCase.score.viabilityScore}</strong>
                   </div>
                   <div className="review-kv">

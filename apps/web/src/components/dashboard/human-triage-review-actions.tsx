@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type HumanTriageReviewActionsProps = {
@@ -23,13 +23,17 @@ export function HumanTriageReviewActions({
   defaultReviewerId
 }: HumanTriageReviewActionsProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewerId, setReviewerId] = useState(defaultReviewerId);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   async function submitDecision(decision: "approve" | "reject") {
+    if (isSubmitting) {
+      return;
+    }
+
     setError(null);
     setSuccess(null);
 
@@ -40,6 +44,8 @@ export function HumanTriageReviewActions({
       setError("Informe a identificacao do revisor.");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch(`/api/intake/cases/${caseId}/human-triage`, {
@@ -80,11 +86,11 @@ export function HumanTriageReviewActions({
           : "Triagem bloqueada. O caso permaneceu sob analise."
       );
 
-      startTransition(() => {
-        router.refresh();
-      });
+      router.refresh();
     } catch {
       setError("Falha de conexao ao registrar a decisao.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -103,7 +109,6 @@ export function HumanTriageReviewActions({
         className="legal-review-actions-form"
         onSubmit={(event) => {
           event.preventDefault();
-          void submitDecision("approve");
         }}
       >
         <label className="field">
@@ -131,24 +136,21 @@ export function HumanTriageReviewActions({
 
         <div className="review-action-row">
           <button
-            type="submit"
+            type="button"
             className="button-primary inline-action"
-            disabled={isPending}
-            onClick={(event) => {
-              if (isPending) {
-                event.preventDefault();
-              }
+            disabled={isSubmitting}
+            onClick={() => {
+              void submitDecision("approve");
             }}
           >
-            {isPending ? "Liberando..." : "Aprovar triagem"}
+            {isSubmitting ? "Liberando..." : "Aprovar triagem"}
           </button>
 
           <button
             type="button"
             className="button-ghost inline-action inline-action--danger"
-            disabled={isPending}
-            onClick={(event) => {
-              event.preventDefault();
+            disabled={isSubmitting}
+            onClick={() => {
               void submitDecision("reject");
             }}
           >
