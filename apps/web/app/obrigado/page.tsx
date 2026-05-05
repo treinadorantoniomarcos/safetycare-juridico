@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { ConversionPixel } from "../../src/components/intake/conversion-pixel";
+import { PublicLegalBriefAccessPoller } from "../../src/components/intake/public-legal-brief-access-poller";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -84,6 +88,8 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
         <div className="thanks-meta">
           <p>{accessMessage}</p>
         </div>
+
+        <PublicLegalBriefAccessPoller enabled={!canOpenLegalBrief} />
 
         <Link className="button-ghost thanks-action" href="/">
           Voltar para a página principal

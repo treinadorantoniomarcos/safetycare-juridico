@@ -5,6 +5,7 @@ import {
   type CaseRecord,
   type WorkflowJobRecord
 } from "@safetycare/database";
+import { unstable_noStore as noStore } from "next/cache";
 import { getDatabaseClient } from "../../lib/database";
 
 export type PublicLegalBriefAccessState =
@@ -55,6 +56,8 @@ export async function resolvePublicLegalBriefAccess(
   caseId?: string,
   workflowJobId?: string
 ): Promise<PublicLegalBriefAccessState> {
+  noStore();
+
   if (!caseId || !workflowJobId) {
     return {
       status: "missing_params",

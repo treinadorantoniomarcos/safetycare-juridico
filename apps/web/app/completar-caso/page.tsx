@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { LegalBriefForm } from "../../src/components/intake/legal-brief-form";
+import { PublicLegalBriefAccessPoller } from "../../src/components/intake/public-legal-brief-access-poller";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -48,6 +52,8 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
             </p>
             <p>Você poderá retornar pelo mesmo link assim que a aprovação for concluída.</p>
           </div>
+
+          <PublicLegalBriefAccessPoller enabled={true} />
 
           <Link className="button-ghost thanks-action" href="/obrigado">
             Voltar para a confirmação
