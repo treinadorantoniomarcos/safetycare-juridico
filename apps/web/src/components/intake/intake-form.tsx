@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
+import { savePublicCaseAccess } from "../../features/intake/public-case-access-storage";
 
 type LeadSource = "site" | "form" | "whatsapp" | "referral";
 type LandingSource = "landing_home" | "landing_method" | "landing_faq" | "unknown";
@@ -110,6 +111,8 @@ export function IntakeForm({ landingSource = "unknown" }: IntakeFormProps) {
 
       const caseId = payload.caseId;
       const workflowJobId = payload.workflowJobId;
+
+      savePublicCaseAccess(caseId, workflowJobId);
 
       void fetch("/api/intake/conversion-event", {
         method: "POST",

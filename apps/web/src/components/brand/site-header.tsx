@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 type SiteHeaderProps = {
-  current?: "home" | "metodo" | "faq" | "dashboard";
+  current?: "home" | "metodo" | "faq" | "resume" | "dashboard";
 };
 
 function linkClass(active: boolean) {
@@ -27,6 +27,9 @@ export function SiteHeader({ current = "home" }: SiteHeaderProps) {
         </Link>
         <Link href="/faq" className={linkClass(current === "faq")}>
           FAQ
+        </Link>
+        <Link href="/retomar-caso" className={linkClass(current === "resume")}>
+          Retomar caso
         </Link>
         <Link href={dashboardHref} className={linkClass(current === "dashboard")}>
           Dashboard

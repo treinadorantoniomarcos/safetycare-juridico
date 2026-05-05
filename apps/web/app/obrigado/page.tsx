@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { ConversionPixel } from "../../src/components/intake/conversion-pixel";
 import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
+import { PublicCaseAccessSync } from "../../src/components/intake/public-case-access-sync";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,7 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
         utmContent={utmContent}
         utmTerm={utmTerm}
       />
+      <PublicCaseAccessSync caseId={caseId} workflowJobId={workflowJobId} />
 
       <section className="thanks-panel">
         <p className="section-eyebrow">Solicitacao recebida</p>
@@ -97,8 +99,9 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
           <p>{accessMessage}</p>
           {!canOpenLegalBrief ? (
             <p>
-              A liberacao acontece quando o score dos agentes ficar verde ou amarelo. Se a pagina
-              nao atualizar, recarregue manualmente.
+              A liberacao acontece quando o score dos agentes ficar verde ou amarelo. Se fechar a
+              pagina, voce pode retomar pelo menu "Retomar caso". Se a pagina nao atualizar,
+              recarregue manualmente.
             </p>
           ) : null}
         </div>
@@ -107,6 +110,9 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
 
         <Link className="button-ghost thanks-action" href="/">
           Voltar para a pagina principal
+        </Link>
+        <Link className="button-ghost thanks-action" href="/retomar-caso">
+          Retomar caso
         </Link>
       </section>
     </main>

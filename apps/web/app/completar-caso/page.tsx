@@ -1,5 +1,6 @@
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { LegalBriefForm } from "../../src/components/intake/legal-brief-form";
+import { PublicCaseAccessSync } from "../../src/components/intake/public-case-access-sync";
 import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
@@ -34,6 +35,7 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
   return (
     <main className="brand-shell">
       <SiteHeader />
+      <PublicCaseAccessSync caseId={caseId} workflowJobId={workflowJobId} />
 
       <section className="thanks-panel">
         <p className="section-eyebrow">Etapa 2 de 2</p>
@@ -52,8 +54,9 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
                   "A proxima etapa ainda nao foi liberada pelo primeiro score juridico."}
               </p>
               <p>
-                A liberacao acontece quando o score dos agentes ficar verde ou amarelo. Se a pagina
-                nao atualizar, recarregue manualmente.
+                A liberacao acontece quando o score dos agentes ficar verde ou amarelo. Se fechar a
+                pagina, voce pode retomar pelo menu "Retomar caso". Se a pagina nao atualizar,
+                recarregue manualmente.
               </p>
             </div>
 
