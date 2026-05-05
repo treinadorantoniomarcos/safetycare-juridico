@@ -27,6 +27,34 @@ function buildLegalArtifactDownloadUrl(caseId: string, format: "pdf" | "docx") {
   return `/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=${format}`;
 }
 
+function buildReviewUrl(caseId: string, legalStatus: string) {
+  if (legalStatus === "human_triage_pending") {
+    return `/painel-executivo/cases/${caseId}/triage`;
+  }
+
+  if (legalStatus === "human_review_required") {
+    return `/painel-executivo/cases/${caseId}/score`;
+  }
+
+  return `/painel-executivo/cases/${caseId}`;
+}
+
+function buildReviewLabel(legalStatus: string) {
+  if (legalStatus === "human_triage_pending") {
+    return "Analisar triagem inicial";
+  }
+
+  if (legalStatus === "human_review_required") {
+    return "Analisar score";
+  }
+
+  if (legalStatus === "conversion_pending" || legalStatus === "legal_execution_pending") {
+    return "Analisar etapa 2";
+  }
+
+  return "Abrir caso";
+}
+
 export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboardProps) {
   const [data, setData] = useState<OperationsLiveOverview>(initialData);
   const [liveClock, setLiveClock] = useState(new Date());
@@ -168,9 +196,9 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
                     </div>
                     <Link
                       className="button-ghost inline-action"
-                      href={`/painel-executivo/cases/${item.caseId}`}
+                      href={buildReviewUrl(item.caseId, item.legalStatus)}
                     >
-                      Analisar etapa 2
+                      {buildReviewLabel(item.legalStatus)}
                     </Link>
                     <details className="ops-format-menu">
                       <summary className="button-primary inline-action ops-format-menu__trigger">Baixar</summary>

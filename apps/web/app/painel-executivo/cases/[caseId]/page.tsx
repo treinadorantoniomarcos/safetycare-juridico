@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { SiteHeader } from "../../../../src/components/brand/site-header";
+import { CaseReviewStageNav } from "../../../../src/components/dashboard/case-review-stage-nav";
 import { LegalArtifactEditor } from "../../../../src/components/dashboard/legal-artifact-editor";
 import { LegalBriefReviewActions } from "../../../../src/components/dashboard/legal-brief-review-actions";
 import { hasDashboardSessionFromCookieStore } from "../../../../src/lib/dashboard-auth";
@@ -186,6 +187,8 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
             revisão.
           </p>
         </div>
+
+        <CaseReviewStageNav caseId={caseId} activeStage="legal" />
 
         <div className="review-metadata">
           <div className="review-pill-row">
