@@ -33,6 +33,10 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
   const utmTerm = readSingleParam(params.utm_term);
   const legalBriefAccess = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
   const canOpenLegalBrief = legalBriefAccess.status === "ready";
+  const accessMessage =
+    legalBriefAccess.status === "ready"
+      ? "Seu formulário foi liberado pela validação humana."
+      : legalBriefAccess.message;
 
   return (
     <main className="brand-shell">
@@ -62,24 +66,27 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
           informará a história, as datas-chave e os pedidos principais.
         </p>
 
-        {canOpenLegalBrief ? (
-          <Link
-            className="button-primary thanks-action"
-            href={`/completar-caso?caseId=${caseId}&workflowJobId=${workflowJobId}`}
-          >
-            Abrir formulário de parâmetros
-          </Link>
-        ) : (
-          <div className="thanks-meta">
-            <p>
-              {legalBriefAccess.message ??
-                "A próxima etapa será liberada após a validação humana."}
-            </p>
-          </div>
-        )}
+        <div className="thanks-action-row">
+          {canOpenLegalBrief ? (
+            <Link
+              className="button-primary thanks-action thanks-action--ready"
+              href={`/completar-caso?caseId=${caseId}&workflowJobId=${workflowJobId}`}
+            >
+              Liberado o formulário
+            </Link>
+          ) : (
+            <button className="button-ghost thanks-action thanks-action--blocked" type="button" disabled>
+              Aguardando liberação do formulário
+            </button>
+          )}
+        </div>
+
+        <div className="thanks-meta">
+          <p>{accessMessage}</p>
+        </div>
 
         <Link className="button-ghost thanks-action" href="/">
-          Voltar para a pagina principal
+          Voltar para a página principal
         </Link>
       </section>
     </main>

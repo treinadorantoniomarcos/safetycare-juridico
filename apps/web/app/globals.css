@@ -406,6 +406,31 @@ h2 {
   width: fit-content;
 }
 
+.thanks-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.thanks-action--blocked {
+  border: 1px solid #efbcc4;
+  background: #fdeff1;
+  color: #8f2332;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.thanks-action--blocked:hover {
+  transform: none;
+}
+
+.thanks-action--ready {
+  background: linear-gradient(135deg, #1f6d3d 0%, #2f8f46 100%);
+  border: 1px solid #2f8f46;
+  box-shadow: 0 12px 30px rgba(47, 143, 70, 0.28);
+}
+
 .completion-form {
   display: grid;
   gap: 14px;
