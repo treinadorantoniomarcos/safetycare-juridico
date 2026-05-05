@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { ConversionPixel } from "../../src/components/intake/conversion-pixel";
-import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
-import { PublicLegalBriefAccessPoller } from "../../src/components/intake/public-legal-brief-access-poller";
+import { PublicLegalBriefAccessPanel } from "../../src/components/intake/public-legal-brief-access-panel";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
 export const dynamic = "force-dynamic";
@@ -37,11 +36,6 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
   const utmContent = readSingleParam(params.utm_content);
   const utmTerm = readSingleParam(params.utm_term);
   const legalBriefAccess = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
-  const canOpenLegalBrief = legalBriefAccess.status === "ready";
-  const accessMessage =
-    legalBriefAccess.status === "ready"
-      ? "Seu formulário foi liberado pela validação humana."
-      : legalBriefAccess.message;
 
   return (
     <main className="brand-shell">
@@ -60,48 +54,25 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
 
       <section className="thanks-panel">
         <p className="section-eyebrow">Solicitacao recebida</p>
-        <h1>Cadastro concluído. Triagem humana em andamento.</h1>
+        <h1>Cadastro concluido. Triagem humana em andamento.</h1>
         <p>
-          Sua jornada foi registrada e agora passa por validação humana inicial. A próxima etapa
-          só será liberada após essa aprovação.
+          Sua jornada foi registrada e agora passa por validacao humana inicial. A proxima etapa
+          so sera liberada apos essa aprovacao.
         </p>
 
         <p>
-          Quando o caso for liberado, você seguirá para o formulário de parâmetros da peça, onde
-          informará a história, as datas-chave e os pedidos principais.
+          Quando o caso for liberado, voce seguira para o formulario de parametros da peca, onde
+          informara a historia, as datas-chave e os pedidos principais.
         </p>
 
-        <div className="thanks-action-row">
-          {canOpenLegalBrief ? (
-            <Link
-              className="button-primary thanks-action thanks-action--ready"
-              href={`/completar-caso?caseId=${caseId}&workflowJobId=${workflowJobId}`}
-            >
-              Liberado o formulário
-            </Link>
-          ) : (
-            <button className="button-ghost thanks-action thanks-action--blocked" type="button" disabled>
-              Aguardando liberação do formulário
-            </button>
-          )}
-        </div>
-
-        <div className="thanks-meta">
-          <p>{accessMessage}</p>
-          {!canOpenLegalBrief ? (
-            <p>
-              A página é atualizada automaticamente. Se a liberação não aparecer em alguns
-              segundos, atualize a página manualmente.
-            </p>
-          ) : null}
-        </div>
-
-        <PublicLegalBriefAccessPoller enabled={!canOpenLegalBrief} />
-
-        {!canOpenLegalBrief ? <PublicLegalBriefAccessRefreshButton /> : null}
+        <PublicLegalBriefAccessPanel
+          caseId={caseId}
+          workflowJobId={workflowJobId}
+          initialState={legalBriefAccess}
+        />
 
         <Link className="button-ghost thanks-action" href="/">
-          Voltar para a página principal
+          Voltar para a pagina principal
         </Link>
       </section>
     </main>
