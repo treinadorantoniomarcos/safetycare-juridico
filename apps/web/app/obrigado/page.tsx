@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { ConversionPixel } from "../../src/components/intake/conversion-pixel";
+import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
 import { PublicLegalBriefAccessPoller } from "../../src/components/intake/public-legal-brief-access-poller";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
@@ -87,9 +88,17 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
 
         <div className="thanks-meta">
           <p>{accessMessage}</p>
+          {!canOpenLegalBrief ? (
+            <p>
+              A página é atualizada automaticamente. Se a liberação não aparecer em alguns
+              segundos, atualize a página manualmente.
+            </p>
+          ) : null}
         </div>
 
         <PublicLegalBriefAccessPoller enabled={!canOpenLegalBrief} />
+
+        {!canOpenLegalBrief ? <PublicLegalBriefAccessRefreshButton /> : null}
 
         <Link className="button-ghost thanks-action" href="/">
           Voltar para a página principal

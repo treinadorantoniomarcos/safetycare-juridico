@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { LegalBriefForm } from "../../src/components/intake/legal-brief-form";
+import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
 import { PublicLegalBriefAccessPoller } from "../../src/components/intake/public-legal-brief-access-poller";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
@@ -50,10 +51,14 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
               {legalBriefAccess.message ??
                 "A próxima etapa ainda não foi liberada pela validação humana."}
             </p>
-            <p>Você poderá retornar pelo mesmo link assim que a aprovação for concluída.</p>
+            <p>
+              A página é atualizada automaticamente. Se a liberação não aparecer em alguns
+              segundos, atualize a página manualmente.
+            </p>
           </div>
 
           <PublicLegalBriefAccessPoller enabled={true} />
+          <PublicLegalBriefAccessRefreshButton />
 
           <Link className="button-ghost thanks-action" href="/obrigado">
             Voltar para a confirmação
