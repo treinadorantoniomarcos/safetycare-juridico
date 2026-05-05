@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const {
   findCaseByIdMock,
   findWorkflowJobByIdMock,
+  findScoreByCaseIdMock,
   findBriefByCaseIdMock,
   upsertBriefMock,
   recordAuditLogMock,
@@ -10,6 +11,7 @@ const {
 } = vi.hoisted(() => ({
   findCaseByIdMock: vi.fn(),
   findWorkflowJobByIdMock: vi.fn(),
+  findScoreByCaseIdMock: vi.fn(),
   findBriefByCaseIdMock: vi.fn(),
   upsertBriefMock: vi.fn(),
   recordAuditLogMock: vi.fn(),
@@ -19,6 +21,9 @@ const {
 vi.mock("@safetycare/database", () => ({
   CaseRepository: class {
     findById = findCaseByIdMock;
+  },
+  LegalScoreRepository: class {
+    findByCaseId = findScoreByCaseIdMock;
   },
   WorkflowJobRepository: class {
     findById = findWorkflowJobByIdMock;
@@ -56,6 +61,7 @@ describe("Public legal brief route", () => {
       caseId,
       jobType: "intake.orchestrator.bootstrap"
     });
+    findScoreByCaseIdMock.mockResolvedValueOnce(undefined);
 
     const response = await GET(
       new Request(`http://localhost/api/intake/public/cases/${caseId}/brief?workflowJobId=${workflowJobId}`),
@@ -83,6 +89,11 @@ describe("Public legal brief route", () => {
       id: workflowJobId,
       caseId,
       jobType: "intake.orchestrator.bootstrap"
+    });
+    findScoreByCaseIdMock.mockResolvedValueOnce({
+      caseId,
+      viabilityScore: 82,
+      reviewRequired: false
     });
     findBriefByCaseIdMock.mockResolvedValueOnce({
       caseId,
@@ -158,6 +169,11 @@ describe("Public legal brief route", () => {
       id: workflowJobId,
       caseId,
       jobType: "intake.orchestrator.bootstrap"
+    });
+    findScoreByCaseIdMock.mockResolvedValueOnce({
+      caseId,
+      viabilityScore: 82,
+      reviewRequired: false
     });
     findBriefByCaseIdMock.mockResolvedValueOnce(undefined);
     upsertBriefMock.mockResolvedValueOnce({

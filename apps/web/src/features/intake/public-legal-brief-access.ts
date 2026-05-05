@@ -1,19 +1,31 @@
 import { workflowJobTypes } from "@safetycare/ai-contracts";
 import {
   CaseRepository,
-  WorkflowJobRepository,
+  LegalScoreRepository,
   type CaseRecord,
-  type WorkflowJobRecord
+  type LegalScoreRecord,
+  type WorkflowJobRecord,
+  WorkflowJobRepository
 } from "@safetycare/database";
 import { unstable_noStore as noStore } from "next/cache";
+import {
+  getLegalScoreClassification,
+  type LegalScoreClassification
+} from "../dashboard/legal-score-classification";
 import { getDatabaseClient } from "../../lib/database";
 
 export type PublicLegalBriefAccessState =
   | {
       status: "ready";
+      classification: LegalScoreClassification;
+      message: string;
     }
   | {
       status: "processing";
+      message: string;
+    }
+  | {
+      status: "blocked";
       message: string;
     }
   | {
@@ -44,12 +56,42 @@ function isValidPublicCaseAccessToken(
   return workflowJob.caseId === caseId && workflowJob.jobType === workflowJobTypes[0];
 }
 
-function isBriefLocked(legalStatus: string) {
-  return legalStatus === "human_triage_pending" || legalStatus === "awaiting_consent";
-}
-
 function isBriefClosed(caseRecord: Pick<CaseRecord, "commercialStatus" | "legalStatus">) {
   return caseRecord.commercialStatus === "closed_lost" || caseRecord.legalStatus === "closed_lost";
+}
+
+export function evaluatePublicLegalBriefGate(
+  caseRecord: Pick<CaseRecord, "commercialStatus" | "legalStatus">,
+  score?: Pick<LegalScoreRecord, "viabilityScore" | "reviewRequired"> | null
+): PublicLegalBriefAccessState {
+  if (isBriefClosed(caseRecord)) {
+    return {
+      status: "blocked",
+      message: "Este caso nao esta mais disponivel para a segunda etapa."
+    };
+  }
+
+  if (!score) {
+    return {
+      status: "processing",
+      message: "A primeira analise automatica ainda nao concluiu o score juridico."
+    };
+  }
+
+  const classification = getLegalScoreClassification(score);
+
+  if (classification.key === "red") {
+    return {
+      status: "blocked",
+      message: classification.description
+    };
+  }
+
+  return {
+    status: "ready",
+    classification,
+    message: classification.description
+  };
 }
 
 export async function resolvePublicLegalBriefAccess(
@@ -61,13 +103,14 @@ export async function resolvePublicLegalBriefAccess(
   if (!caseId || !workflowJobId) {
     return {
       status: "missing_params",
-      message: "A próxima etapa será liberada após a validação humana."
+      message: "A proxima etapa sera liberada apos a validacao dos agentes."
     };
   }
 
   try {
     const { db } = getDatabaseClient();
     const cases = new CaseRepository(db);
+    const legalScores = new LegalScoreRepository(db);
     const workflowJobs = new WorkflowJobRepository(db);
 
     const caseRecord = await cases.findById(caseId);
@@ -95,16 +138,16 @@ export async function resolvePublicLegalBriefAccess(
       };
     }
 
-    if (isBriefLocked(caseRecord.legalStatus)) {
+    const score = await legalScores.findByCaseId(caseId);
+
+    if (!score) {
       return {
         status: "processing",
-        message: "A próxima etapa será liberada após a validação humana."
+        message: "A primeira analise automatica ainda nao concluiu o score juridico."
       };
     }
 
-    return {
-      status: "ready"
-    };
+    return evaluatePublicLegalBriefGate(caseRecord, score);
   } catch {
     return {
       status: "database_unavailable",
@@ -113,4 +156,12 @@ export async function resolvePublicLegalBriefAccess(
   }
 }
 
-export { isBriefClosed, isBriefLocked, isValidPublicCaseAccessToken };
+export function isBriefLocked(
+  caseRecord: Pick<CaseRecord, "commercialStatus" | "legalStatus">,
+  score?: Pick<LegalScoreRecord, "viabilityScore" | "reviewRequired"> | null
+) {
+  const gate = evaluatePublicLegalBriefGate(caseRecord, score);
+  return gate.status !== "ready";
+}
+
+export { isBriefClosed, isValidPublicCaseAccessToken };

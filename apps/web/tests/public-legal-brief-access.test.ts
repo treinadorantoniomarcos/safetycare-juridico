@@ -3,16 +3,21 @@ import { describe, expect, it, vi } from "vitest";
 const {
   findCaseByIdMock,
   findWorkflowJobByIdMock,
+  findScoreByCaseIdMock,
   getDatabaseClientMock
 } = vi.hoisted(() => ({
   findCaseByIdMock: vi.fn(),
   findWorkflowJobByIdMock: vi.fn(),
+  findScoreByCaseIdMock: vi.fn(),
   getDatabaseClientMock: vi.fn()
 }));
 
 vi.mock("@safetycare/database", () => ({
   CaseRepository: class {
     findById = findCaseByIdMock;
+  },
+  LegalScoreRepository: class {
+    findByCaseId = findScoreByCaseIdMock;
   },
   WorkflowJobRepository: class {
     findById = findWorkflowJobByIdMock;
@@ -29,7 +34,7 @@ const caseId = "11111111-1111-4111-8111-111111111111";
 const workflowJobId = "22222222-2222-4222-8222-222222222222";
 
 describe("Public legal brief access gate", () => {
-  it("blocks the stage while human analysis is pending", async () => {
+  it("blocks the stage while the first score has not been generated", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
@@ -43,29 +48,63 @@ describe("Public legal brief access gate", () => {
       caseId,
       jobType: "intake.orchestrator.bootstrap"
     });
+    findScoreByCaseIdMock.mockResolvedValueOnce(undefined);
 
     const result = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
 
     expect(result.status).toBe("processing");
   });
 
-  it("allows the stage when the case is already released", async () => {
+  it("allows the stage when the first score is yellow", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
     findCaseByIdMock.mockResolvedValueOnce({
       id: caseId,
       commercialStatus: "screening",
-      legalStatus: "intake"
+      legalStatus: "human_review_required"
     });
     findWorkflowJobByIdMock.mockResolvedValueOnce({
       id: workflowJobId,
       caseId,
       jobType: "intake.orchestrator.bootstrap"
     });
+    findScoreByCaseIdMock.mockResolvedValueOnce({
+      caseId,
+      viabilityScore: 60,
+      reviewRequired: true
+    });
 
     const result = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
 
     expect(result.status).toBe("ready");
+    if (result.status === "ready") {
+      expect(result.classification.key).toBe("yellow");
+    }
+  });
+
+  it("blocks the stage when the first score is red", async () => {
+    getDatabaseClientMock.mockReturnValue({
+      db: {}
+    });
+    findCaseByIdMock.mockResolvedValueOnce({
+      id: caseId,
+      commercialStatus: "screening",
+      legalStatus: "human_review_required"
+    });
+    findWorkflowJobByIdMock.mockResolvedValueOnce({
+      id: workflowJobId,
+      caseId,
+      jobType: "intake.orchestrator.bootstrap"
+    });
+    findScoreByCaseIdMock.mockResolvedValueOnce({
+      caseId,
+      viabilityScore: 30,
+      reviewRequired: true
+    });
+
+    const result = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
+
+    expect(result.status).toBe("blocked");
   });
 });

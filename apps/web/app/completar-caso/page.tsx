@@ -39,9 +39,9 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
         <p className="section-eyebrow">Etapa 2 de 2</p>
         <h1>Formulario de parametros da peca</h1>
         <p>
-          Liberado apos a analise humana, este formulario organiza os dados objetivos do caso para
-          revisao e adaptacao da peca civil ou de saude. O modelo serve apenas como parametro e
-          continua sujeito a validacao humana.
+          Liberado apos a analise dos agentes e o primeiro score juridico, este formulario organiza
+          os dados objetivos do caso para revisao e adaptacao da peca civil ou de saude. O modelo
+          serve apenas como parametro e continua sujeito a validacao humana.
         </p>
 
         {!isReady ? (
@@ -49,18 +49,29 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
             <div className="thanks-meta">
               <p>
                 {legalBriefAccess.message ??
-                  "A proxima etapa ainda nao foi liberada pela validacao humana."}
+                  "A proxima etapa ainda nao foi liberada pelo primeiro score juridico."}
               </p>
               <p>
-                A liberacao e manual. Quando o humano aprovar no dashboard, recarregue a pagina
-                para abrir o formulario.
+                A liberacao acontece quando o score dos agentes ficar verde ou amarelo. Se a pagina
+                nao atualizar, recarregue manualmente.
               </p>
             </div>
 
             <PublicLegalBriefAccessRefreshButton />
           </>
         ) : (
-          <LegalBriefForm caseId={caseId} workflowJobId={workflowJobId} />
+          <>
+            {legalBriefAccess.classification.key === "yellow" ? (
+              <div className="thanks-meta">
+                <p>
+                  Score amarelo: o formulario foi liberado, mas a equipe pode pedir
+                  complementacoes antes da minuta final.
+                </p>
+              </div>
+            ) : null}
+
+            <LegalBriefForm caseId={caseId} workflowJobId={workflowJobId} />
+          </>
         )}
       </section>
     </main>

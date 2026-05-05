@@ -8,6 +8,7 @@ import {
   AuditLogRepository,
   CaseRepository,
   LegalBriefInputRepository,
+  LegalScoreRepository,
   WorkflowJobRepository
 } from "@safetycare/database";
 import {
@@ -18,8 +19,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDatabaseClient } from "../../../../../../../src/lib/database";
 import {
+  evaluatePublicLegalBriefGate,
   isBriefClosed,
-  isBriefLocked,
   isValidPublicCaseAccessToken
 } from "../../../../../../../src/features/intake/public-legal-brief-access";
 
@@ -165,6 +166,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const { db } = getDatabaseClient();
     const cases = new CaseRepository(db);
+    const legalScores = new LegalScoreRepository(db);
     const workflowJobs = new WorkflowJobRepository(db);
     const legalBriefInputs = new LegalBriefInputRepository(db);
 
@@ -202,16 +204,22 @@ export async function GET(request: Request, context: RouteContext) {
       );
     }
 
-    if (isBriefLocked(caseRecord.legalStatus)) {
+    const score = await legalScores.findByCaseId(caseId);
+    const gate = evaluatePublicLegalBriefGate(caseRecord, score);
+
+    if (gate.status !== "ready") {
       return NextResponse.json(
         {
           correlationId,
-          status: "processing",
+          status: gate.status,
           caseId,
           workflowJobId,
-          message: "A etapa de parâmetros ainda não foi liberada pela análise humana."
+          message:
+            gate.status === "blocked"
+              ? gate.message
+              : "A etapa de parametros ainda nao foi liberada pela analise dos agentes."
         },
-        { status: 202 }
+        { status: gate.status === "blocked" ? 409 : 202 }
       );
     }
 
@@ -281,6 +289,7 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const { db } = getDatabaseClient();
     const cases = new CaseRepository(db);
+    const legalScores = new LegalScoreRepository(db);
     const workflowJobs = new WorkflowJobRepository(db);
     const legalBriefInputs = new LegalBriefInputRepository(db);
     const auditLogs = new AuditLogRepository(db);
@@ -319,11 +328,14 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    if (isBriefLocked(caseRecord.legalStatus)) {
+    const score = await legalScores.findByCaseId(caseId);
+    const gate = evaluatePublicLegalBriefGate(caseRecord, score);
+
+    if (gate.status !== "ready") {
       return NextResponse.json(
         {
           correlationId,
-          error: "brief_not_ready"
+          error: gate.status === "blocked" ? "brief_blocked" : "brief_not_ready"
         },
         { status: 409 }
       );
