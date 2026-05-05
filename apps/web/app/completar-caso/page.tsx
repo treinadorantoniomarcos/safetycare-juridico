@@ -1,5 +1,6 @@
 import { SiteHeader } from "../../src/components/brand/site-header";
-import { PublicLegalBriefStagePanel } from "../../src/components/intake/public-legal-brief-stage-panel";
+import { LegalBriefForm } from "../../src/components/intake/legal-brief-form";
+import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
   const caseId = readSingleParam(params.caseId);
   const workflowJobId = readSingleParam(params.workflowJobId);
   const legalBriefAccess = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
+  const isReady = legalBriefAccess.status === "ready";
 
   return (
     <main className="brand-shell">
@@ -42,11 +44,24 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
           continua sujeito a validacao humana.
         </p>
 
-        <PublicLegalBriefStagePanel
-          caseId={caseId}
-          workflowJobId={workflowJobId}
-          initialState={legalBriefAccess}
-        />
+        {!isReady ? (
+          <>
+            <div className="thanks-meta">
+              <p>
+                {legalBriefAccess.message ??
+                  "A proxima etapa ainda nao foi liberada pela validacao humana."}
+              </p>
+              <p>
+                A liberacao e manual. Quando o humano aprovar no dashboard, recarregue a pagina
+                para abrir o formulario.
+              </p>
+            </div>
+
+            <PublicLegalBriefAccessRefreshButton />
+          </>
+        ) : (
+          <LegalBriefForm caseId={caseId} workflowJobId={workflowJobId} />
+        )}
       </section>
     </main>
   );

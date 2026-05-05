@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "../../src/components/brand/site-header";
 import { ConversionPixel } from "../../src/components/intake/conversion-pixel";
-import { PublicLegalBriefAccessPanel } from "../../src/components/intake/public-legal-brief-access-panel";
+import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +36,11 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
   const utmContent = readSingleParam(params.utm_content);
   const utmTerm = readSingleParam(params.utm_term);
   const legalBriefAccess = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
+  const canOpenLegalBrief = legalBriefAccess.status === "ready";
+  const accessMessage =
+    legalBriefAccess.status === "ready"
+      ? "Seu formulario foi liberado pela validacao humana."
+      : legalBriefAccess.message;
 
   return (
     <main className="brand-shell">
@@ -65,11 +70,32 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
           informara a historia, as datas-chave e os pedidos principais.
         </p>
 
-        <PublicLegalBriefAccessPanel
-          caseId={caseId}
-          workflowJobId={workflowJobId}
-          initialState={legalBriefAccess}
-        />
+        <div className="thanks-action-row">
+          {canOpenLegalBrief ? (
+            <Link
+              className="button-primary thanks-action thanks-action--ready"
+              href={`/completar-caso?caseId=${caseId}&workflowJobId=${workflowJobId}`}
+            >
+              Liberado o formulario
+            </Link>
+          ) : (
+            <button className="button-ghost thanks-action thanks-action--blocked" type="button" disabled>
+              Aguardando liberacao do formulario
+            </button>
+          )}
+        </div>
+
+        <div className="thanks-meta">
+          <p>{accessMessage}</p>
+          {!canOpenLegalBrief ? (
+            <p>
+              A liberacao e manual. Quando o humano aprovar no dashboard, recarregue a pagina para
+              abrir o formulario.
+            </p>
+          ) : null}
+        </div>
+
+        {!canOpenLegalBrief ? <PublicLegalBriefAccessRefreshButton /> : null}
 
         <Link className="button-ghost thanks-action" href="/">
           Voltar para a pagina principal
