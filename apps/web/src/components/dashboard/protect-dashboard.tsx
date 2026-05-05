@@ -44,6 +44,10 @@ function alertClassName(severity: "critical" | "warning" | "info") {
   return "protect-alert-item";
 }
 
+function ProtectedBadge({ visible }: { visible: boolean }) {
+  return visible ? <span className="protect-lock-badge">Protegido</span> : null;
+}
+
 export function ProtectDashboard({ initialData }: ProtectDashboardProps) {
   const [data, setData] = useState<ProtectOverview>(initialData);
   const [loading, setLoading] = useState(false);
@@ -195,6 +199,9 @@ export function ProtectDashboard({ initialData }: ProtectDashboardProps) {
                   {selectedCase.department} | Status: {selectedCase.status}
                 </p>
                 <p className="hero-lede">Admissao: {formatDateTime(selectedCase.admissionDate)}</p>
+                <p className="protect-meta">
+                  <ProtectedBadge visible={selectedCase.isProtected || selectedCase.patientProtected} />
+                </p>
               </div>
               <span className={riskClassName(selectedCase.riskScore)}>
                 Risco {selectedCase.riskScore}%
@@ -227,8 +234,10 @@ export function ProtectDashboard({ initialData }: ProtectDashboardProps) {
                     <p>
                       <strong>{formatDateTime(item.eventDate)}</strong> | {item.eventType}
                     </p>
-                    <p>{item.description}</p>
-                    <p className="protect-meta">Risco: {item.riskLevel}</p>
+                    <p>{item.description ?? "Sem descricao registrada."}</p>
+                    <p className="protect-meta">
+                      Risco: {item.riskLevel} {item.isProtected ? "| Protegido" : ""}
+                    </p>
                   </article>
                 ))
               ) : (
@@ -259,6 +268,7 @@ export function ProtectDashboard({ initialData }: ProtectDashboardProps) {
                     <p key={item.id}>
                       {item.docType} | {item.validationStatus}
                       {item.gapDetails ? ` | ${item.gapDetails}` : ""}
+                      {item.isProtected ? " | Protegido" : ""}
                     </p>
                   ))}
                 </div>
@@ -277,6 +287,7 @@ export function ProtectDashboard({ initialData }: ProtectDashboardProps) {
                       <p className="protect-meta">
                         {item.severity} | {formatDateTime(item.createdAt)}
                       </p>
+                      <p className="protect-meta">{item.isProtected ? "Protegido" : null}</p>
                       {!item.isResolved ? (
                         <button
                           type="button"

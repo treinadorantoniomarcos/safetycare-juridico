@@ -22,12 +22,14 @@ export type ProtectOverview = {
     eventType: string;
     description: string | null;
     riskLevel: string;
+    isProtected: boolean;
   }>;
   evidence: Array<{
     id: string;
     docType: string;
     validationStatus: string;
     gapDetails: string | null;
+    isProtected: boolean;
   }>;
   alerts: Array<{
     id: string;
@@ -35,6 +37,7 @@ export type ProtectOverview = {
     message: string;
     isResolved: boolean;
     createdAt: string;
+    isProtected: boolean;
   }>;
   selectedCase: {
     caseId: string;
@@ -43,6 +46,8 @@ export type ProtectOverview = {
     riskScore: number;
     status: string;
     admissionDate: string;
+    isProtected: boolean;
+    patientProtected: boolean;
   } | null;
   dossier: {
     thesis: string;
@@ -105,20 +110,24 @@ export async function getProtectOverview(caseId?: string) {
       department: latestCase.department,
       riskScore: latestCase.currentRiskScore,
       status: latestCase.status,
-      admissionDate: latestCase.admissionDate.toISOString()
+      admissionDate: latestCase.admissionDate.toISOString(),
+      isProtected: latestCase.isProtected,
+      patientProtected: patient?.isProtected ?? false
     },
     timeline: timeline.map((event, index) => ({
       id: `${event.caseId}-${index}`,
       eventDate: event.eventDate.toISOString(),
       eventType: event.eventType,
       description: event.description,
-      riskLevel: event.riskLevel
+      riskLevel: event.riskLevel,
+      isProtected: event.isProtected
     })),
     evidence: documents.map((doc, index) => ({
       id: `${doc.caseId}-${index}`,
       docType: doc.docType,
       validationStatus: doc.validationStatus,
-      gapDetails: doc.gapDetails
+      gapDetails: doc.gapDetails,
+      isProtected: doc.isProtected
     })),
     alerts: [
       {
@@ -126,7 +135,8 @@ export async function getProtectOverview(caseId?: string) {
         severity: "critical" as const,
         message: "RISCO JURIDICO ALTO: Atraso em diagnostico critico detectado no Caso SC-4920.",
         isResolved: false,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        isProtected: true
       }
     ],
     dossier: {
