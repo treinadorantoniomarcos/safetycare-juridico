@@ -41,7 +41,8 @@ export async function POST(request: Request) {
         correlationId,
         status: "accepted",
         caseId: result.caseId,
-        workflowJobId: result.workflowJobId
+        workflowJobId: result.workflowJobId,
+        accessCode: result.accessCode
       },
       { status: 201 }
     );

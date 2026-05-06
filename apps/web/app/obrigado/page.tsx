@@ -3,6 +3,11 @@ import { SiteHeader } from "../../src/components/brand/site-header";
 import { ConversionPixel } from "../../src/components/intake/conversion-pixel";
 import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
 import { PublicCaseAccessSync } from "../../src/components/intake/public-case-access-sync";
+import {
+  buildPublicCaseCompletionHref,
+  buildPublicCaseResumeHref,
+  createPublicCaseAccessCode
+} from "../../src/features/intake/public-case-access-code";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
 export const dynamic = "force-dynamic";
@@ -36,8 +41,10 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
   const utmCampaign = readSingleParam(params.utm_campaign);
   const utmContent = readSingleParam(params.utm_content);
   const utmTerm = readSingleParam(params.utm_term);
+  const accessCode = caseId && workflowJobId ? createPublicCaseAccessCode(caseId, workflowJobId) : undefined;
   const legalBriefAccess = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
   const canOpenLegalBrief = legalBriefAccess.status === "ready";
+  const legalBriefHref = accessCode ? buildPublicCaseCompletionHref(accessCode) : undefined;
   const accessMessage =
     legalBriefAccess.status === "ready"
       ? legalBriefAccess.classification.key === "yellow"
@@ -78,7 +85,7 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
           {canOpenLegalBrief ? (
             <Link
               className="button-primary thanks-action thanks-action--ready"
-              href={`/completar-caso?caseId=${caseId}&workflowJobId=${workflowJobId}`}
+              href={legalBriefHref ?? "/retomar-caso"}
             >
               {legalBriefAccess.classification.key === "yellow"
                 ? "Liberado com complementacao"
@@ -97,6 +104,11 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
 
         <div className="thanks-meta">
           <p>{accessMessage}</p>
+          {accessCode ? (
+            <p>
+              Codigo de acesso: <strong>{accessCode}</strong>
+            </p>
+          ) : null}
           {!canOpenLegalBrief ? (
             <p>
               A liberacao acontece quando o score dos agentes ficar verde ou amarelo. Se fechar a
@@ -111,7 +123,7 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
         <Link className="button-ghost thanks-action" href="/">
           Voltar para a pagina principal
         </Link>
-        <Link className="button-ghost thanks-action" href="/retomar-caso">
+        <Link className="button-ghost thanks-action" href={accessCode ? buildPublicCaseResumeHref(accessCode) : "/retomar-caso"}>
           Retomar caso
         </Link>
       </section>

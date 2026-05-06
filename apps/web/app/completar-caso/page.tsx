@@ -2,6 +2,7 @@ import { SiteHeader } from "../../src/components/brand/site-header";
 import { LegalBriefForm } from "../../src/components/intake/legal-brief-form";
 import { PublicCaseAccessSync } from "../../src/components/intake/public-case-access-sync";
 import { PublicLegalBriefAccessRefreshButton } from "../../src/components/intake/public-legal-brief-access-refresh-button";
+import { parsePublicCaseAccessCode } from "../../src/features/intake/public-case-access-code";
 import { resolvePublicLegalBriefAccess } from "../../src/features/intake/public-legal-brief-access";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +28,18 @@ function readSingleParam(value: string | string[] | undefined) {
 
 export default async function CompletarCasoPage({ searchParams }: CompletarCasoPageProps) {
   const params = await searchParams;
-  const caseId = readSingleParam(params.caseId);
-  const workflowJobId = readSingleParam(params.workflowJobId);
-  const legalBriefAccess = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
+  const accessCode = readSingleParam(params.accessCode);
+  const parsedAccessCode = parsePublicCaseAccessCode(accessCode);
+  const accessCodeProvided = Boolean(accessCode?.trim());
+  const caseId = parsedAccessCode?.caseId ?? readSingleParam(params.caseId);
+  const workflowJobId = parsedAccessCode?.workflowJobId ?? readSingleParam(params.workflowJobId);
+  const legalBriefAccess =
+    accessCodeProvided && !parsedAccessCode
+      ? {
+          status: "invalid_case_access" as const,
+          message: "Codigo de acesso invalido. Volte em Retomar caso para gerar um novo link."
+        }
+      : await resolvePublicLegalBriefAccess(caseId, workflowJobId);
   const isReady = legalBriefAccess.status === "ready";
 
   return (
@@ -53,6 +63,12 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
                 {legalBriefAccess.message ??
                   "A proxima etapa ainda nao foi liberada pelo primeiro score juridico."}
               </p>
+              {accessCodeProvided ? (
+                <p>
+                  Se voce recebeu um codigo, confira se ele foi copiado por completo. O link
+                  correto tambem pode ser reenviado pela equipe.
+                </p>
+              ) : null}
               <p>
                 A liberacao acontece quando o score dos agentes ficar verde ou amarelo. Se fechar a
                 pagina, voce pode retomar pelo menu "Retomar caso". Se a pagina nao atualizar,

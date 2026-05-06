@@ -102,6 +102,7 @@ export function IntakeForm({ landingSource = "unknown" }: IntakeFormProps) {
         error?: string;
         caseId?: string;
         workflowJobId?: string;
+        accessCode?: string;
       };
 
       if (!response.ok || !payload.caseId || !payload.workflowJobId) {
@@ -139,6 +140,7 @@ export function IntakeForm({ landingSource = "unknown" }: IntakeFormProps) {
         query.set("workflowJobId", workflowJobId);
         query.set("source", landingSource);
 
+        if (payload.accessCode) query.set("accessCode", payload.accessCode);
         if (utmSource) query.set("utm_source", utmSource);
         if (utmMedium) query.set("utm_medium", utmMedium);
         if (utmCampaign) query.set("utm_campaign", utmCampaign);

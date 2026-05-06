@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  buildPublicCaseCompletionHref,
+  createPublicCaseAccessCode
+} from "../../features/intake/public-case-access-code";
 
 type LegalBriefReviewActionsProps = {
   caseId: string;
@@ -37,18 +41,21 @@ export function LegalBriefReviewActions({
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const [publicLink, setPublicLink] = useState("");
 
-  const publicLinkPath = useMemo(() => {
+  const publicAccessCode = useMemo(() => {
     if (!publicAccessJobId) {
       return "";
     }
 
-    const query = new URLSearchParams({
-      caseId,
-      workflowJobId: publicAccessJobId
-    });
-
-    return `/completar-caso?${query.toString()}`;
+    return createPublicCaseAccessCode(caseId, publicAccessJobId);
   }, [caseId, publicAccessJobId]);
+
+  const publicLinkPath = useMemo(() => {
+    if (!publicAccessCode) {
+      return "";
+    }
+
+    return buildPublicCaseCompletionHref(publicAccessCode);
+  }, [publicAccessCode]);
 
   useEffect(() => {
     if (!publicLinkPath) {
@@ -59,18 +66,23 @@ export function LegalBriefReviewActions({
     setPublicLink(`${window.location.origin}${publicLinkPath}`);
   }, [publicLinkPath]);
 
-  async function copyPublicLink() {
-    if (!publicLinkPath) {
-      setError("Nao foi possivel gerar o link do segundo formulario.");
+  async function copyText(value: string, successMessage: string, errorMessage: string) {
+    if (!value) {
+      setError(errorMessage);
       return;
     }
 
     try {
-      const valueToCopy = publicLink || `${window.location.origin}${publicLinkPath}`;
+      const valueToCopy =
+        value.startsWith("/") && typeof window !== "undefined"
+          ? `${window.location.origin}${value}`
+          : value;
+
       await navigator.clipboard.writeText(valueToCopy);
-      setCopyStatus("Link copiado para envio por WhatsApp ou e-mail.");
+      setCopyStatus(successMessage);
+      setError(null);
     } catch {
-      setError("Nao foi possivel copiar o link. Copie manualmente o endereco exibido.");
+      setError(errorMessage);
     }
   }
 
@@ -173,6 +185,36 @@ export function LegalBriefReviewActions({
         }}
       >
         <div className="review-block">
+          <h4>Codigo de acesso</h4>
+          <p className="section-note">
+            Copie o codigo para reenviar por WhatsApp ou e-mail junto com a aprovacao.
+          </p>
+
+          <div className="review-copy-link-row">
+            <input
+              type="text"
+              value={publicAccessCode || "Codigo indisponivel neste momento"}
+              readOnly
+              aria-label="Codigo de acesso do segundo formulario"
+            />
+            <button
+              type="button"
+              className="button-ghost inline-action"
+              disabled={!publicAccessCode || isSubmitting}
+              onClick={() => {
+                void copyText(
+                  publicAccessCode,
+                  "Codigo de acesso copiado para envio.",
+                  "Nao foi possivel copiar o codigo. Copie manualmente o endereco exibido."
+                );
+              }}
+            >
+              Copiar codigo
+            </button>
+          </div>
+        </div>
+
+        <div className="review-block">
           <h4>Link para encaminhar ao cliente</h4>
           <p className="section-note">
             Copie este endereco e envie ao WhatsApp ou e-mail cadastrado para o cliente continuar
@@ -191,7 +233,11 @@ export function LegalBriefReviewActions({
               className="button-ghost inline-action"
               disabled={!publicLinkPath || isSubmitting}
               onClick={() => {
-                void copyPublicLink();
+                void copyText(
+                  publicLinkPath,
+                  "Link copiado para envio por WhatsApp ou e-mail.",
+                  "Nao foi possivel copiar o link. Copie manualmente o endereco exibido."
+                );
               }}
             >
               Copiar link

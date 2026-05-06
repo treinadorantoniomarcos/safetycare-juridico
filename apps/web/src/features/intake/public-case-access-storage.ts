@@ -1,8 +1,11 @@
 "use client";
 
+import { createPublicCaseAccessCode } from "./public-case-access-code";
+
 export type PublicCaseAccess = {
   caseId: string;
   workflowJobId: string;
+  accessCode: string;
   savedAt: string;
 };
 
@@ -16,6 +19,7 @@ export function savePublicCaseAccess(caseId: string, workflowJobId: string) {
   const payload: PublicCaseAccess = {
     caseId,
     workflowJobId,
+    accessCode: createPublicCaseAccessCode(caseId, workflowJobId),
     savedAt: new Date().toISOString()
   };
 
@@ -46,6 +50,10 @@ export function loadPublicCaseAccess(): PublicCaseAccess | null {
     return {
       caseId: parsed.caseId,
       workflowJobId: parsed.workflowJobId,
+      accessCode:
+        typeof parsed.accessCode === "string"
+          ? parsed.accessCode
+          : createPublicCaseAccessCode(parsed.caseId, parsed.workflowJobId),
       savedAt: parsed.savedAt
     };
   } catch {
