@@ -23,10 +23,6 @@ export class LegalScoreRepository {
           confidence: input.confidence,
           reviewRequired: input.reviewRequired,
           reviewReasons: input.reviewReasons,
-          decision: null,
-          reviewNote: null,
-          reviewedBy: null,
-          reviewedAt: null,
           rationale: input.rationale,
           updatedAt: new Date()
         }

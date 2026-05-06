@@ -2,18 +2,46 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  normalizeScoreReviewDecision,
+  type LegalScoreTrafficLight
+} from "../../features/dashboard/legal-score-classification";
 
 type ScoreReviewActionsProps = {
   caseId: string;
   currentLegalStatus: string;
+  defaultDecision?: string | null;
+  defaultNote?: string;
   defaultReviewerId: string;
 };
 
-function buildRequestBody(
-  decision: "approve" | "request_changes" | "reject",
-  reviewerId: string,
-  note: string
-) {
+const scoreColorOptions: Array<{
+  key: LegalScoreTrafficLight;
+  label: string;
+  summary: string;
+  noteHint: string;
+}> = [
+  {
+    key: "green",
+    label: "Verde",
+    summary: "Pode continuar",
+    noteHint: "Opcional: informe observacoes adicionais."
+  },
+  {
+    key: "yellow",
+    label: "Amarelo",
+    summary: "Precisa complementar",
+    noteHint: "Informe o que precisa ser complementado."
+  },
+  {
+    key: "red",
+    label: "Vermelho",
+    summary: "Nao cabe acao juridica",
+    noteHint: "Explique por que o caso deve ser bloqueado."
+  }
+];
+
+function buildRequestBody(decision: LegalScoreTrafficLight, reviewerId: string, note: string) {
   return {
     decision,
     reviewerId,
@@ -21,19 +49,36 @@ function buildRequestBody(
   };
 }
 
+function getDecisionSuccessMessage(decision: LegalScoreTrafficLight) {
+  if (decision === "green") {
+    return "Classificacao verde salva. A etapa 2 pode ser liberada.";
+  }
+
+  if (decision === "yellow") {
+    return "Classificacao amarela salva. A etapa 2 foi liberada com complementacao.";
+  }
+
+  return "Classificacao vermelha salva. A etapa 2 ficou bloqueada.";
+}
+
 export function ScoreReviewActions({
   caseId,
   currentLegalStatus,
+  defaultDecision,
+  defaultNote,
   defaultReviewerId
 }: ScoreReviewActionsProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDecision, setSelectedDecision] = useState<LegalScoreTrafficLight | null>(() =>
+    normalizeScoreReviewDecision(defaultDecision)
+  );
   const [reviewerId, setReviewerId] = useState(defaultReviewerId);
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(defaultNote ?? "");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  async function submitDecision(decision: "approve" | "request_changes" | "reject") {
+  async function submitDecision() {
     if (isSubmitting) {
       return;
     }
@@ -44,13 +89,18 @@ export function ScoreReviewActions({
     const normalizedReviewerId = reviewerId.trim();
     const normalizedNote = note.trim();
 
+    if (!selectedDecision) {
+      setError("Escolha uma cor para classificar o score.");
+      return;
+    }
+
     if (!normalizedReviewerId) {
       setError("Informe a identificacao do revisor.");
       return;
     }
 
-    if (decision === "request_changes" && !normalizedNote) {
-      setError("Descreva o que precisa ser complementado.");
+    if (selectedDecision !== "green" && !normalizedNote) {
+      setError("Descreva o motivo da classificacao antes de enviar.");
       return;
     }
 
@@ -62,14 +112,14 @@ export function ScoreReviewActions({
         headers: {
           "content-type": "application/json"
         },
-        body: JSON.stringify(buildRequestBody(decision, normalizedReviewerId, normalizedNote))
+        body: JSON.stringify(buildRequestBody(selectedDecision, normalizedReviewerId, normalizedNote))
       });
 
       const payload = (await response.json()) as
         | { error?: string; detail?: string; correlationId?: string }
         | {
             caseStatus?: { legalStatus?: string };
-            decision?: "approve" | "request_changes" | "reject";
+            decision?: LegalScoreTrafficLight;
           };
 
       if (!response.ok) {
@@ -85,7 +135,7 @@ export function ScoreReviewActions({
           }
 
           if (payload.error === "note_required") {
-            setError("Descreva o motivo da complementacao antes de enviar.");
+            setError("Descreva o motivo da classificacao antes de enviar.");
             return;
           }
         }
@@ -94,13 +144,7 @@ export function ScoreReviewActions({
         return;
       }
 
-      setSuccess(
-        decision === "approve"
-          ? "Score aprovado. O caso pode seguir para a etapa 2."
-          : decision === "request_changes"
-            ? "Complementacao solicitada. O caso voltou para ajuste."
-            : "Score bloqueado. O caso foi encerrado nesta etapa."
-      );
+      setSuccess(getDecisionSuccessMessage(selectedDecision));
 
       router.refresh();
     } catch {
@@ -110,14 +154,18 @@ export function ScoreReviewActions({
     }
   }
 
+  const selectedOption = selectedDecision
+    ? scoreColorOptions.find((option) => option.key === selectedDecision)
+    : null;
+
   return (
     <section className="form-section-card legal-review-actions-card">
       <div className="form-section-head">
         <p className="section-eyebrow">Decisao humana</p>
-        <h3>Liberacao ou bloqueio do score juridico</h3>
+        <h3>Classificacao manual do score juridico</h3>
         <p className="section-note">
-          O status atual do caso e {currentLegalStatus}. A aprovacao libera a conversao; o bloqueio
-          encerra o caso nesta etapa.
+          O status atual do caso e {currentLegalStatus}. Escolha verde, amarelo ou vermelho para
+          definir se a etapa 2 pode seguir.
         </p>
       </div>
 
@@ -127,6 +175,45 @@ export function ScoreReviewActions({
           event.preventDefault();
         }}
       >
+        <fieldset className="score-choice-fieldset">
+          <legend className="score-choice-legend">Escolha a cor final</legend>
+          <div className="score-choice-grid" role="radiogroup" aria-label="Classificacao do score">
+            {scoreColorOptions.map((option) => {
+              const isSelected = selectedDecision === option.key;
+
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={`score-choice-card score-choice-card--${option.key} ${
+                    isSelected ? "score-choice-card--selected" : ""
+                  }`}
+                  aria-pressed={isSelected}
+                  onClick={() => {
+                    setSelectedDecision(option.key);
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                >
+                  <span className="score-choice-card__dot" aria-hidden="true" />
+                  <span className="score-choice-card__body">
+                    <strong>{option.label}</strong>
+                    <span>{option.summary}</span>
+                    <small>{option.noteHint}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        {selectedOption ? (
+          <p className={`score-choice-note score-choice-note--${selectedOption.key}`}>
+            Classificacao selecionada: <strong>{selectedOption.label}</strong>.{" "}
+            {selectedOption.summary}.
+          </p>
+        ) : null}
+
         <label className="field">
           <span>Identificacao do revisor</span>
           <input
@@ -143,7 +230,15 @@ export function ScoreReviewActions({
             rows={3}
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Informe o motivo da aprovacao, complementacao ou bloqueio"
+            placeholder={
+              selectedDecision === "green"
+                ? "Informe observacoes adicionais, se houver."
+                : selectedDecision === "yellow"
+                  ? "Descreva o que precisa ser complementado."
+                  : selectedDecision === "red"
+                    ? "Explique por que o caso nao deve seguir."
+                    : "Escolha uma cor para liberar o campo de observacao."
+            }
           />
         </label>
 
@@ -154,34 +249,12 @@ export function ScoreReviewActions({
           <button
             type="button"
             className="button-primary inline-action"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !selectedDecision}
             onClick={() => {
-              void submitDecision("approve");
+              void submitDecision();
             }}
           >
-            {isSubmitting ? "Liberando..." : "Continuar para etapa 2"}
-          </button>
-
-          <button
-            type="button"
-            className="button-ghost inline-action"
-            disabled={isSubmitting}
-            onClick={() => {
-              void submitDecision("request_changes");
-            }}
-          >
-            Solicitar complementacao
-          </button>
-
-          <button
-            type="button"
-            className="button-ghost inline-action inline-action--danger"
-            disabled={isSubmitting}
-            onClick={() => {
-              void submitDecision("reject");
-            }}
-          >
-            Nao cabe acao juridica
+            {isSubmitting ? "Salvando..." : "Salvar classificacao"}
           </button>
         </div>
       </form>

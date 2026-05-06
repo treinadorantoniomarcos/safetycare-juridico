@@ -14,8 +14,8 @@ type RouteContext = {
       }>;
 };
 
-function getCaseStatusesForDecision(decision: "approve" | "request_changes" | "reject") {
-  if (decision === "approve" || decision === "request_changes") {
+function getCaseStatusesForDecision(decision: "green" | "yellow" | "red") {
+  if (decision === "green" || decision === "yellow") {
     return {
       commercialStatus: "conversion_pending",
       legalStatus: "conversion_pending"
@@ -105,7 +105,7 @@ export async function POST(request: Request, context: RouteContext) {
       note: validation.data.note?.trim() ? validation.data.note.trim() : ""
     };
 
-    if (validation.data.decision === "request_changes" && !decisionInput.note) {
+    if (validation.data.decision !== "green" && !decisionInput.note) {
       return NextResponse.json(
         {
           correlationId,
@@ -124,11 +124,11 @@ export async function POST(request: Request, context: RouteContext) {
       actorType: "user",
       actorId: validation.data.reviewerId,
       action:
-        validation.data.decision === "approve"
-          ? "intake.score_review_approved"
-          : validation.data.decision === "request_changes"
-            ? "intake.score_review_requested_changes"
-            : "intake.score_review_rejected",
+        validation.data.decision === "green"
+          ? "intake.score_review_classified_green"
+          : validation.data.decision === "yellow"
+            ? "intake.score_review_classified_yellow"
+            : "intake.score_review_classified_red",
       correlationId,
       beforePayload: {
         score: scoreRecord,

@@ -1,4 +1,4 @@
-import { scoreReviewDecisionSchema, workflowJobTypes } from "@safetycare/ai-contracts";
+import { humanTriageDecisionSchema, workflowJobTypes } from "@safetycare/ai-contracts";
 import { AuditLogRepository, CaseRepository, WorkflowJobRepository } from "@safetycare/database";
 import { NextResponse } from "next/server";
 import { getDatabaseClient } from "../../../../../../src/lib/database";
@@ -42,7 +42,7 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const validation = scoreReviewDecisionSchema.safeParse(payload);
+  const validation = humanTriageDecisionSchema.safeParse(payload);
 
   if (!validation.success) {
     return NextResponse.json(

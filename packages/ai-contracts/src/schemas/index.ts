@@ -26,6 +26,7 @@ export {
   legalSupportingDocumentTypeSchema
 } from "./legal-document-pack.schema";
 export { leadIntakeSchema } from "./lead-intake.schema";
+export { humanTriageDecisionSchema } from "./human-triage-decision.schema";
 export { scoreReviewDecisionSchema } from "./score-review-decision.schema";
 export { rightsAssessmentItemSchema, rightsAssessmentSchema } from "./rights-assessment.schema";
 export { triageClassificationSchema } from "./triage-classification.schema";

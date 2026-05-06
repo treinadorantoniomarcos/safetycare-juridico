@@ -48,9 +48,10 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
   const accessMessage =
     legalBriefAccess.status === "ready"
       ? legalBriefAccess.classification.key === "yellow"
-        ? "Seu formulario foi liberado com complementacao pelo primeiro score juridico."
-        : "Seu formulario foi liberado pelo primeiro score juridico."
+        ? "Seu formulario foi liberado com complementacao pela classificacao amarela da equipe."
+        : "Seu formulario foi liberado pela classificacao verde da equipe."
       : legalBriefAccess.message;
+  const isAwaitingHumanScore = legalBriefAccess.status === "awaiting_human_score";
 
   return (
     <main className="brand-shell">
@@ -72,8 +73,8 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
         <p className="section-eyebrow">Solicitacao recebida</p>
         <h1>Cadastro concluido. Analise dos agentes em andamento.</h1>
         <p>
-          Sua jornada foi registrada e agora passa pela analise automatica dos agentes. A proxima
-          etapa so sera liberada quando o primeiro score juridico ficar verde ou amarelo.
+          Sua jornada foi registrada e agora passa pela classificacao humana do score. A proxima
+          etapa so sera liberada quando a equipe selecionar verde ou amarelo.
         </p>
 
         <p>
@@ -97,7 +98,9 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
             </button>
           ) : (
             <button className="button-ghost thanks-action thanks-action--blocked" type="button" disabled>
-              Aguardando liberacao do formulario
+              {isAwaitingHumanScore
+                ? "Aguardando classificacao do score"
+                : "Aguardando liberacao do formulario"}
             </button>
           )}
         </div>
@@ -111,9 +114,9 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
           ) : null}
           {!canOpenLegalBrief ? (
             <p>
-              A liberacao acontece quando o score dos agentes ficar verde ou amarelo. Se fechar a
-              pagina, voce pode retomar pelo menu "Retomar caso". Se a pagina nao atualizar,
-              recarregue manualmente.
+              A liberacao acontece quando a equipe classificar o score em verde ou amarelo. Se
+              fechar a pagina, voce pode retomar pelo menu "Retomar caso". Se a pagina nao
+              atualizar, recarregue manualmente.
             </p>
           ) : null}
         </div>

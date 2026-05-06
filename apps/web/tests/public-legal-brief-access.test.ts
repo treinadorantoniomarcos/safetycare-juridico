@@ -55,7 +55,7 @@ describe("Public legal brief access gate", () => {
     expect(result.status).toBe("processing");
   });
 
-  it("allows the stage when the first score is yellow", async () => {
+  it("waits for human classification when the first score exists but has not been reviewed", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
@@ -73,6 +73,32 @@ describe("Public legal brief access gate", () => {
       caseId,
       viabilityScore: 60,
       reviewRequired: true
+    });
+
+    const result = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
+
+    expect(result.status).toBe("awaiting_human_score");
+  });
+
+  it("allows the stage when the first score is yellow", async () => {
+    getDatabaseClientMock.mockReturnValue({
+      db: {}
+    });
+    findCaseByIdMock.mockResolvedValueOnce({
+      id: caseId,
+      commercialStatus: "screening",
+      legalStatus: "human_review_required"
+    });
+    findWorkflowJobByIdMock.mockResolvedValueOnce({
+      id: workflowJobId,
+      caseId,
+      jobType: "intake.orchestrator.bootstrap"
+    });
+    findScoreByCaseIdMock.mockResolvedValueOnce({
+      caseId,
+      viabilityScore: 60,
+      reviewRequired: true,
+      decision: "yellow"
     });
 
     const result = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
@@ -100,7 +126,8 @@ describe("Public legal brief access gate", () => {
     findScoreByCaseIdMock.mockResolvedValueOnce({
       caseId,
       viabilityScore: 30,
-      reviewRequired: true
+      reviewRequired: true,
+      decision: "red"
     });
 
     const result = await resolvePublicLegalBriefAccess(caseId, workflowJobId);

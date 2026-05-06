@@ -76,6 +76,39 @@ describe("Public legal brief route", () => {
     expect(body.status).toBe("processing");
   });
 
+  it("returns awaiting_human_score while the score exists but has not been classified", async () => {
+    getDatabaseClientMock.mockReturnValue({
+      db: {}
+    });
+    findCaseByIdMock.mockResolvedValueOnce({
+      id: caseId,
+      commercialStatus: "screening",
+      legalStatus: "human_review_required"
+    });
+    findWorkflowJobByIdMock.mockResolvedValueOnce({
+      id: workflowJobId,
+      caseId,
+      jobType: "intake.orchestrator.bootstrap"
+    });
+    findScoreByCaseIdMock.mockResolvedValueOnce({
+      caseId,
+      viabilityScore: 65,
+      reviewRequired: true
+    });
+
+    const response = await GET(
+      new Request(`http://localhost/api/intake/public/cases/${caseId}/brief?workflowJobId=${workflowJobId}`),
+      {
+        params: { caseId }
+      }
+    );
+
+    const body = await response.json();
+
+    expect(response.status).toBe(202);
+    expect(body.status).toBe("awaiting_human_score");
+  });
+
   it("returns an existing brief submission when the case is ready", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
@@ -93,7 +126,8 @@ describe("Public legal brief route", () => {
     findScoreByCaseIdMock.mockResolvedValueOnce({
       caseId,
       viabilityScore: 82,
-      reviewRequired: false
+      reviewRequired: false,
+      decision: "green"
     });
     findBriefByCaseIdMock.mockResolvedValueOnce({
       caseId,
@@ -173,7 +207,8 @@ describe("Public legal brief route", () => {
     findScoreByCaseIdMock.mockResolvedValueOnce({
       caseId,
       viabilityScore: 82,
-      reviewRequired: false
+      reviewRequired: false,
+      decision: "green"
     });
     findBriefByCaseIdMock.mockResolvedValueOnce(undefined);
     upsertBriefMock.mockResolvedValueOnce({

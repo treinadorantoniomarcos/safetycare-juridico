@@ -217,7 +217,7 @@ export async function GET(request: Request, context: RouteContext) {
           message:
             gate.status === "blocked"
               ? gate.message
-              : "A etapa de parametros ainda nao foi liberada pela analise dos agentes."
+              : "A etapa de parametros ainda nao foi liberada pela classificacao humana do score."
         },
         { status: gate.status === "blocked" ? 409 : 202 }
       );

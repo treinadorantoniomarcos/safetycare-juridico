@@ -37,7 +37,7 @@ vi.mock("../src/lib/database", () => ({
 import { POST } from "../app/api/intake/cases/[caseId]/score/review/route";
 
 describe("POST /api/intake/cases/[caseId]/score/review", () => {
-  it("approves score review and moves the case to conversion_pending", async () => {
+  it("classifies the score as green and moves the case to conversion_pending", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
@@ -54,7 +54,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     applyHumanReviewDecisionMock.mockResolvedValueOnce({
       caseId: "case-1",
       reviewRequired: false,
-      humanReviewDecision: "approve"
+      decision: "green"
     });
     updateStatusesMock.mockResolvedValueOnce({
       id: "case-1",
@@ -66,7 +66,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     const request = new Request("http://localhost/api/intake/cases/case-1/score/review", {
       method: "POST",
       body: JSON.stringify({
-        decision: "approve",
+        decision: "green",
         reviewerId: "reviewer-1",
         note: "Seguir para conversao."
       }),
@@ -84,7 +84,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
 
     expect(response.status).toBe(200);
     expect(applyHumanReviewDecisionMock).toHaveBeenCalledWith("case-1", {
-      decision: "approve",
+      decision: "green",
       reviewerId: "reviewer-1",
       note: "Seguir para conversao."
     });
@@ -95,7 +95,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     expect(body.caseStatus.legalStatus).toBe("conversion_pending");
   });
 
-  it("rejects score review and moves the case to score_rejected", async () => {
+  it("classifies the score as red and moves the case to score_rejected", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
@@ -112,7 +112,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     applyHumanReviewDecisionMock.mockResolvedValueOnce({
       caseId: "case-1",
       reviewRequired: false,
-      humanReviewDecision: "reject"
+      decision: "red"
     });
     updateStatusesMock.mockResolvedValueOnce({
       id: "case-1",
@@ -124,8 +124,9 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     const request = new Request("http://localhost/api/intake/cases/case-1/score/review", {
       method: "POST",
       body: JSON.stringify({
-        decision: "reject",
-        reviewerId: "reviewer-2"
+        decision: "red",
+        reviewerId: "reviewer-2",
+        note: "Nao ha base juridica suficiente."
       }),
       headers: {
         "content-type": "application/json"
@@ -140,6 +141,11 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(applyHumanReviewDecisionMock).toHaveBeenCalledWith("case-1", {
+      decision: "red",
+      reviewerId: "reviewer-2",
+      note: "Nao ha base juridica suficiente."
+    });
     expect(updateStatusesMock).toHaveBeenCalledWith("case-1", {
       commercialStatus: "score_rejected",
       legalStatus: "score_rejected"
@@ -147,7 +153,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     expect(body.caseStatus.commercialStatus).toBe("score_rejected");
   });
 
-  it("requests changes and moves the case back to conversion_pending", async () => {
+  it("classifies the score as yellow and moves the case back to conversion_pending", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
@@ -164,7 +170,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     applyHumanReviewDecisionMock.mockResolvedValueOnce({
       caseId: "case-1",
       reviewRequired: true,
-      humanReviewDecision: "request_changes"
+      decision: "yellow"
     });
     updateStatusesMock.mockResolvedValueOnce({
       id: "case-1",
@@ -176,7 +182,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     const request = new Request("http://localhost/api/intake/cases/case-1/score/review", {
       method: "POST",
       body: JSON.stringify({
-        decision: "request_changes",
+        decision: "yellow",
         reviewerId: "reviewer-3",
         note: "Faltam exames complementares."
       }),
@@ -194,7 +200,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
 
     expect(response.status).toBe(200);
     expect(applyHumanReviewDecisionMock).toHaveBeenCalledWith("case-1", {
-      decision: "request_changes",
+      decision: "yellow",
       reviewerId: "reviewer-3",
       note: "Faltam exames complementares."
     });
@@ -214,7 +220,7 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     const request = new Request("http://localhost/api/intake/cases/case-404/score/review", {
       method: "POST",
       body: JSON.stringify({
-        decision: "approve",
+        decision: "green",
         reviewerId: "reviewer-1"
       }),
       headers: {

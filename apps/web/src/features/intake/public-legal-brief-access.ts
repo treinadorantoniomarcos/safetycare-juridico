@@ -9,7 +9,7 @@ import {
 } from "@safetycare/database";
 import { unstable_noStore as noStore } from "next/cache";
 import {
-  getLegalScoreClassification,
+  getHumanScoreClassification,
   type LegalScoreClassification
 } from "../dashboard/legal-score-classification";
 import { getDatabaseClient } from "../../lib/database";
@@ -22,6 +22,10 @@ export type PublicLegalBriefAccessState =
     }
   | {
       status: "processing";
+      message: string;
+    }
+  | {
+      status: "awaiting_human_score";
       message: string;
     }
   | {
@@ -62,7 +66,7 @@ function isBriefClosed(caseRecord: Pick<CaseRecord, "commercialStatus" | "legalS
 
 export function evaluatePublicLegalBriefGate(
   caseRecord: Pick<CaseRecord, "commercialStatus" | "legalStatus">,
-  score?: Pick<LegalScoreRecord, "viabilityScore" | "reviewRequired"> | null
+  score?: Pick<LegalScoreRecord, "viabilityScore" | "reviewRequired" | "decision"> | null
 ): PublicLegalBriefAccessState {
   if (isBriefClosed(caseRecord)) {
     return {
@@ -78,19 +82,26 @@ export function evaluatePublicLegalBriefGate(
     };
   }
 
-  const classification = getLegalScoreClassification(score);
+  const humanClassification = getHumanScoreClassification(score.decision);
 
-  if (classification.key === "red") {
+  if (!humanClassification) {
+    return {
+      status: "awaiting_human_score",
+      message: "O score juridico ainda precisa ser classificado manualmente pela equipe."
+    };
+  }
+
+  if (humanClassification.key === "red") {
     return {
       status: "blocked",
-      message: classification.description
+      message: humanClassification.description
     };
   }
 
   return {
     status: "ready",
-    classification,
-    message: classification.description
+    classification: humanClassification,
+    message: humanClassification.description
   };
 }
 
@@ -158,7 +169,7 @@ export async function resolvePublicLegalBriefAccess(
 
 export function isBriefLocked(
   caseRecord: Pick<CaseRecord, "commercialStatus" | "legalStatus">,
-  score?: Pick<LegalScoreRecord, "viabilityScore" | "reviewRequired"> | null
+  score?: Pick<LegalScoreRecord, "viabilityScore" | "reviewRequired" | "decision"> | null
 ) {
   const gate = evaluatePublicLegalBriefGate(caseRecord, score);
   return gate.status !== "ready";

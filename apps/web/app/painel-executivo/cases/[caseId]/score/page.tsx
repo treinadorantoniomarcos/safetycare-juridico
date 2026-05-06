@@ -245,7 +245,11 @@ export default async function ScoreReviewPage({ params }: PageProps) {
           <section className="form-section-card">
             <div className="form-section-head">
               <p className="section-eyebrow">Score</p>
-              <h3>Analise de viabilidade juridica</h3>
+              <h3>Classificacao humana do score juridico</h3>
+              <p className="section-note">
+                A analise automatica abaixo ajuda na leitura do caso, mas a cor escolhida pelo
+                humano define se a etapa 2 sera liberada ou bloqueada.
+              </p>
             </div>
 
           {reviewCase.score ? (
@@ -254,7 +258,7 @@ export default async function ScoreReviewPage({ params }: PageProps) {
                 <div className="score-status-card__current">
                   <span className="score-status-card__dot" aria-hidden="true" />
                   <div>
-                    <p className="section-eyebrow">Classificacao rapida</p>
+                    <p className="section-eyebrow">Classificacao automatica</p>
                     <h4>{scoreClassification.label}</h4>
                     <p className="review-paragraph">{scoreClassification.description}</p>
                   </div>
@@ -404,7 +408,9 @@ export default async function ScoreReviewPage({ params }: PageProps) {
             <ScoreReviewActions
               caseId={caseId}
               currentLegalStatus={reviewCase.legalStatus}
-              defaultReviewerId={reviewerIdDefault}
+              defaultDecision={reviewCase.score.decision}
+              defaultNote={reviewCase.score.reviewNote ?? ""}
+              defaultReviewerId={reviewCase.score.reviewedBy ?? reviewerIdDefault}
             />
           ) : null}
         </div>
