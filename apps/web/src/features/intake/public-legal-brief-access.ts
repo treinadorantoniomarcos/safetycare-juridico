@@ -77,8 +77,8 @@ export function evaluatePublicLegalBriefGate(
 
   if (!score) {
     return {
-      status: "processing",
-      message: "A primeira analise automatica ainda nao concluiu o score juridico."
+      status: "awaiting_human_score",
+      message: "A classificacao manual do score juridico ainda nao foi registrada."
     };
   }
 
@@ -153,8 +153,8 @@ export async function resolvePublicLegalBriefAccess(
 
     if (!score) {
       return {
-        status: "processing",
-        message: "A primeira analise automatica ainda nao concluiu o score juridico."
+        status: "awaiting_human_score",
+        message: "A classificacao manual do score juridico ainda nao foi registrada."
       };
     }
 

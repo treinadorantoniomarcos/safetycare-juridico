@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { SiteHeader } from "../../../../../src/components/brand/site-header";
 import { CaseReviewStageNav } from "../../../../../src/components/dashboard/case-review-stage-nav";
-import { getLegalScoreClassification } from "../../../../../src/features/dashboard/legal-score-classification";
+import { getHumanScoreClassification } from "../../../../../src/features/dashboard/legal-score-classification";
 import { ScoreReviewActions } from "../../../../../src/components/dashboard/score-review-actions";
 import { getScoreReviewCase } from "../../../../../src/features/dashboard/get-score-review-case";
 import { hasDashboardSessionFromCookieStore } from "../../../../../src/lib/dashboard-auth";
@@ -87,28 +87,7 @@ export default async function ScoreReviewPage({ params }: PageProps) {
   }
 
   const reviewerIdDefault = process.env.DASHBOARD_AUTH_USER ?? "painel-executivo";
-  const scoreClassification = getLegalScoreClassification(
-    reviewCase.score
-      ? {
-          viabilityScore: reviewCase.score.viabilityScore,
-          reviewRequired: reviewCase.score.reviewRequired
-        }
-      : null
-  );
-  const scoreLegend = [
-    {
-      key: "green",
-      label: "Pode continuar"
-    },
-    {
-      key: "yellow",
-      label: "Precisa complementar"
-    },
-    {
-      key: "red",
-      label: "Nao cabe acao juridica"
-    }
-  ] as const;
+  const scoreClassification = getHumanScoreClassification(reviewCase.score?.decision);
 
   return (
     <main className="brand-shell">
@@ -245,86 +224,37 @@ export default async function ScoreReviewPage({ params }: PageProps) {
           <section className="form-section-card">
             <div className="form-section-head">
               <p className="section-eyebrow">Score</p>
-              <h3>Classificacao humana do score juridico</h3>
+              <h3>Classificacao manual do score juridico</h3>
               <p className="section-note">
-                A analise automatica abaixo ajuda na leitura do caso, mas a cor escolhida pelo
-                humano define se a etapa 2 sera liberada ou bloqueada.
+                Nao existe score automatico nesta etapa. A equipe escolhe a cor manualmente para
+                liberar ou bloquear a etapa 2.
               </p>
             </div>
 
-          {reviewCase.score ? (
-            <>
-              <div className={`score-status-card score-status-card--${scoreClassification.key}`}>
-                <div className="score-status-card__current">
-                  <span className="score-status-card__dot" aria-hidden="true" />
-                  <div>
-                    <p className="section-eyebrow">Classificacao automatica</p>
-                    <h4>{scoreClassification.label}</h4>
-                    <p className="review-paragraph">{scoreClassification.description}</p>
-                  </div>
-                </div>
-                <div className="score-status-legend" aria-label="Legenda da classificacao do score">
-                  {scoreLegend.map((item) => (
-                    <div
-                      key={item.key}
-                      className={`score-status-legend__item score-status-legend__item--${item.key} ${
-                        item.key === scoreClassification.key ? "score-status-legend__item--active" : ""
-                      }`}
-                    >
-                      <span
-                        className={`score-status-legend__dot score-status-legend__dot--${item.key}`}
-                        aria-hidden="true"
-                      />
-                      <span>{item.label}</span>
+            <ScoreReviewActions
+              caseId={caseId}
+              currentLegalStatus={reviewCase.legalStatus}
+              defaultDecision={reviewCase.score?.decision ?? null}
+              defaultNote={reviewCase.score?.reviewNote ?? ""}
+              defaultReviewerId={reviewCase.score?.reviewedBy ?? reviewerIdDefault}
+            />
+
+            {scoreClassification ? (
+              <div className="review-block">
+                <h4>Classificacao atual</h4>
+                <div className={`score-status-card score-status-card--${scoreClassification.key}`}>
+                  <div className="score-status-card__current">
+                    <span className="score-status-card__dot" aria-hidden="true" />
+                    <div>
+                      <p className="section-eyebrow">Classificacao manual</p>
+                      <h4>{scoreClassification.label}</h4>
+                      <p className="review-paragraph">{scoreClassification.description}</p>
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
-
-              <div className="review-kv-grid">
-                <div className="review-kv">
-                  <span>Score</span>
-                    <strong>{reviewCase.score.viabilityScore}</strong>
-                  </div>
-                  <div className="review-kv">
-                    <span>Complexidade</span>
-                    <strong>{reviewCase.score.complexity}</strong>
-                  </div>
-                  <div className="review-kv">
-                    <span>Valor estimado</span>
-                    <strong>
-                      {Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL"
-                      }).format(reviewCase.score.estimatedValueCents / 100)}
-                    </strong>
-                  </div>
-                  <div className="review-kv">
-                    <span>Revisao humana</span>
-                    <strong>{reviewCase.score.reviewRequired ? "sim" : "nao"}</strong>
-                  </div>
-                  <div className="review-kv">
-                    <span>Confianca</span>
-                    <strong>{reviewCase.score.confidence}%</strong>
-                  </div>
-                  <div className="review-kv">
-                    <span>Job</span>
-                    <strong>{reviewCase.scoreJob?.status ?? "nao localizado"}</strong>
-                  </div>
-                </div>
-
-                <div className="review-block">
-                  <h4>Motivos da revisao</h4>
-                  {renderMaybeJson(reviewCase.score.reviewReasons)}
-                </div>
-
-                <div className="review-block">
-                  <h4>Racional</h4>
-                  {renderMaybeJson(reviewCase.score.rationale)}
-                </div>
-              </>
             ) : (
-              <p className="review-empty-state">Nenhum score foi localizado para este caso.</p>
+              <p className="review-empty-state">Nenhuma classificacao manual foi registrada.</p>
             )}
           </section>
 

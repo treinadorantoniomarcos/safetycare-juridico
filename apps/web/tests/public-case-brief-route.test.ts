@@ -47,7 +47,7 @@ const caseId = "11111111-1111-4111-8111-111111111111";
 const workflowJobId = "22222222-2222-4222-8222-222222222222";
 
 describe("Public legal brief route", () => {
-  it("returns processing while the human analysis has not released the form", async () => {
+  it("returns awaiting_human_score while the score has not been classified manually", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
@@ -73,7 +73,7 @@ describe("Public legal brief route", () => {
     const body = await response.json();
 
     expect(response.status).toBe(202);
-    expect(body.status).toBe("processing");
+    expect(body.status).toBe("awaiting_human_score");
   });
 
   it("returns awaiting_human_score while the score exists but has not been classified", async () => {

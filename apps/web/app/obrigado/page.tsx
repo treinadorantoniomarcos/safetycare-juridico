@@ -73,7 +73,7 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
         <p className="section-eyebrow">Solicitacao recebida</p>
         <h1>Cadastro concluido. Analise dos agentes em andamento.</h1>
         <p>
-          Sua jornada foi registrada e agora passa pela classificacao humana do score. A proxima
+          Sua jornada foi registrada e agora passa pela classificacao manual do score. A proxima
           etapa so sera liberada quando a equipe selecionar verde ou amarelo.
         </p>
 
@@ -99,7 +99,7 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
           ) : (
             <button className="button-ghost thanks-action thanks-action--blocked" type="button" disabled>
               {isAwaitingHumanScore
-                ? "Aguardando classificacao do score"
+                ? "Aguardando classificacao manual do score"
                 : "Aguardando liberacao do formulario"}
             </button>
           )}
@@ -114,7 +114,7 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
           ) : null}
           {!canOpenLegalBrief ? (
             <p>
-              A liberacao acontece quando a equipe classificar o score em verde ou amarelo. Se
+              A liberacao acontece quando a equipe classificar o score manualmente em verde ou amarelo. Se
               fechar a pagina, voce pode retomar pelo menu "Retomar caso". Se a pagina nao
               atualizar, recarregue manualmente.
             </p>

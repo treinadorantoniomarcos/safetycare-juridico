@@ -34,7 +34,7 @@ const caseId = "11111111-1111-4111-8111-111111111111";
 const workflowJobId = "22222222-2222-4222-8222-222222222222";
 
 describe("Public legal brief access gate", () => {
-  it("blocks the stage while the first score has not been generated", async () => {
+  it("waits for human classification when the score has not been registered yet", async () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
@@ -52,7 +52,7 @@ describe("Public legal brief access gate", () => {
 
     const result = await resolvePublicLegalBriefAccess(caseId, workflowJobId);
 
-    expect(result.status).toBe("processing");
+    expect(result.status).toBe("awaiting_human_score");
   });
 
   it("waits for human classification when the first score exists but has not been reviewed", async () => {

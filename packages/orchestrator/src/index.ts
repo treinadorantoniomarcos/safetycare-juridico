@@ -3,14 +3,12 @@ import {
   assessPatientRights,
   buildEvidenceChecklist,
   buildPatientJourneyTimeline,
-  calculateLegalScore,
   classifyCaseTriage
 } from "@safetycare/agents";
 import {
   clinicalAnalysisSchema,
   evidenceChecklistSchema,
   journeyTimelineSchema,
-  legalScoreSchema,
   rightsAssessmentSchema,
   triageClassificationSchema,
   workflowJobTypes,
@@ -22,7 +20,6 @@ import {
   EvidenceChecklistRepository,
   LegalBriefInputRepository,
   LegalArtifactRepository,
-  LegalScoreRepository,
   RightsAssessmentRepository,
   type LegalBriefInputRecord,
   type DatabaseClient,
@@ -124,9 +121,7 @@ type LegalScoreJobResult = {
   workflowJobId: string;
   caseId: string;
   status: "completed" | "blocked";
-  nextStage: "score_ready" | "human_review_required" | "score_pending";
-  viabilityScore: number;
-  reviewRequired: boolean;
+  nextStage: "human_review_required" | "score_pending";
   retryAt?: string;
 };
 
@@ -1101,7 +1096,6 @@ export async function runLegalScore(
   const clinicalAnalyses = new ClinicalAnalysisRepository(db);
   const rightsAssessments = new RightsAssessmentRepository(db);
   const evidenceChecklists = new EvidenceChecklistRepository(db);
-  const legalScores = new LegalScoreRepository(db);
   const auditLogs = new AuditLogRepository(db);
 
   const claimedJob = await workflowJobs.claim(workflowJobId);
@@ -1168,108 +1162,41 @@ export async function runLegalScore(
         caseId: intakeContext.caseRecord.id,
         status: "blocked",
         nextStage: "score_pending",
-        viabilityScore: 0,
-        reviewRequired: true,
         retryAt: retryAt.toISOString()
       };
     }
 
-    const triageInput = triageClassificationSchema.parse({
-      caseType: triage.caseType,
-      priority: triage.priority,
-      urgency: triage.urgency,
-      hasDamage: triage.hasDamage,
-      legalPotential: triage.legalPotential,
-      confidence: triage.confidence,
-      rationale: triage.rationale
-    });
-    const clinicalInput = clinicalAnalysisSchema.parse({
-      caseId: clinical.caseId,
-      source: clinical.source,
-      summary: clinical.summary,
-      riskLevel: clinical.riskLevel,
-      confidence: clinical.confidence,
-      findings: normalizeClinicalFindings(clinical.findings)
-    });
-    const rightsInput = rightsAssessmentSchema.parse({
-      caseId: rights.caseId,
-      source: rights.source,
-      summary: rights.summary,
-      confidence: rights.confidence,
-      violationCount: rights.violationCount,
-      rights: rights.rights
-    });
-    const evidenceInput = evidenceChecklistSchema.parse({
-      caseId: evidence.caseId,
-      source: evidence.source,
-      summary: evidence.summary,
-      confidence: evidence.confidence,
-      missingCount: evidence.missingCount,
-      items: evidence.items,
-      requiredInformationRequests: evidence.requiredInformationRequests
-    });
-
-    const score = calculateLegalScore({
-      caseId: intakeContext.caseRecord.id,
-      triage: triageInput,
-      clinical: clinicalInput,
-      rights: rightsInput,
-      evidence: evidenceInput
-    });
-    const normalizedScore = legalScoreSchema.parse(score);
-
-    await legalScores.upsert({
-      caseId: intakeContext.caseRecord.id,
-      viabilityScore: normalizedScore.viabilityScore,
-      complexity: normalizedScore.complexity,
-      estimatedValueCents: normalizedScore.estimatedValueCents,
-      confidence: normalizedScore.confidence,
-      reviewRequired: normalizedScore.reviewRequired,
-      reviewReasons: normalizedScore.reviewReasons,
-      rationale: normalizedScore.rationale
-    });
-
-    const nextStage = normalizedScore.reviewRequired ? "human_review_required" : "score_ready";
+    const nextStage = "human_review_required" as const;
 
     await cases.updateStatuses(intakeContext.caseRecord.id, {
       legalStatus: nextStage
     });
 
     await workflowJobs.markCompleted(claimedJob.id, {
-      stage: nextStage,
-      viabilityScore: normalizedScore.viabilityScore,
-      complexity: normalizedScore.complexity,
-      confidence: normalizedScore.confidence,
-      reviewRequired: normalizedScore.reviewRequired,
-      reviewReasons: normalizedScore.reviewReasons
+      stage: nextStage
     });
 
     await auditLogs.record({
       caseId: intakeContext.caseRecord.id,
-      actorType: "agent",
+      actorType: "system",
       actorId: "legal-scorer",
-      action: "score.completed",
+      action: "score.awaiting_human_classification",
       correlationId: claimedJob.correlationId,
       afterPayload: {
         workflowJobId: claimedJob.id,
-        viabilityScore: normalizedScore.viabilityScore,
-        complexity: normalizedScore.complexity,
-        confidence: normalizedScore.confidence,
-        reviewRequired: normalizedScore.reviewRequired
+        nextStage
       }
     });
 
     logger.info(
-      `score_completed caseId=${intakeContext.caseRecord.id} workflowJobId=${claimedJob.id} viabilityScore=${normalizedScore.viabilityScore} reviewRequired=${String(normalizedScore.reviewRequired)}`
+      `score_manual_review_pending caseId=${intakeContext.caseRecord.id} workflowJobId=${claimedJob.id}`
     );
 
     return {
       workflowJobId: claimedJob.id,
       caseId: intakeContext.caseRecord.id,
       status: "completed",
-      nextStage,
-      viabilityScore: normalizedScore.viabilityScore,
-      reviewRequired: normalizedScore.reviewRequired
+      nextStage
     };
   } catch (error) {
     await handleWorkflowFailure(workflowJobs, claimedJob.id, error);

@@ -51,7 +51,7 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
         <p className="section-eyebrow">Etapa 2 de 2</p>
         <h1>Formulario de parametros da peca</h1>
         <p>
-          Liberado apos a classificacao humana do score em verde ou amarelo, este formulario
+          Liberado apos a classificacao manual do score em verde ou amarelo, este formulario
           organiza os dados objetivos do caso para revisao e adaptacao da peca civil ou de saude.
           O modelo serve apenas como parametro e continua sujeito a validacao humana.
         </p>
@@ -70,7 +70,8 @@ export default async function CompletarCasoPage({ searchParams }: CompletarCasoP
                 </p>
               ) : null}
               <p>
-                A liberacao acontece quando a equipe classificar o score em verde ou amarelo. Se
+                A liberacao acontece quando a equipe classificar o score manualmente em verde ou
+                amarelo. Se
                 fechar a pagina, voce pode retomar pelo menu "Retomar caso". Se a pagina nao
                 atualizar, recarregue manualmente.
               </p>

@@ -84,7 +84,7 @@ export function HumanTriageReviewActions({
 
       setSuccess(
         decision === "approve"
-          ? "Triagem liberada. O caso pode seguir para a operacao automatica."
+          ? "Triagem liberada. O caso pode seguir para a classificacao manual do score."
           : "Triagem bloqueada. O caso permaneceu sob analise."
       );
 
@@ -106,7 +106,7 @@ export function HumanTriageReviewActions({
         <p className="section-eyebrow">Decisao humana</p>
         <h3>Liberacao ou bloqueio da triagem inicial</h3>
         <p className="section-note">
-          O status atual do caso e {currentLegalStatus}. A aprovacao libera o fluxo automatico;
+          O status atual do caso e {currentLegalStatus}. A aprovacao libera o fluxo interno;
           o bloqueio encerra a entrada para revisao interna.
         </p>
       </div>
