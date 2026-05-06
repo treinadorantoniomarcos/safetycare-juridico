@@ -93,15 +93,15 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
                 : "Liberado o formulario"}
             </Link>
           ) : legalBriefAccess.status === "blocked" ? (
-            <button className="button-ghost thanks-action thanks-action--blocked" type="button" disabled>
+            <p className="thanks-status-note thanks-status-note--blocked">
               Nao cabe acao juridica neste momento
-            </button>
+            </p>
           ) : (
-            <button className="button-ghost thanks-action thanks-action--blocked" type="button" disabled>
+            <p className="thanks-status-note thanks-status-note--blocked">
               {isAwaitingHumanScore
                 ? "Aguardando classificacao manual do score"
                 : "Aguardando liberacao do formulario"}
-            </button>
+            </p>
           )}
         </div>
 
