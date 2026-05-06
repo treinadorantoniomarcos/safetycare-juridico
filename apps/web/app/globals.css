@@ -996,6 +996,10 @@ h2 {
   grid-column: 1 / -1;
 }
 
+.legal-review-actions-card--inline {
+  grid-column: auto;
+}
+
 .legal-review-actions-form {
   display: grid;
   gap: 12px;

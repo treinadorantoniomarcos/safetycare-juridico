@@ -1,5 +1,5 @@
 import { workflowJobTypes } from "@safetycare/ai-contracts";
-import { CaseRepository, WorkflowJobRepository } from "@safetycare/database";
+import { CaseRepository, LegalScoreRepository, WorkflowJobRepository } from "@safetycare/database";
 import { getDatabaseClient } from "../../lib/database";
 
 export type HumanTriageReviewJobView = {
@@ -32,6 +32,7 @@ export type HumanTriageReviewCase = {
   };
   priority: string;
   urgency: string;
+  score: Awaited<ReturnType<LegalScoreRepository["findByCaseId"]>> | null;
   bootstrapJob: HumanTriageReviewJobView | null;
 };
 
@@ -65,6 +66,7 @@ export async function getHumanTriageReviewCase(
 ): Promise<HumanTriageReviewCase | null> {
   const { db } = getDatabaseClient();
   const cases = new CaseRepository(db);
+  const legalScores = new LegalScoreRepository(db);
   const workflowJobs = new WorkflowJobRepository(db);
 
   const intakeContext = await cases.findIntakeContextById(caseId);
@@ -73,9 +75,10 @@ export async function getHumanTriageReviewCase(
     return null;
   }
 
-  const bootstrapJob = formatJob(
-    await workflowJobs.findLatestByCaseIdAndType(caseId, workflowJobTypes[0])
-  );
+  const [score, bootstrapJob] = await Promise.all([
+    legalScores.findByCaseId(caseId),
+    workflowJobs.findLatestByCaseIdAndType(caseId, workflowJobTypes[0])
+  ]);
 
   return {
     caseId: intakeContext.caseRecord.id,
@@ -102,6 +105,7 @@ export async function getHumanTriageReviewCase(
     },
     priority: intakeContext.caseRecord.priority,
     urgency: intakeContext.caseRecord.urgency,
-    bootstrapJob
+    score,
+    bootstrapJob: formatJob(bootstrapJob)
   };
 }

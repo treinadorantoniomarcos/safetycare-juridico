@@ -13,6 +13,7 @@ type ScoreReviewActionsProps = {
   defaultDecision?: string | null;
   defaultNote?: string;
   defaultReviewerId: string;
+  layout?: "stacked" | "inline";
 };
 
 const scoreColorOptions: Array<{
@@ -66,7 +67,8 @@ export function ScoreReviewActions({
   currentLegalStatus,
   defaultDecision,
   defaultNote,
-  defaultReviewerId
+  defaultReviewerId,
+  layout = "stacked"
 }: ScoreReviewActionsProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -159,7 +161,11 @@ export function ScoreReviewActions({
     : null;
 
   return (
-    <section className="form-section-card legal-review-actions-card">
+    <section
+      className={`form-section-card legal-review-actions-card ${
+        layout === "inline" ? "legal-review-actions-card--inline" : ""
+      }`}
+    >
       <div className="form-section-head">
         <p className="section-eyebrow">Decisao humana</p>
         <h3>Classificacao manual do score juridico</h3>

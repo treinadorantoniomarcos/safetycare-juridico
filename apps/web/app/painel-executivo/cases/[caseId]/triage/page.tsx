@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { SiteHeader } from "../../../../../src/components/brand/site-header";
 import { CaseReviewStageNav } from "../../../../../src/components/dashboard/case-review-stage-nav";
 import { HumanTriageReviewActions } from "../../../../../src/components/dashboard/human-triage-review-actions";
+import { ScoreReviewActions } from "../../../../../src/components/dashboard/score-review-actions";
 import { getHumanTriageReviewCase } from "../../../../../src/features/dashboard/get-human-triage-review-case";
 import { hasDashboardSessionFromCookieStore } from "../../../../../src/lib/dashboard-auth";
 
@@ -212,7 +213,42 @@ export default async function HumanTriageReviewPage({ params }: PageProps) {
             caseId={caseId}
             currentLegalStatus={reviewCase.legalStatus}
             defaultReviewerId={reviewerIdDefault}
+            layout="inline"
           />
+
+          {reviewCase.score ? (
+            <ScoreReviewActions
+              caseId={caseId}
+              currentLegalStatus={reviewCase.legalStatus}
+              defaultDecision={reviewCase.score.decision}
+              defaultNote={reviewCase.score.reviewNote ?? ""}
+              defaultReviewerId={reviewCase.score.reviewedBy ?? reviewerIdDefault}
+              layout="inline"
+            />
+          ) : (
+            <section className="form-section-card legal-review-actions-card legal-review-actions-card--inline">
+              <div className="form-section-head">
+                <p className="section-eyebrow">Score juridico</p>
+                <h3>Classificacao de cor ainda indisponivel</h3>
+                <p className="section-note">
+                  Nenhum score consolidado foi localizado para este caso. Se preciso, abra a tela
+                  de score para revisar a classificacao separadamente.
+                </p>
+              </div>
+
+              <p className="review-empty-state">
+                A classificacao por cor aparece aqui ao lado da triagem quando o score estiver
+                disponivel.
+              </p>
+
+              <Link
+                className="button-ghost inline-action"
+                href={`/painel-executivo/cases/${caseId}/score`}
+              >
+                Abrir tela do score
+              </Link>
+            </section>
+          )}
         </div>
 
         <Link className="button-ghost inline-action legal-review-back-link" href="/painel-executivo">

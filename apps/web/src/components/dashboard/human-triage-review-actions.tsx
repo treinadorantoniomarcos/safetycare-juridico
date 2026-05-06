@@ -7,6 +7,7 @@ type HumanTriageReviewActionsProps = {
   caseId: string;
   currentLegalStatus: string;
   defaultReviewerId: string;
+  layout?: "stacked" | "inline";
 };
 
 function buildRequestBody(decision: "approve" | "reject", reviewerId: string, note: string) {
@@ -20,7 +21,8 @@ function buildRequestBody(decision: "approve" | "reject", reviewerId: string, no
 export function HumanTriageReviewActions({
   caseId,
   currentLegalStatus,
-  defaultReviewerId
+  defaultReviewerId,
+  layout = "stacked"
 }: HumanTriageReviewActionsProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,7 +97,11 @@ export function HumanTriageReviewActions({
   }
 
   return (
-    <section className="form-section-card legal-review-actions-card">
+    <section
+      className={`form-section-card legal-review-actions-card ${
+        layout === "inline" ? "legal-review-actions-card--inline" : ""
+      }`}
+    >
       <div className="form-section-head">
         <p className="section-eyebrow">Decisao humana</p>
         <h3>Liberacao ou bloqueio da triagem inicial</h3>
