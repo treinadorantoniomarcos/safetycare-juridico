@@ -28,6 +28,40 @@ function getCaseStatusesForDecision(decision: "green" | "yellow" | "red") {
   } as const;
 }
 
+function getSeedScoreForDecision(caseId: string, decision: "green" | "yellow" | "red") {
+  const base =
+    decision === "green"
+      ? {
+          viabilityScore: 85,
+          reviewRequired: false
+        }
+      : decision === "yellow"
+        ? {
+            viabilityScore: 60,
+            reviewRequired: true
+          }
+        : {
+            viabilityScore: 30,
+            reviewRequired: false
+          };
+
+  return {
+    caseId,
+    viabilityScore: base.viabilityScore,
+    complexity: "manual_classification",
+    estimatedValueCents: 0,
+    confidence: 100,
+    reviewRequired: base.reviewRequired,
+    reviewReasons: {
+      source: "human_score_classification"
+    },
+    rationale: {
+      source: "human_score_classification",
+      decision
+    }
+  };
+}
+
 export async function POST(request: Request, context: RouteContext) {
   const correlationId = crypto.randomUUID();
   const { caseId } = await Promise.resolve(context.params);
@@ -87,18 +121,6 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    const scoreRecord = await legalScores.findByCaseId(caseId);
-
-    if (!scoreRecord) {
-      return NextResponse.json(
-        {
-          correlationId,
-          error: "score_not_found"
-        },
-        { status: 404 }
-      );
-    }
-
     const decisionInput = {
       decision: validation.data.decision,
       reviewerId: validation.data.reviewerId,
@@ -115,6 +137,9 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
+    const scoreRecord =
+      (await legalScores.findByCaseId(caseId)) ??
+      (await legalScores.upsert(getSeedScoreForDecision(caseId, validation.data.decision)));
     const reviewedScore = await legalScores.applyHumanReviewDecision(caseId, decisionInput);
     const nextStatuses = getCaseStatusesForDecision(validation.data.decision);
     const caseStatus = await cases.updateStatuses(caseId, nextStatuses);

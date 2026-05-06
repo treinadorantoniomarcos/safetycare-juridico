@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const {
   findCaseByIdMock,
   findScoreByCaseIdMock,
+  upsertScoreMock,
   applyHumanReviewDecisionMock,
   updateStatusesMock,
   recordMock,
@@ -10,6 +11,7 @@ const {
 } = vi.hoisted(() => ({
   findCaseByIdMock: vi.fn(),
   findScoreByCaseIdMock: vi.fn(),
+  upsertScoreMock: vi.fn(),
   applyHumanReviewDecisionMock: vi.fn(),
   updateStatusesMock: vi.fn(),
   recordMock: vi.fn(),
@@ -26,6 +28,7 @@ vi.mock("@safetycare/database", () => ({
   },
   LegalScoreRepository: class {
     findByCaseId = findScoreByCaseIdMock;
+    upsert = upsertScoreMock;
     applyHumanReviewDecision = applyHumanReviewDecisionMock;
   }
 }));
@@ -93,6 +96,69 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
       legalStatus: "conversion_pending"
     });
     expect(body.caseStatus.legalStatus).toBe("conversion_pending");
+  });
+
+  it("creates a manual score seed when none exists yet", async () => {
+    getDatabaseClientMock.mockReturnValue({
+      db: {}
+    });
+    findCaseByIdMock.mockResolvedValueOnce({
+      id: "case-2",
+      commercialStatus: "triaged",
+      legalStatus: "human_review_required"
+    });
+    findScoreByCaseIdMock.mockResolvedValueOnce(undefined);
+    upsertScoreMock.mockResolvedValueOnce({
+      caseId: "case-2",
+      viabilityScore: 60,
+      reviewRequired: true
+    });
+    applyHumanReviewDecisionMock.mockResolvedValueOnce({
+      caseId: "case-2",
+      reviewRequired: true,
+      decision: "yellow"
+    });
+    updateStatusesMock.mockResolvedValueOnce({
+      id: "case-2",
+      commercialStatus: "conversion_pending",
+      legalStatus: "conversion_pending"
+    });
+    recordMock.mockResolvedValueOnce(undefined);
+
+    const request = new Request("http://localhost/api/intake/cases/case-2/score/review", {
+      method: "POST",
+      body: JSON.stringify({
+        decision: "yellow",
+        reviewerId: "reviewer-4",
+        note: "Faltam exames complementares."
+      }),
+      headers: {
+        "content-type": "application/json"
+      }
+    });
+
+    const response = await POST(request, {
+      params: {
+        caseId: "case-2"
+      }
+    });
+
+    expect(response.status).toBe(200);
+    expect(upsertScoreMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        caseId: "case-2",
+        viabilityScore: 60,
+        complexity: "manual_classification",
+        estimatedValueCents: 0,
+        confidence: 100,
+        reviewRequired: true
+      })
+    );
+    expect(applyHumanReviewDecisionMock).toHaveBeenCalledWith("case-2", {
+      decision: "yellow",
+      reviewerId: "reviewer-4",
+      note: "Faltam exames complementares."
+    });
   });
 
   it("classifies the score as red and moves the case to score_rejected", async () => {

@@ -216,39 +216,14 @@ export default async function HumanTriageReviewPage({ params }: PageProps) {
             layout="inline"
           />
 
-          {reviewCase.score ? (
-            <ScoreReviewActions
-              caseId={caseId}
-              currentLegalStatus={reviewCase.legalStatus}
-              defaultDecision={reviewCase.score.decision}
-              defaultNote={reviewCase.score.reviewNote ?? ""}
-              defaultReviewerId={reviewCase.score.reviewedBy ?? reviewerIdDefault}
-              layout="inline"
-            />
-          ) : (
-            <section className="form-section-card legal-review-actions-card legal-review-actions-card--inline">
-              <div className="form-section-head">
-                <p className="section-eyebrow">Score juridico</p>
-                <h3>Classificacao de cor ainda indisponivel</h3>
-                <p className="section-note">
-                  Nenhum score consolidado foi localizado para este caso. Se preciso, abra a tela
-                  de score para revisar a classificacao separadamente.
-                </p>
-              </div>
-
-              <p className="review-empty-state">
-                A classificacao por cor aparece aqui ao lado da triagem quando o score estiver
-                disponivel.
-              </p>
-
-              <Link
-                className="button-ghost inline-action"
-                href={`/painel-executivo/cases/${caseId}/score`}
-              >
-                Abrir tela do score
-              </Link>
-            </section>
-          )}
+          <ScoreReviewActions
+            caseId={caseId}
+            currentLegalStatus={reviewCase.legalStatus}
+            defaultDecision={reviewCase.score?.decision ?? null}
+            defaultNote={reviewCase.score?.reviewNote ?? ""}
+            defaultReviewerId={reviewCase.score?.reviewedBy ?? reviewerIdDefault}
+            layout="inline"
+          />
         </div>
 
         <Link className="button-ghost inline-action legal-review-back-link" href="/painel-executivo">
