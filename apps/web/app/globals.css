@@ -970,6 +970,28 @@ h2 {
   gap: 8px;
 }
 
+.review-copy-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-copy-link-row input {
+  flex: 1 1 360px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 11px 12px;
+  color: var(--ink);
+  font: inherit;
+}
+
+.review-copy-link-row input:focus-visible {
+  outline: 2px solid #1f4ea5;
+  outline-offset: 1px;
+}
+
 .legal-review-actions-card {
   grid-column: 1 / -1;
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type LegalBriefReviewActionsProps = {
   caseId: string;
   currentLegalStatus: string;
   defaultReviewerId: string;
+  publicAccessJobId: string | null;
 };
 
 function buildRequestBody(
@@ -24,7 +25,8 @@ function buildRequestBody(
 export function LegalBriefReviewActions({
   caseId,
   currentLegalStatus,
-  defaultReviewerId
+  defaultReviewerId,
+  publicAccessJobId
 }: LegalBriefReviewActionsProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,6 +34,45 @@ export function LegalBriefReviewActions({
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
+  const [publicLink, setPublicLink] = useState("");
+
+  const publicLinkPath = useMemo(() => {
+    if (!publicAccessJobId) {
+      return "";
+    }
+
+    const query = new URLSearchParams({
+      caseId,
+      workflowJobId: publicAccessJobId
+    });
+
+    return `/completar-caso?${query.toString()}`;
+  }, [caseId, publicAccessJobId]);
+
+  useEffect(() => {
+    if (!publicLinkPath) {
+      setPublicLink("");
+      return;
+    }
+
+    setPublicLink(`${window.location.origin}${publicLinkPath}`);
+  }, [publicLinkPath]);
+
+  async function copyPublicLink() {
+    if (!publicLinkPath) {
+      setError("Nao foi possivel gerar o link do segundo formulario.");
+      return;
+    }
+
+    try {
+      const valueToCopy = publicLink || `${window.location.origin}${publicLinkPath}`;
+      await navigator.clipboard.writeText(valueToCopy);
+      setCopyStatus("Link copiado para envio por WhatsApp ou e-mail.");
+    } catch {
+      setError("Nao foi possivel copiar o link. Copie manualmente o endereco exibido.");
+    }
+  }
 
   async function submitDecision(decision: "approve" | "reject" | "request_changes") {
     if (isSubmitting) {
@@ -40,6 +81,7 @@ export function LegalBriefReviewActions({
 
     setError(null);
     setSuccess(null);
+    setCopyStatus(null);
 
     const normalizedReviewerId = reviewerId.trim();
     const normalizedNote = note.trim();
@@ -98,7 +140,7 @@ export function LegalBriefReviewActions({
 
       setSuccess(
         decision === "approve"
-          ? "Etapa 2 liberada. Os agentes podem gerar a minuta, a procuração e o contrato."
+          ? "Etapa 2 liberada. Copie o link abaixo e envie ao cliente por WhatsApp ou e-mail."
           : decision === "request_changes"
             ? "Complementacao solicitada. O caso voltou para ajuste."
             : "Etapa 2 bloqueada. O caso permanece em analise."
@@ -130,6 +172,35 @@ export function LegalBriefReviewActions({
           event.preventDefault();
         }}
       >
+        <div className="review-block">
+          <h4>Link para encaminhar ao cliente</h4>
+          <p className="section-note">
+            Copie este endereco e envie ao WhatsApp ou e-mail cadastrado para o cliente continuar
+            o segundo formulario.
+          </p>
+
+          <div className="review-copy-link-row">
+            <input
+              type="text"
+              value={publicLink || publicLinkPath || "Link indisponivel neste momento"}
+              readOnly
+              aria-label="Link para encaminhar ao cliente"
+            />
+            <button
+              type="button"
+              className="button-ghost inline-action"
+              disabled={!publicLinkPath || isSubmitting}
+              onClick={() => {
+                void copyPublicLink();
+              }}
+            >
+              Copiar link
+            </button>
+          </div>
+
+          {copyStatus ? <p className="completion-success-message">{copyStatus}</p> : null}
+        </div>
+
         <label className="field">
           <span>Identificacao do revisor</span>
           <input

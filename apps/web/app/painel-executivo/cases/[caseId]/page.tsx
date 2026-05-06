@@ -498,6 +498,7 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
               caseId={caseId}
               currentLegalStatus={reviewCase.legalStatus}
               defaultReviewerId={reviewerIdDefault}
+              publicAccessJobId={reviewCase.publicAccessJob?.id ?? null}
             />
           </div>
         )}

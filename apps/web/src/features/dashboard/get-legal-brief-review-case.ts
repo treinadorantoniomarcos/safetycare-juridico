@@ -55,6 +55,7 @@ export type LegalBriefReviewCase = {
   };
   caseUpdatedAt: string;
   draft: LegalDraft | null;
+  publicAccessJob: LegalBriefReviewJobView | null;
   legalExecutionJob: LegalBriefReviewJobView | null;
   legalStatus: string;
   supportingDocumentPack: LegalDocumentPack | null;
@@ -151,6 +152,9 @@ export async function getLegalBriefReviewCase(caseId: string): Promise<LegalBrie
   const submission = submissionRecord ? formatSubmission(submissionRecord) : null;
   const draft = submission ? buildCivilHealthLegalDraft(submission) : null;
   const supportingDocumentPack = submission ? buildCivilHealthSupportingDocumentPack(submission) : null;
+  const publicAccessJob = formatJob(
+    await workflowJobs.findLatestByCaseIdAndType(caseId, workflowJobTypes[0])
+  );
   const legalExecutionJob = formatJob(
     await workflowJobs.findLatestByCaseIdAndType(caseId, workflowJobTypes[7])
   );
@@ -167,6 +171,7 @@ export async function getLegalBriefReviewCase(caseId: string): Promise<LegalBrie
     },
     caseUpdatedAt: toIsoDate(caseWithClient.caseRecord.updatedAt),
     draft,
+    publicAccessJob,
     legalExecutionJob,
     legalStatus: caseWithClient.caseRecord.legalStatus,
     supportingDocumentPack,
