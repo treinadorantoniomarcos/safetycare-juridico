@@ -7,7 +7,9 @@ const {
   requeueMock,
   markCompletedMock,
   recordMock,
-  getDatabaseClientMock
+  getDatabaseClientMock,
+  hasDashboardSessionFromRequestMock,
+  hasOperationsAccessMock
 } = vi.hoisted(() => ({
   findWithClientByIdMock: vi.fn(),
   findLatestByCaseIdAndTypeMock: vi.fn(),
@@ -15,7 +17,9 @@ const {
   requeueMock: vi.fn(),
   markCompletedMock: vi.fn(),
   recordMock: vi.fn(),
-  getDatabaseClientMock: vi.fn()
+  getDatabaseClientMock: vi.fn(),
+  hasDashboardSessionFromRequestMock: vi.fn(),
+  hasOperationsAccessMock: vi.fn()
 }));
 
 vi.mock("@safetycare/database", () => ({
@@ -37,6 +41,14 @@ vi.mock("../src/lib/database", () => ({
   getDatabaseClient: getDatabaseClientMock
 }));
 
+vi.mock("../src/lib/dashboard-auth", () => ({
+  hasDashboardSessionFromRequest: hasDashboardSessionFromRequestMock
+}));
+
+vi.mock("../src/lib/operations-auth", () => ({
+  hasOperationsAccess: hasOperationsAccessMock
+}));
+
 import { POST } from "../app/api/intake/cases/[caseId]/human-triage/route";
 
 describe("POST /api/intake/cases/[caseId]/human-triage", () => {
@@ -44,6 +56,8 @@ describe("POST /api/intake/cases/[caseId]/human-triage", () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
+    hasDashboardSessionFromRequestMock.mockReturnValue(true);
+    hasOperationsAccessMock.mockReturnValue(false);
     findWithClientByIdMock.mockResolvedValueOnce({
       caseRecord: {
         id: "case-1",
@@ -100,6 +114,8 @@ describe("POST /api/intake/cases/[caseId]/human-triage", () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
+    hasDashboardSessionFromRequestMock.mockReturnValue(true);
+    hasOperationsAccessMock.mockReturnValue(false);
     findWithClientByIdMock.mockResolvedValueOnce({
       caseRecord: {
         id: "case-2",

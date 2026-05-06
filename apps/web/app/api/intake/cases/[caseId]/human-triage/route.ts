@@ -2,6 +2,7 @@ import { humanTriageDecisionSchema, workflowJobTypes } from "@safetycare/ai-cont
 import { AuditLogRepository, CaseRepository, WorkflowJobRepository } from "@safetycare/database";
 import { NextResponse } from "next/server";
 import { getDatabaseClient } from "../../../../../../src/lib/database";
+import { hasDashboardSessionFromRequest } from "../../../../../../src/lib/dashboard-auth";
 import { hasOperationsAccess } from "../../../../../../src/lib/operations-auth";
 
 type RouteContext = {
@@ -18,7 +19,9 @@ export async function POST(request: Request, context: RouteContext) {
   const correlationId = crypto.randomUUID();
   const { caseId } = await Promise.resolve(context.params);
 
-  if (!hasOperationsAccess(request)) {
+  const canAccess = hasDashboardSessionFromRequest(request) || hasOperationsAccess(request);
+
+  if (!canAccess) {
     return NextResponse.json(
       {
         correlationId,
