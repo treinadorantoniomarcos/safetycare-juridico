@@ -7,7 +7,9 @@ const {
   applyHumanReviewDecisionMock,
   updateStatusesMock,
   recordMock,
-  getDatabaseClientMock
+  getDatabaseClientMock,
+  hasDashboardSessionFromRequestMock,
+  hasOperationsAccessMock
 } = vi.hoisted(() => ({
   findCaseByIdMock: vi.fn(),
   findScoreByCaseIdMock: vi.fn(),
@@ -15,7 +17,9 @@ const {
   applyHumanReviewDecisionMock: vi.fn(),
   updateStatusesMock: vi.fn(),
   recordMock: vi.fn(),
-  getDatabaseClientMock: vi.fn()
+  getDatabaseClientMock: vi.fn(),
+  hasDashboardSessionFromRequestMock: vi.fn(),
+  hasOperationsAccessMock: vi.fn()
 }));
 
 vi.mock("@safetycare/database", () => ({
@@ -37,6 +41,14 @@ vi.mock("../src/lib/database", () => ({
   getDatabaseClient: getDatabaseClientMock
 }));
 
+vi.mock("../src/lib/dashboard-auth", () => ({
+  hasDashboardSessionFromRequest: hasDashboardSessionFromRequestMock
+}));
+
+vi.mock("../src/lib/operations-auth", () => ({
+  hasOperationsAccess: hasOperationsAccessMock
+}));
+
 import { POST } from "../app/api/intake/cases/[caseId]/score/review/route";
 
 describe("POST /api/intake/cases/[caseId]/score/review", () => {
@@ -44,6 +56,8 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
+    hasDashboardSessionFromRequestMock.mockReturnValue(true);
+    hasOperationsAccessMock.mockReturnValue(false);
     findCaseByIdMock.mockResolvedValueOnce({
       id: "case-1",
       commercialStatus: "triaged",
@@ -102,6 +116,8 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
+    hasDashboardSessionFromRequestMock.mockReturnValue(true);
+    hasOperationsAccessMock.mockReturnValue(false);
     findCaseByIdMock.mockResolvedValueOnce({
       id: "case-2",
       commercialStatus: "triaged",
@@ -165,6 +181,8 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
+    hasDashboardSessionFromRequestMock.mockReturnValue(true);
+    hasOperationsAccessMock.mockReturnValue(false);
     findCaseByIdMock.mockResolvedValueOnce({
       id: "case-1",
       commercialStatus: "triaged",
@@ -223,6 +241,8 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
+    hasDashboardSessionFromRequestMock.mockReturnValue(true);
+    hasOperationsAccessMock.mockReturnValue(false);
     findCaseByIdMock.mockResolvedValueOnce({
       id: "case-1",
       commercialStatus: "triaged",
@@ -281,6 +301,8 @@ describe("POST /api/intake/cases/[caseId]/score/review", () => {
     getDatabaseClientMock.mockReturnValue({
       db: {}
     });
+    hasDashboardSessionFromRequestMock.mockReturnValue(true);
+    hasOperationsAccessMock.mockReturnValue(false);
     findCaseByIdMock.mockResolvedValueOnce(undefined);
 
     const request = new Request("http://localhost/api/intake/cases/case-404/score/review", {
