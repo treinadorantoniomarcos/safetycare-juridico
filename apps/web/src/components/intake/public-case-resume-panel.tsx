@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   clearPublicCaseAccess,
+  savePublicCaseAccess,
   loadPublicCaseAccess,
   type PublicCaseAccess
 } from "../../features/intake/public-case-access-storage";
@@ -93,6 +94,23 @@ export function PublicCaseResumePanel({
   const accessCodeToShow = resolvedAccess?.accessCode ?? manualAccessCode.trim() ?? "";
   const canOpenManual = Boolean(completionHref);
   const hasInvalidAccessInput = (hasManualInput && !manualAccessAttempt) || (hasUrlInput && !urlAccess);
+
+  useEffect(() => {
+    if (!resolvedAccess) {
+      return;
+    }
+
+    if (
+      savedAccess?.caseId === resolvedAccess.caseId &&
+      savedAccess?.workflowJobId === resolvedAccess.workflowJobId &&
+      savedAccess?.accessCode === resolvedAccess.accessCode
+    ) {
+      return;
+    }
+
+    savePublicCaseAccess(resolvedAccess.caseId, resolvedAccess.workflowJobId);
+    setSavedAccess(loadPublicCaseAccess());
+  }, [resolvedAccess, savedAccess?.accessCode, savedAccess?.caseId, savedAccess?.workflowJobId]);
 
   async function copyText(value: string, successMessage: string) {
     if (!value) {
