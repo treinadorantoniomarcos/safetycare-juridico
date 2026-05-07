@@ -180,6 +180,23 @@ describe("POST /api/dashboard/protect/cases/[caseId]/legal-artifacts/generate", 
       legalStatus: "legal_execution_in_progress"
     });
     recordAuditLogMock.mockResolvedValue({ id: "audit-1" });
+    findLatestArtifactByCaseIdAndTypeMock.mockResolvedValue({
+      id: "artifact-previous",
+      caseId,
+      sourceWorkflowJobId: workflowJobId,
+      artifactType: "civil_health_draft",
+      versionNumber: 1,
+      status: "draft",
+      title: "Minuta preliminar",
+      subtitle: "Subtitulo anterior",
+      summary: "Resumo anterior",
+      contentMarkdown: "# Minuta\n\nTexto anterior.",
+      metadata: {
+        source: "worker"
+      },
+      createdAt: new Date("2026-05-07T11:00:00Z"),
+      updatedAt: new Date("2026-05-07T11:00:00Z")
+    });
     process.env.DASHBOARD_AUTH_USER = "painel-executivo";
   });
 
@@ -208,6 +225,7 @@ describe("POST /api/dashboard/protect/cases/[caseId]/legal-artifacts/generate", 
       "fee_agreement"
     ]);
     expect(createVersionMock).toHaveBeenCalledTimes(3);
+    expect(findLatestArtifactByCaseIdAndTypeMock).not.toHaveBeenCalled();
     expect(markCompletedMock).toHaveBeenCalledTimes(1);
     expect(updateStatusesMock).toHaveBeenCalledWith(caseId, {
       legalStatus: "legal_execution_in_progress"

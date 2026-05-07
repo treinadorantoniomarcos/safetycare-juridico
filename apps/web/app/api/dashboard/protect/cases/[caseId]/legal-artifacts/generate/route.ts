@@ -149,13 +149,6 @@ export async function POST(request: Request, context: RouteContext) {
     const artifacts = [];
 
     for (const descriptor of artifactDescriptors) {
-      const latestArtifact = await legalArtifacts.findLatestByCaseIdAndType(caseId, descriptor.artifactType);
-
-      if (latestArtifact) {
-        artifacts.push(latestArtifact);
-        continue;
-      }
-
       const created = await legalArtifacts.createVersion({
         caseId,
         sourceWorkflowJobId: submissionRecord.sourceWorkflowJobId,
