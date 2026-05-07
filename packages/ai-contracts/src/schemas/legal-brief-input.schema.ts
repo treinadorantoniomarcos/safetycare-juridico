@@ -1,9 +1,19 @@
 import { z } from "zod";
 import { legalBriefProblemTypes, triageUrgencyLevels } from "../constants";
 
+const optionalTimeSchema = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}, z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora invalida").optional());
+
 export const legalBriefKeyDateSchema = z.object({
   label: z.string().trim().min(1).max(140),
-  date: z.string().date()
+  date: z.string().date(),
+  time: optionalTimeSchema
 });
 
 export const legalBriefUploadedDocumentSchema = z.object({

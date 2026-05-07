@@ -249,7 +249,7 @@ export const legalBriefInputsTable = pgTable(
     problemType: text("problem_type").notNull(),
     currentUrgency: text("current_urgency").notNull(),
     keyDates: jsonb("key_dates")
-      .$type<Array<{ label: string; date: string }>>()
+      .$type<Array<{ label: string; date: string; time?: string }>>()
       .notNull()
       .default([]),
     objectiveDescription: text("objective_description").notNull(),

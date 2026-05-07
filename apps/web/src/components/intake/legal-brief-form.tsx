@@ -68,7 +68,7 @@ function createEmptyState(): LegalBriefFormState {
     contactRg: "",
     problemType: "atendimento",
     currentUrgency: "medium",
-    keyDates: [{ label: "", date: "" }],
+    keyDates: [{ label: "", date: "", time: "" }],
     objectiveDescription: "",
     materialLosses: "",
     moralImpact: "",
@@ -103,7 +103,13 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
     contactRg: submission.contactRg ?? "",
     problemType: submission.problemType,
     currentUrgency: submission.currentUrgency,
-    keyDates: submission.keyDates.length > 0 ? submission.keyDates : [{ label: "", date: "" }],
+    keyDates:
+      submission.keyDates.length > 0
+        ? submission.keyDates.map((item) => ({
+            ...item,
+            time: item.time ?? ""
+          }))
+        : [{ label: "", date: "", time: "" }],
     objectiveDescription: submission.objectiveDescription,
     materialLosses: submission.materialLosses,
     moralImpact: submission.moralImpact,
@@ -121,10 +127,13 @@ function trimList(values: string[]) {
 
 function trimDates(values: LegalBriefKeyDate[]) {
   return values
-    .map((value) => ({
-      label: value.label.trim(),
-      date: value.date.trim()
-    }))
+    .map((value) => {
+      const label = value.label.trim();
+      const date = value.date.trim();
+      const time = value.time?.trim() ?? "";
+
+      return time.length > 0 ? { label, date, time } : { label, date };
+    })
     .filter((value) => value.label.length > 0 && value.date.length > 0);
 }
 
@@ -425,7 +434,7 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
   function addKeyDate() {
     setFormState((prev) => ({
       ...prev,
-      keyDates: [...prev.keyDates, { label: "", date: "" }]
+      keyDates: [...prev.keyDates, { label: "", date: "", time: "" }]
     }));
   }
 
@@ -998,7 +1007,7 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           <h3>Datas-chave</h3>
           <p className="section-note">
             Liste os marcos mais importantes da história: sintomas, atendimentos, negativas,
-            internações, pedidos administrativos, altas ou piora clínica.
+            internações, pedidos administrativos, altas ou piora clínica. O horário é opcional.
           </p>
         </div>
 
@@ -1027,6 +1036,19 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
                   onChange={(event) =>
                     updateKeyDate(index, {
                       date: event.target.value
+                    })
+                  }
+                  />
+              </label>
+
+              <label className="field">
+                <span>Horário (opcional)</span>
+                <input
+                  type="time"
+                  value={item.time ?? ""}
+                  onChange={(event) =>
+                    updateKeyDate(index, {
+                      time: event.target.value
                     })
                   }
                 />

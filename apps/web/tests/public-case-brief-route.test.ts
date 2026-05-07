@@ -150,7 +150,7 @@ describe("Public legal brief route", () => {
       contactRg: "1234567",
       problemType: "plano",
       currentUrgency: "high",
-      keyDates: [{ label: "Negativa do plano", date: "2025-05-02" }],
+      keyDates: [{ label: "Negativa do plano", date: "2025-05-02", time: "14:30" }],
       objectiveDescription: "Paciente teve negativa de cobertura para tratamento essencial.",
       materialLosses: "Gastos com exames e consultas particulares.",
       moralImpact: "Angústia, insegurança e agravamento do quadro clínico.",
@@ -184,6 +184,7 @@ describe("Public legal brief route", () => {
     expect(body.status).toBe("ready");
     expect(body.submission.patientFullName).toBe("Ana Souza");
     expect(body.submission.contactFullName).toBe("Maria Souza");
+    expect(body.submission.keyDates[0].time).toBe("14:30");
     expect(body.submission.uploadedDocuments).toHaveLength(1);
     expect(body.draft.title).toContain("Minuta preliminar");
     expect(body.supportingDocumentPack.title).toBe("Modelos complementares");
@@ -232,7 +233,7 @@ describe("Public legal brief route", () => {
       contactRg: "7654321",
       problemType: "medicamento",
       currentUrgency: "critical",
-      keyDates: [{ label: "Negativa do remédio", date: "2025-05-02" }],
+      keyDates: [{ label: "Negativa do remédio", date: "2025-05-02", time: "09:15" }],
       objectiveDescription: "Medicamento foi negado pelo plano.",
       materialLosses: "Compra particular e deslocamentos.",
       moralImpact: "Risco clínico e sofrimento intenso.",
@@ -283,7 +284,7 @@ describe("Public legal brief route", () => {
           contactRg: "7654321",
           problemType: "medicamento",
           currentUrgency: "critical",
-          keyDates: [{ label: "Negativa do remédio", date: "2025-05-02" }],
+          keyDates: [{ label: "Negativa do remédio", date: "2025-05-02", time: "09:15" }],
           objectiveDescription: "Medicamento foi negado pelo plano.",
           materialLosses: "Compra particular e deslocamentos.",
           moralImpact: "Risco clínico e sofrimento intenso.",

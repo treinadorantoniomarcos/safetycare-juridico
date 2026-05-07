@@ -93,8 +93,9 @@ function renderTimeline(keyDates: CivilHealthDraftInput["keyDates"]) {
     .map((item, index) => {
       const label = normalizeText(item.label);
       const date = formatDate(item.date);
+      const time = item.time?.trim();
 
-      return `${index + 1}. ${label} em ${date}`;
+      return `${index + 1}. ${label} em ${date}${time ? ` às ${time}` : ""}`;
     })
     .join("\n");
 }

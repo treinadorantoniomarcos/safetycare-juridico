@@ -417,7 +417,7 @@ describe("legalBriefInputSchema", () => {
       contactRg: "1234567",
       problemType: "plano",
       currentUrgency: "high",
-      keyDates: [{ label: "Negativa do plano", date: "2025-05-02" }],
+      keyDates: [{ label: "Negativa do plano", date: "2025-05-02", time: "14:30" }],
       objectiveDescription: "Paciente teve negativa de cobertura para tratamento essencial.",
       materialLosses: "Gastos com exames e consultas particulares.",
       moralImpact: "Angustia, inseguranca e agravamento do quadro clinico.",
@@ -431,6 +431,7 @@ describe("legalBriefInputSchema", () => {
     expect(result.contactFullName).toBe("Maria Souza");
     expect(result.contactEmail).toBe("maria.souza@example.com");
     expect(result.patientEmail).toBe("ana.souza@example.com");
+    expect(result.keyDates[0].time).toBe("14:30");
   });
 });
 
@@ -489,23 +490,23 @@ describe("legalArtifactRevisionSchema", () => {
 });
 
 describe("scoreReviewDecisionSchema", () => {
-  it("accepts valid review decision payload", () => {
+  it("accepts green score classification payload", () => {
     const result = scoreReviewDecisionSchema.parse({
-      decision: "approve",
+      decision: "green",
       reviewerId: "user-123",
       note: "Caso aprovado para conversao."
     });
 
-    expect(result.decision).toBe("approve");
+    expect(result.decision).toBe("green");
   });
 
-  it("accepts request_changes review decision payload", () => {
+  it("accepts yellow score classification payload", () => {
     const result = scoreReviewDecisionSchema.parse({
-      decision: "request_changes",
+      decision: "yellow",
       reviewerId: "user-456",
       note: "Faltam exames e comprovantes."
     });
 
-    expect(result.decision).toBe("request_changes");
+    expect(result.decision).toBe("yellow");
   });
 });

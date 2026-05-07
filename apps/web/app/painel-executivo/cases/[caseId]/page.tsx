@@ -63,7 +63,7 @@ function renderList(items: string[]) {
   );
 }
 
-function renderKeyDates(items: Array<{ label: string; date: string }>) {
+function renderKeyDates(items: Array<{ label: string; date: string; time?: string }>) {
   if (items.length === 0) {
     return <p className="review-empty-state">Nenhuma data-chave informada.</p>;
   }
@@ -73,6 +73,7 @@ function renderKeyDates(items: Array<{ label: string; date: string }>) {
       {items.map((item, index) => (
         <li key={`${item.label}-${index}`}>
           <strong>{item.label}</strong> - {item.date}
+          {item.time ? ` às ${item.time}` : ""}
         </li>
       ))}
     </ul>

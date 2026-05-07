@@ -573,7 +573,7 @@ h2 {
 }
 
 .repeatable-grid--date {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.75fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.75fr) minmax(0, 0.55fr) auto;
 }
 
 .repeatable-grid--single {

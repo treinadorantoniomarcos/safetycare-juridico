@@ -85,7 +85,7 @@ function formatSubmission(record: {
   contactRg: string;
   problemType: string;
   currentUrgency: string;
-  keyDates: Array<{ label: string; date: string }>;
+  keyDates: LegalBriefInput["keyDates"];
   objectiveDescription: string;
   materialLosses: string;
   moralImpact: string;
