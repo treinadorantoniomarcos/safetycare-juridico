@@ -444,7 +444,11 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
               )}
             </section>
 
-            <LegalArtifactEditor caseId={caseId} artifacts={reviewCase.artifacts} />
+            <LegalArtifactEditor
+              caseId={caseId}
+              legalStatus={reviewCase.legalStatus}
+              artifacts={reviewCase.artifacts}
+            />
 
             <section className="form-section-card">
               <div className="form-section-head">

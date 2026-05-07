@@ -30,6 +30,7 @@ type SaveFeedback = {
 type LegalArtifactEditorProps = {
   artifacts: LegalBriefReviewArtifactView[];
   caseId: string;
+  legalStatus: string;
 };
 
 function formatDateTime(value?: string | null) {
@@ -104,14 +105,18 @@ function getArtifactLabel(artifactType: string) {
   return legalArtifactLabels[artifactType as LegalArtifactType] ?? artifactType;
 }
 
-export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorProps) {
+export function LegalArtifactEditor({ artifacts, caseId, legalStatus }: LegalArtifactEditorProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const groupedArtifacts = useMemo(() => groupArtifacts(artifacts), [artifacts]);
+  const canGenerateArtifacts =
+    legalStatus === "legal_execution_pending" || legalStatus === "legal_execution_in_progress";
   const [drafts, setDrafts] = useState<Record<string, ArtifactDraftState>>(() =>
     buildDraftMap(groupedArtifacts)
   );
   const [savingArtifactType, setSavingArtifactType] = useState<string | null>(null);
+  const [isGeneratingArtifacts, setIsGeneratingArtifacts] = useState(false);
+  const [generationFeedback, setGenerationFeedback] = useState<SaveFeedback | undefined>();
   const [feedbackByArtifactType, setFeedbackByArtifactType] = useState<
     Record<string, SaveFeedback | undefined>
   >({});
@@ -119,7 +124,124 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
   useEffect(() => {
     setDrafts(buildDraftMap(groupedArtifacts));
     setFeedbackByArtifactType({});
+    setGenerationFeedback(undefined);
   }, [groupedArtifacts]);
+
+  async function generateArtifacts() {
+    if (!canGenerateArtifacts) {
+      setGenerationFeedback({
+        kind: "error",
+        message:
+          "A geracao manual so fica disponivel depois da liberacao da etapa 2 pelo humano."
+      });
+      return;
+    }
+
+    setIsGeneratingArtifacts(true);
+    setGenerationFeedback(undefined);
+
+    try {
+      const response = await fetch(
+        `/api/dashboard/protect/cases/${caseId}/legal-artifacts/generate`,
+        {
+          method: "POST"
+        }
+      );
+
+      const payload = (await response.json()) as
+        | {
+            error?: string;
+            message?: string;
+            detail?: string;
+            correlationId?: string;
+          }
+        | {
+            createdArtifactTypes?: string[];
+          };
+
+      if (!response.ok) {
+        const message =
+          "error" in payload && payload.error === "invalid_case_stage"
+            ? "A etapa 2 ainda nao foi aprovada. Gere os artefatos somente depois da liberacao humana."
+            : "Nao foi possivel gerar os artefatos. Tente novamente.";
+
+        setGenerationFeedback({
+          kind: "error",
+          message
+        });
+        return;
+      }
+
+      setGenerationFeedback({
+        kind: "success",
+        message: "Artefatos gerados com sucesso."
+      });
+
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch {
+      setGenerationFeedback({
+        kind: "error",
+        message: "Falha de conexao ao gerar os artefatos."
+      });
+    } finally {
+      setIsGeneratingArtifacts(false);
+    }
+  }
+
+  function renderGenerationControls() {
+    return (
+      <div className="legal-artifact-editor__generation-controls">
+        <div className="review-download-row legal-artifact-editor__bundle-actions">
+          <button
+            type="button"
+            className="button-primary inline-action"
+            disabled={!canGenerateArtifacts || isGeneratingArtifacts || isPending}
+            onClick={() => {
+              void generateArtifacts();
+            }}
+          >
+            {isGeneratingArtifacts ? "Gerando..." : "Gerar minuta, procuração e contrato"}
+          </button>
+          <a
+            className="button-ghost inline-action legal-artifact-editor__download-link"
+            href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`}
+          >
+            Baixar pacote DOC
+          </a>
+          <a
+            className="button-ghost inline-action"
+            href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=pdf`}
+          >
+            Baixar pacote PDF
+          </a>
+          <a
+            className="button-ghost inline-action"
+            href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=docx`}
+          >
+            Baixar pacote DOCX
+          </a>
+        </div>
+
+        <p className="section-note legal-artifact-editor__generation-note">
+          {canGenerateArtifacts
+            ? "A geracao manual cria ou completa a minuta, a procuração e o contrato quando o worker nao estiver disponivel."
+            : `A geracao manual so fica disponivel quando o status juridico for legal_execution_pending ou legal_execution_in_progress. Status atual: ${legalStatus}.`}
+        </p>
+
+        {generationFeedback ? (
+          <p
+            className={
+              generationFeedback.kind === "success" ? "completion-success-message" : "form-error"
+            }
+          >
+            {generationFeedback.message}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
 
   async function saveArtifact(artifactType: string) {
     const currentDraft = drafts[artifactType];
@@ -215,9 +337,12 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
           <p className="section-eyebrow">Artefatos gerados</p>
           <h3>Editar, salvar e baixar</h3>
           <p className="section-note">
-            Ainda nao ha artefatos gravados. A aprovacao humana vai disparar a geracao final.
+            Ainda nao ha artefatos gravados. Use a geracao manual abaixo depois da liberacao
+            humana da etapa 2.
           </p>
         </div>
+
+        {renderGenerationControls()}
       </section>
     );
   }
@@ -233,26 +358,7 @@ export function LegalArtifactEditor({ artifacts, caseId }: LegalArtifactEditorPr
         </p>
       </div>
 
-      <div className="review-download-row legal-artifact-editor__bundle-actions">
-        <a
-          className="button-ghost inline-action legal-artifact-editor__download-link"
-          href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=doc`}
-        >
-          Baixar pacote DOC
-        </a>
-        <a
-          className="button-ghost inline-action"
-          href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=pdf`}
-        >
-          Baixar pacote PDF
-        </a>
-        <a
-          className="button-ghost inline-action"
-          href={`/api/dashboard/protect/cases/${caseId}/legal-artifacts?format=docx`}
-        >
-          Baixar pacote DOCX
-        </a>
-      </div>
+      {renderGenerationControls()}
 
       <div className="legal-artifact-editor__list">
         {groupedArtifacts.map((group) => {
