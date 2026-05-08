@@ -115,6 +115,18 @@ function renderTimeline(keyDates: CivilHealthDraftInput["keyDates"]) {
     .join("\n");
 }
 
+function buildPreliminaryLegalAnalysis(input: CivilHealthDraftInput) {
+  const urgencyLabel = formatUrgency(input.currentUrgency);
+  const analysisParagraphs = [
+    `A narrativa consolidada aponta, em tese, falha no atendimento emergencial, com triagem sem resposta imediata, permanência prolongada em sala de espera e agravamento progressivo do quadro até o óbito ainda nas dependências da unidade.`,
+    `Sob a ótica jurídica, a peça deve examinar o dever de assistência tempestiva, a adequação do protocolo de classificação de risco, o tempo de resposta assistencial, a evolução clínica documentada e o nexo causal entre a demora e o desfecho descrito.`,
+    `Também é necessário conferir prontuário, horários de entrada e evolução, registros de triagem, exames, condutas adotadas e eventual ausência de medidas de estabilização, pois esses elementos sustentam ou enfraquecem a tese de responsabilidade civil.`,
+    `A análise jurídica preliminar permanece sujeita à validação humana antes do protocolo, especialmente quanto à escolha dos fundamentos legais, da jurisprudência aplicável, do polo passivo e da extensão dos pedidos indenizatórios. Urgência informada: ${urgencyLabel}.`
+  ];
+
+  return analysisParagraphs.join("\n\n");
+}
+
 function buildMarkdownDraft(input: CivilHealthDraftInput, sections: LegalDraftSection[]) {
   const introduction = [
     `EXCELENTÍSSIMO(A) SENHOR(A) JUIZ(A) DE DIREITO DA VARA CÍVEL DA COMARCA DE ${normalizeText(input.city)}`,
@@ -178,6 +190,11 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
       key: "timeline",
       title: "Linha do tempo",
       body: renderTimeline(input.keyDates)
+    },
+    {
+      key: "analise_juridica",
+      title: "Análise jurídica preliminar",
+      body: buildPreliminaryLegalAnalysis(input)
     },
     {
       key: "impactos",
