@@ -49,6 +49,14 @@ function normalizeText(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function normalizeParagraphText(value: string) {
+  return value
+    .split(/\r?\n+/)
+    .map((paragraph) => normalizeText(paragraph))
+    .filter((paragraph) => paragraph.length > 0)
+    .join("\n\n");
+}
+
 function formatFileSize(bytes: number) {
   if (bytes <= 0) {
     return "0 B";
@@ -163,8 +171,8 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
     },
     {
       key: "fatos",
-      title: "Síntese objetiva dos fatos",
-      body: normalizeText(input.objectiveDescription)
+      title: "Narrativa técnica consolidada dos fatos",
+      body: normalizeParagraphText(input.objectiveDescription)
     },
     {
       key: "timeline",
@@ -175,8 +183,8 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
       key: "impactos",
       title: "Prejuízos e repercussões",
       body: [
-        `Prejuízos materiais informados: ${normalizeText(input.materialLosses)}.`,
-        `Impacto moral e assistencial informado: ${normalizeText(input.moralImpact)}.`
+        `Prejuízos materiais informados: ${normalizeParagraphText(input.materialLosses)}.`,
+        `Impacto moral e assistencial informado: ${normalizeParagraphText(input.moralImpact)}.`
       ].join("\n\n")
     },
     {
@@ -200,8 +208,8 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
       key: "pedidos",
       title: "Pedidos sugeridos",
       body: [
-        `Pedido principal: ${normalizeText(input.mainRequest)}.`,
-        `Pedido subsidiário: ${normalizeText(input.subsidiaryRequest)}.`,
+        `Pedido principal: ${normalizeParagraphText(input.mainRequest)}.`,
+        `Pedido subsidiário: ${normalizeParagraphText(input.subsidiaryRequest)}.`,
         "",
         `A urgência indicada é ${urgencyLabel}, o que recomenda verificar a viabilidade de tutela de urgência e a necessidade de delimitar prova pré-constituída.`
       ].join("\n\n")

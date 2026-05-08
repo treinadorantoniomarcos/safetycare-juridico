@@ -1127,20 +1127,21 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
       <section className="form-section-card">
         <div className="form-section-head">
           <p className="section-eyebrow">História do caso</p>
-          <h3>Descrição objetiva, impactos e prejuízos</h3>
+          <h3>Narrativa técnica, impactos e prejuízos</h3>
           <p className="section-note">
-            Seja objetivo. Conte o que aconteceu, o que foi negado ou atrasado, os prejuízos
-            materiais e o impacto moral e assistencial.
+            Descreva em um parágrafo técnico o que aconteceu, como foi o socorro, o tempo de
+            espera, a piora clínica e o desfecho. Depois detalhe os prejuízos materiais e o
+            impacto moral e assistencial.
           </p>
         </div>
 
         <label className="field">
-          <span>Descrição objetiva da conduta</span>
+          <span>Narrativa técnica consolidada dos fatos</span>
           <textarea
             name="objectiveDescription"
             rows={6}
             maxLength={5000}
-            placeholder="Explique de forma cronológica e objetiva o que ocorreu."
+            placeholder="Ex.: vítima de atropelamento, socorrida por terceiros, triagem sem atendimento imediato, permanência em sala de espera, agravamento progressivo e óbito ainda na unidade."
             value={formState.objectiveDescription}
             onChange={(event) =>
               setFormState((prev) => ({
