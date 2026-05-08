@@ -27,7 +27,15 @@ describe("buildCivilHealthSupportingDocumentPack", () => {
       moralImpact: "Impacto moral informado.",
       uploadedDocuments: [],
       documentsAttached: ["doc.pdf"],
-      witnesses: ["Testemunha"],
+      witnesses: [
+        {
+          fullName: "Testemunha",
+          cpf: "111.111.111-11",
+          rg: "RG-TESTE",
+          address: "Rua Teste, 123",
+          whatsapp: "(11) 90000-0000"
+        }
+      ],
       mainRequest: "Pedido principal.",
       subsidiaryRequest: "Pedido subsidiario."
     });

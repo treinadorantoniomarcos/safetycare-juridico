@@ -164,7 +164,15 @@ describe("Public legal brief route", () => {
         }
       ],
       documentsAttached: ["negativa.pdf"],
-      witnesses: ["João Silva"],
+      witnesses: [
+        {
+          fullName: "João Silva",
+          cpf: "111.222.333-44",
+          rg: "MG-1.234.567",
+          address: "Rua das Flores, 123, Curitiba-PR",
+          whatsapp: "(41) 98888-1111"
+        }
+      ],
       mainRequest: "Custeio integral do tratamento.",
       subsidiaryRequest: "Tutela de urgência para cobertura imediata.",
       createdAt: new Date("2025-05-03T12:00:00Z"),
@@ -247,7 +255,15 @@ describe("Public legal brief route", () => {
         }
       ],
       documentsAttached: ["receita.pdf"],
-      witnesses: ["Carlos Mendes"],
+      witnesses: [
+        {
+          fullName: "Carlos Mendes",
+          cpf: "222.333.444-55",
+          rg: "SP-7.654.321",
+          address: "Rua B, 456, Centro, Curitiba-PR",
+          whatsapp: "(41) 97777-6666"
+        }
+      ],
       mainRequest: "Fornecimento imediato do medicamento.",
       subsidiaryRequest: "Subsidiariamente, reembolso integral.",
       createdAt: new Date("2025-05-03T12:00:00Z"),
@@ -298,7 +314,15 @@ describe("Public legal brief route", () => {
             }
           ],
           documentsAttached: ["receita.pdf"],
-          witnesses: ["Carlos Mendes"],
+          witnesses: [
+            {
+              fullName: "Carlos Mendes",
+              cpf: "222.333.444-55",
+              rg: "SP-7.654.321",
+              address: "Rua B, 456, Centro, Curitiba-PR",
+              whatsapp: "(41) 97777-6666"
+            }
+          ],
           mainRequest: "Fornecimento imediato do medicamento.",
           subsidiaryRequest: "Subsidiariamente, reembolso integral."
         })

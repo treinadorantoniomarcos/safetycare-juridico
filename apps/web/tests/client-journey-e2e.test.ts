@@ -117,7 +117,13 @@ const journeyState = vi.hoisted(() => ({
           uploadedAt: string;
         }>;
         documentsAttached: string[];
-        witnesses: string[];
+        witnesses: Array<{
+          fullName: string;
+          cpf?: string;
+          rg?: string;
+          address?: string;
+          whatsapp?: string;
+        }>;
         mainRequest: string;
         subsidiaryRequest: string;
         createdAt: Date;
@@ -309,7 +315,15 @@ const briefPayload = {
     }
   ],
   documentsAttached: ["receita.pdf"],
-  witnesses: ["Carlos Mendes"],
+  witnesses: [
+    {
+      fullName: "Carlos Mendes",
+      cpf: "222.333.444-55",
+      rg: "SP-7.654.321",
+      address: "Rua B, 456, Centro, Curitiba-PR",
+      whatsapp: "(41) 97777-6666"
+    }
+  ],
   mainRequest: "Fornecimento imediato do medicamento.",
   subsidiaryRequest: "Subsidiariamente, reembolso integral."
 };

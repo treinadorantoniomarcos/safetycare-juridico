@@ -2,7 +2,8 @@ import {
   legalBriefInputSchema,
   type LegalDocumentPack,
   type LegalDraft,
-  type LegalBriefInput
+  type LegalBriefInput,
+  normalizeLegalBriefWitnesses
 } from "@safetycare/ai-contracts";
 import {
   AuditLogRepository,
@@ -97,7 +98,7 @@ function formatSubmission(record: {
     uploadedAt: string;
   }>;
   documentsAttached: string[];
-  witnesses: string[];
+  witnesses: unknown;
   mainRequest: string;
   subsidiaryRequest: string;
   createdAt: Date | string;
@@ -128,7 +129,7 @@ function formatSubmission(record: {
     moralImpact: record.moralImpact,
     uploadedDocuments: record.uploadedDocuments ?? [],
     documentsAttached: record.documentsAttached,
-    witnesses: record.witnesses,
+    witnesses: normalizeLegalBriefWitnesses(record.witnesses),
     mainRequest: record.mainRequest,
     subsidiaryRequest: record.subsidiaryRequest,
     submittedAt: toIsoDate(record.createdAt),

@@ -1,4 +1,11 @@
-import { legalDraftSchema, type LegalBriefInput, type LegalDraft, type LegalDraftSection } from "@safetycare/ai-contracts";
+import {
+  formatLegalBriefWitnessLine,
+  legalDraftSchema,
+  normalizeLegalBriefWitnesses,
+  type LegalBriefInput,
+  type LegalDraft,
+  type LegalDraftSection
+} from "@safetycare/ai-contracts";
 
 type CivilHealthDraftInput = Omit<LegalBriefInput, "caseId" | "workflowJobId">;
 
@@ -128,7 +135,7 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
   const keyDatesCount = input.keyDates.length;
   const documentCount = input.documentsAttached.filter((item) => normalizeText(item).length > 0).length;
   const uploadedDocumentCount = input.uploadedDocuments.length;
-  const witnessCount = input.witnesses.filter((item) => normalizeText(item).length > 0).length;
+  const witnessCount = normalizeLegalBriefWitnesses(input.witnesses).length;
 
   const sections: LegalDraftSection[] = [
     {
@@ -183,7 +190,10 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
         renderUploadedDocuments(input.uploadedDocuments),
         "",
         `Testemunhas indicadas (${witnessCount}):`,
-        renderList(input.witnesses, "Nenhuma testemunha adicional foi informada.")
+        renderList(
+          normalizeLegalBriefWitnesses(input.witnesses).map(formatLegalBriefWitnessLine),
+          "Nenhuma testemunha adicional foi informada."
+        )
       ].join("\n")
     },
     {

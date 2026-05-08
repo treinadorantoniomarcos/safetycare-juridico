@@ -2,6 +2,7 @@ import {
   type LegalBriefInput,
   type LegalDocumentPack,
   type LegalDraft,
+  normalizeLegalBriefWitnesses,
   workflowJobTypes
 } from "@safetycare/ai-contracts";
 import {
@@ -98,7 +99,7 @@ function formatSubmission(record: LegalBriefInputRecord): LegalBriefSubmissionVi
     moralImpact: record.moralImpact,
     uploadedDocuments: record.uploadedDocuments ?? [],
     documentsAttached: record.documentsAttached,
-    witnesses: record.witnesses,
+    witnesses: normalizeLegalBriefWitnesses(record.witnesses),
     mainRequest: record.mainRequest,
     subsidiaryRequest: record.subsidiaryRequest,
     submittedAt: toIsoDate(record.createdAt),

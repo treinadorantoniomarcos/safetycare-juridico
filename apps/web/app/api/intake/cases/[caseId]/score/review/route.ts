@@ -130,16 +130,6 @@ export async function POST(request: Request, context: RouteContext) {
       note: validation.data.note?.trim() ? validation.data.note.trim() : ""
     };
 
-    if (validation.data.decision !== "green" && !decisionInput.note) {
-      return NextResponse.json(
-        {
-          correlationId,
-          error: "note_required"
-        },
-        { status: 400 }
-      );
-    }
-
     const scoreRecord =
       (await legalScores.findByCaseId(caseId)) ??
       (await legalScores.upsert(getSeedScoreForDecision(caseId, validation.data.decision)));

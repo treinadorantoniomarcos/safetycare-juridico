@@ -580,6 +580,24 @@ h2 {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.repeatable-grid--witness {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.repeatable-grid__head {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.repeatable-grid--witness .field-grid {
+  grid-column: 1 / -1;
+}
+
 .repeatable-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -2471,7 +2489,8 @@ h2 {
   }
 
   .repeatable-grid--date,
-  .repeatable-grid--single {
+  .repeatable-grid--single,
+  .repeatable-grid--witness {
     grid-template-columns: 1fr;
   }
 }

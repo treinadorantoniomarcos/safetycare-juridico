@@ -17,7 +17,14 @@ export {
 export {
   legalBriefInputSchema,
   legalBriefKeyDateSchema,
+  legalBriefWitnessSchema,
+  formatLegalBriefWitnessLine,
   legalBriefUploadedDocumentSchema
+} from "./legal-brief-input.schema";
+export {
+  normalizeLegalBriefWitness,
+  normalizeLegalBriefWitnesses,
+  renderLegalBriefWitnessList
 } from "./legal-brief-input.schema";
 export { legalBriefReviewDecisionSchema } from "./legal-brief-review-decision.schema";
 export { legalDraftSchema } from "./legal-draft.schema";

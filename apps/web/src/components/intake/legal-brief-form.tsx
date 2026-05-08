@@ -4,6 +4,7 @@ import {
   legalBriefProblemTypes,
   type LegalDocumentPack,
   type LegalDraft,
+  normalizeLegalBriefWitnesses,
   triageUrgencyLevels,
   type LegalBriefInput,
   type LegalBriefKeyDate,
@@ -14,6 +15,13 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 type LegalBriefProblemType = (typeof legalBriefProblemTypes)[number];
 type LegalBriefUrgencyLevel = (typeof triageUrgencyLevels)[number];
 type UploadedDocument = LegalBriefUploadedDocument;
+type WitnessEntry = {
+  fullName: string;
+  cpf: string;
+  rg: string;
+  address: string;
+  whatsapp: string;
+};
 
 const MAX_UPLOADED_DOCUMENTS = 10;
 const MAX_UPLOADED_DOCUMENT_SIZE_BYTES = 12 * 1024 * 1024;
@@ -74,9 +82,19 @@ function createEmptyState(): LegalBriefFormState {
     moralImpact: "",
     uploadedDocuments: [],
     documentsAttached: [""],
-    witnesses: [""],
+    witnesses: [createEmptyWitness()],
     mainRequest: "",
     subsidiaryRequest: ""
+  };
+}
+
+function createEmptyWitness(): WitnessEntry {
+  return {
+    fullName: "",
+    cpf: "",
+    rg: "",
+    address: "",
+    whatsapp: ""
   };
 }
 
@@ -84,6 +102,14 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
   if (!submission) {
     return createEmptyState();
   }
+
+  const witnesses = normalizeLegalBriefWitnesses(submission.witnesses).map((item) => ({
+    fullName: item.fullName,
+    cpf: item.cpf ?? "",
+    rg: item.rg ?? "",
+    address: item.address ?? "",
+    whatsapp: item.whatsapp ?? ""
+  }));
 
   return {
     patientFullName: submission.patientFullName,
@@ -115,7 +141,7 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
     moralImpact: submission.moralImpact,
     uploadedDocuments: submission.uploadedDocuments,
     documentsAttached: submission.documentsAttached.length > 0 ? submission.documentsAttached : [""],
-    witnesses: submission.witnesses.length > 0 ? submission.witnesses : [""],
+    witnesses: witnesses.length > 0 ? witnesses : [createEmptyWitness()],
     mainRequest: submission.mainRequest,
     subsidiaryRequest: submission.subsidiaryRequest
   };
@@ -448,27 +474,53 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
     }));
   }
 
-  function updateStringList(field: "documentsAttached" | "witnesses", index: number, value: string) {
+  function updateStringList(field: "documentsAttached", index: number, value: string) {
     setFormState((prev) => ({
       ...prev,
       [field]: prev[field].map((item, currentIndex) => (currentIndex === index ? value : item))
     }));
   }
 
-  function addStringListItem(field: "documentsAttached" | "witnesses") {
+  function addStringListItem(field: "documentsAttached") {
     setFormState((prev) => ({
       ...prev,
       [field]: [...prev[field], ""]
     }));
   }
 
-  function removeStringListItem(field: "documentsAttached" | "witnesses", index: number) {
+  function removeStringListItem(field: "documentsAttached", index: number) {
     setFormState((prev) => ({
       ...prev,
       [field]:
         prev[field].length === 1
           ? prev[field]
           : prev[field].filter((_, currentIndex) => currentIndex !== index)
+    }));
+  }
+
+  function updateWitnessField(index: number, field: keyof WitnessEntry, value: string) {
+    setFormState((prev) => ({
+      ...prev,
+      witnesses: prev.witnesses.map((item, currentIndex) =>
+        currentIndex === index ? { ...item, [field]: value } : item
+      )
+    }));
+  }
+
+  function addWitnessItem() {
+    setFormState((prev) => ({
+      ...prev,
+      witnesses: [...prev.witnesses, createEmptyWitness()]
+    }));
+  }
+
+  function removeWitnessItem(index: number) {
+    setFormState((prev) => ({
+      ...prev,
+      witnesses:
+        prev.witnesses.length === 1
+          ? prev.witnesses
+          : prev.witnesses.filter((_, currentIndex) => currentIndex !== index)
     }));
   }
 
@@ -602,7 +654,7 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           moralImpact: formState.moralImpact.trim(),
           uploadedDocuments: formState.uploadedDocuments,
           documentsAttached: trimList(formState.documentsAttached),
-          witnesses: trimList(formState.witnesses),
+          witnesses: normalizeLegalBriefWitnesses(formState.witnesses),
           mainRequest: formState.mainRequest.trim(),
           subsidiaryRequest: formState.subsidiaryRequest.trim()
         })
@@ -1133,8 +1185,9 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           <p className="section-eyebrow">Provas</p>
           <h3>Documentos anexos e testemunhas</h3>
           <p className="section-note">
-            Liste os documentos já existentes e as pessoas que podem confirmar a narrativa. Se não
-            houver algo para informar neste momento, mantenha o campo em branco.
+            Liste os documentos já existentes e as pessoas que podem confirmar a narrativa. Para
+            cada testemunha, o formulario aceita nome, CPF, RG, endereco completo e WhatsApp,
+            mas nenhum destes campos e obrigatorio.
           </p>
         </div>
 
@@ -1208,34 +1261,76 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
 
         <div className="repeatable-list">
           {formState.witnesses.map((witness, index) => (
-            <div key={`witness-${index}`} className="repeatable-grid repeatable-grid--single">
+            <div key={`witness-${index}`} className="repeatable-grid repeatable-grid--witness">
+              <div className="repeatable-grid__head">
+                <p className="section-eyebrow">Testemunha {index + 1}</p>
+                <button
+                  type="button"
+                  className="button-ghost inline-action inline-action--danger"
+                  onClick={() => removeWitnessItem(index)}
+                >
+                  Remover
+                </button>
+              </div>
+
               <label className="field">
-                <span>Testemunha</span>
+                <span>Nome completo</span>
                 <input
                   type="text"
-                  placeholder="Nome e contato"
-                  value={witness}
-                  onChange={(event) => updateStringList("witnesses", index, event.target.value)}
+                  placeholder="Nome completo da testemunha"
+                  value={witness.fullName}
+                  onChange={(event) => updateWitnessField(index, "fullName", event.target.value)}
                 />
               </label>
 
-              <button
-                type="button"
-                className="button-ghost inline-action inline-action--danger"
-                onClick={() => removeStringListItem("witnesses", index)}
-              >
-                Remover
-              </button>
+              <div className="field-grid">
+                <label className="field">
+                  <span>CPF (opcional)</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="000.000.000-00"
+                    value={witness.cpf}
+                    onChange={(event) => updateWitnessField(index, "cpf", event.target.value)}
+                  />
+                </label>
+
+                <label className="field">
+                  <span>RG (opcional)</span>
+                  <input
+                    type="text"
+                    placeholder="Documento de identidade"
+                    value={witness.rg}
+                    onChange={(event) => updateWitnessField(index, "rg", event.target.value)}
+                  />
+                </label>
+              </div>
+
+              <label className="field">
+                <span>Endereco completo (opcional)</span>
+                <textarea
+                  rows={2}
+                  placeholder="Rua, numero, bairro, cidade, UF, CEP"
+                  value={witness.address}
+                  onChange={(event) => updateWitnessField(index, "address", event.target.value)}
+                />
+              </label>
+
+              <label className="field">
+                <span>WhatsApp (opcional)</span>
+                <input
+                  type="tel"
+                  placeholder="(00) 00000-0000"
+                  value={witness.whatsapp}
+                  onChange={(event) => updateWitnessField(index, "whatsapp", event.target.value)}
+                />
+              </label>
             </div>
           ))}
         </div>
 
         <div className="repeatable-toolbar">
-          <button
-            type="button"
-            className="button-ghost inline-action"
-            onClick={() => addStringListItem("witnesses")}
-          >
+          <button type="button" className="button-ghost inline-action" onClick={addWitnessItem}>
             Adicionar testemunha
           </button>
         </div>

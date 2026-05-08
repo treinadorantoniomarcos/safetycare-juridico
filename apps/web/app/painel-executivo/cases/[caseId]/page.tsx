@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { formatLegalBriefWitnessLine, type LegalBriefWitness } from "@safetycare/ai-contracts";
 import { SiteHeader } from "../../../../src/components/brand/site-header";
 import { CaseReviewStageNav } from "../../../../src/components/dashboard/case-review-stage-nav";
 import { LegalArtifactEditor } from "../../../../src/components/dashboard/legal-artifact-editor";
@@ -58,6 +59,20 @@ function renderList(items: string[]) {
     <ul className="review-list">
       {items.map((item, index) => (
         <li key={`${item}-${index}`}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+function renderWitnesses(items: LegalBriefWitness[]) {
+  if (items.length === 0) {
+    return <p className="review-empty-state">Nenhuma testemunha informada.</p>;
+  }
+
+  return (
+    <ul className="review-list">
+      {items.map((item, index) => (
+        <li key={`${item.fullName}-${index}`}>{formatLegalBriefWitnessLine(item)}</li>
       ))}
     </ul>
   );
@@ -353,7 +368,7 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
 
               <div className="review-block">
                 <h4>Testemunhas</h4>
-                {renderList(submission.witnesses)}
+                {renderWitnesses(submission.witnesses)}
               </div>
             </section>
 

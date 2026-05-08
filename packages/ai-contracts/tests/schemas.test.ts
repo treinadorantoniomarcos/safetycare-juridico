@@ -423,7 +423,15 @@ describe("legalBriefInputSchema", () => {
       moralImpact: "Angustia, inseguranca e agravamento do quadro clinico.",
       uploadedDocuments: [],
       documentsAttached: ["negativa.pdf"],
-      witnesses: ["Joao Silva"],
+      witnesses: [
+        {
+          fullName: "Joao Silva",
+          cpf: "111.222.333-44",
+          rg: "MG-1.234.567",
+          address: "Rua X, 123, Curitiba-PR",
+          whatsapp: "(41) 98888-1111"
+        }
+      ],
       mainRequest: "Custeio integral do tratamento.",
       subsidiaryRequest: "Tutela de urgencia para cobertura imediata."
     });

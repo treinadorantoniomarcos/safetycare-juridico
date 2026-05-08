@@ -4,7 +4,6 @@ import { notFound, redirect } from "next/navigation";
 import { SiteHeader } from "../../../../../src/components/brand/site-header";
 import { CaseReviewStageNav } from "../../../../../src/components/dashboard/case-review-stage-nav";
 import { HumanTriageReviewActions } from "../../../../../src/components/dashboard/human-triage-review-actions";
-import { ScoreReviewActions } from "../../../../../src/components/dashboard/score-review-actions";
 import { getHumanTriageReviewCase } from "../../../../../src/features/dashboard/get-human-triage-review-case";
 import { hasDashboardSessionFromCookieStore } from "../../../../../src/lib/dashboard-auth";
 
@@ -213,15 +212,6 @@ export default async function HumanTriageReviewPage({ params }: PageProps) {
             caseId={caseId}
             currentLegalStatus={reviewCase.legalStatus}
             defaultReviewerId={reviewerIdDefault}
-            layout="inline"
-          />
-
-          <ScoreReviewActions
-            caseId={caseId}
-            currentLegalStatus={reviewCase.legalStatus}
-            defaultDecision={reviewCase.score?.decision ?? null}
-            defaultNote={reviewCase.score?.reviewNote ?? ""}
-            defaultReviewerId={reviewCase.score?.reviewedBy ?? reviewerIdDefault}
             layout="inline"
           />
         </div>

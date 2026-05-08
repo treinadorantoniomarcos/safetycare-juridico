@@ -100,7 +100,15 @@ function buildSubmission() {
     moralImpact: "Impacto moral.",
     uploadedDocuments: [],
     documentsAttached: ["Prontuario"],
-    witnesses: ["Maria"],
+    witnesses: [
+      {
+        fullName: "Maria",
+        cpf: "333.444.555-66",
+        rg: "MG-9.876.543",
+        address: "Rua C, 789, Centro, Sao Paulo-SP",
+        whatsapp: "(11) 97777-1111"
+      }
+    ],
     mainRequest: "Pedido principal.",
     subsidiaryRequest: "Pedido subsidiario."
   };

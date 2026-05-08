@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   uuid
 } from "drizzle-orm/pg-core";
+import type { LegalBriefWitness } from "@safetycare/ai-contracts";
 
 type LegalBriefUploadedDocumentRecord = {
   name: string;
@@ -260,7 +261,7 @@ export const legalBriefInputsTable = pgTable(
       .notNull()
       .default([]),
     documentsAttached: jsonb("documents_attached").$type<string[]>().notNull().default([]),
-    witnesses: jsonb("witnesses").$type<string[]>().notNull().default([]),
+    witnesses: jsonb("witnesses").$type<LegalBriefWitness[]>().notNull().default([]),
     mainRequest: text("main_request").notNull(),
     subsidiaryRequest: text("subsidiary_request").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

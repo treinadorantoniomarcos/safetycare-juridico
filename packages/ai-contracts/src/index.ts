@@ -44,6 +44,7 @@ export type { LegalScoreResult, StrategicLegalGuidance } from "./schemas/legal-s
 export type {
   LegalBriefInput,
   LegalBriefKeyDate,
+  LegalBriefWitness,
   LegalBriefUploadedDocument
 } from "./schemas/legal-brief-input.schema";
 export type { LegalDraft, LegalDraftSection } from "./schemas/legal-draft.schema";

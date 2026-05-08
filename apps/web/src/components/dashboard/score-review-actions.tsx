@@ -26,19 +26,19 @@ const scoreColorOptions: Array<{
     key: "green",
     label: "Verde",
     summary: "Pode continuar",
-    noteHint: "Opcional: informe observacoes adicionais."
+    noteHint: "Opcional: informe a justificativa da escolha."
   },
   {
     key: "yellow",
     label: "Amarelo",
     summary: "Precisa complementar",
-    noteHint: "Informe o que precisa ser complementado."
+    noteHint: "Opcional: explique o que precisa ser complementado."
   },
   {
     key: "red",
     label: "Vermelho",
     summary: "Nao cabe acao juridica",
-    noteHint: "Explique por que o caso deve ser bloqueado."
+    noteHint: "Opcional: explique por que o caso deve ser bloqueado."
   }
 ];
 
@@ -101,11 +101,6 @@ export function ScoreReviewActions({
       return;
     }
 
-    if (selectedDecision !== "green" && !normalizedNote) {
-      setError("Descreva o motivo da classificacao antes de enviar.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -136,10 +131,6 @@ export function ScoreReviewActions({
             return;
           }
 
-          if (payload.error === "note_required") {
-            setError("Descreva o motivo da classificacao antes de enviar.");
-            return;
-          }
         }
 
         setError("Nao foi possivel registrar a decisao. Tente novamente.");
@@ -216,7 +207,7 @@ export function ScoreReviewActions({
         {selectedOption ? (
           <p className={`score-choice-note score-choice-note--${selectedOption.key}`}>
             Classificacao selecionada: <strong>{selectedOption.label}</strong>.{" "}
-            {selectedOption.summary}.
+            {selectedOption.summary}. A justificativa e opcional.
           </p>
         ) : null}
 
@@ -231,19 +222,19 @@ export function ScoreReviewActions({
         </label>
 
         <label className="field">
-          <span>Observacao</span>
+          <span>Justificativa (opcional)</span>
           <textarea
             rows={3}
             value={note}
             onChange={(event) => setNote(event.target.value)}
             placeholder={
               selectedDecision === "green"
-                ? "Informe observacoes adicionais, se houver."
+                ? "Explique por que a classificacao verde foi escolhida, se desejar."
                 : selectedDecision === "yellow"
-                  ? "Descreva o que precisa ser complementado."
+                  ? "Explique por que a classificacao amarela foi escolhida, se desejar."
                   : selectedDecision === "red"
-                    ? "Explique por que o caso nao deve seguir."
-                    : "Escolha uma cor para liberar o campo de observacao."
+                    ? "Explique por que a classificacao vermelha foi escolhida, se desejar."
+                    : "Escolha uma cor para registrar uma justificativa opcional."
             }
           />
         </label>

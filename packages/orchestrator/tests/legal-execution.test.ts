@@ -102,7 +102,15 @@ describe("runLegalExecution", () => {
       moralImpact: "Impacto moral",
       uploadedDocuments: [],
       documentsAttached: ["doc.pdf"],
-      witnesses: ["Testemunha"],
+      witnesses: [
+        {
+          fullName: "Testemunha",
+          cpf: "111.111.111-11",
+          rg: "RG-TESTE",
+          address: "Rua Teste, 123",
+          whatsapp: "(11) 90000-0000"
+        }
+      ],
       mainRequest: "Pedido principal",
       subsidiaryRequest: "Pedido subsidiário",
       createdAt: new Date("2025-05-01T00:00:00Z"),
