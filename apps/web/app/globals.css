@@ -886,6 +886,17 @@ h2 {
   align-items: end;
 }
 
+.legal-artifacts-hub__filters {
+  display: grid;
+  gap: 10px;
+}
+
+.legal-artifacts-hub__filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .legal-artifacts-hub__search {
   margin: 0;
 }
@@ -926,6 +937,43 @@ h2 {
 .legal-artifacts-hub__artifact-list {
   display: grid;
   gap: 12px;
+}
+
+.legal-artifacts-hub__artifact-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.legal-artifacts-hub__artifact-group {
+  gap: 12px;
+}
+
+.legal-artifacts-hub__version-history {
+  border: 1px solid #d9e2ef;
+  border-radius: 12px;
+  background: #fafdff;
+  padding: 10px 12px;
+}
+
+.legal-artifacts-hub__version-history summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.legal-artifacts-hub__version-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.legal-artifacts-hub__version-card {
+  border: 1px solid #d9e2ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
 }
 
 .legal-artifacts-hub__artifact-card {

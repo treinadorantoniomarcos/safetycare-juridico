@@ -60,9 +60,28 @@ function resolveRequestedArtifactType(value: string | null): LegalArtifactType |
   return validation.data;
 }
 
-function buildExportFilename(caseId: string, format: LegalArtifactExportFormat, artifactTypes: readonly LegalArtifactType[]) {
+function resolveVersionNumber(value: string | null): number | null {
+  if (!value || value.trim().length === 0) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value.trim(), 10);
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function buildExportFilename(
+  caseId: string,
+  format: LegalArtifactExportFormat,
+  artifactTypes: readonly LegalArtifactType[],
+  versionNumber?: number | null
+) {
   if (artifactTypes.length === 1) {
-    return `safetycare-legal-artifact-${caseId}-${artifactTypes[0]}.${format}`;
+    return `safetycare-legal-artifact-${caseId}-${artifactTypes[0]}${versionNumber ? `-v${versionNumber}` : ""}.${format}`;
   }
 
   return `safetycare-legal-artifacts-${caseId}.${format}`;
@@ -85,6 +104,7 @@ export async function GET(request: Request, context: RouteContext) {
   const url = new URL(request.url);
   const format = resolveExportFormat(url.searchParams.get("format"));
   const requestedArtifactType = resolveRequestedArtifactType(url.searchParams.get("artifactType"));
+  const requestedVersionNumber = resolveVersionNumber(url.searchParams.get("versionNumber"));
 
   if (!format) {
     return NextResponse.json(
@@ -116,7 +136,9 @@ export async function GET(request: Request, context: RouteContext) {
     const latestArtifacts = await Promise.all(
       requestedArtifactTypes.map(async (artifactType) => [
         artifactType,
-        await legalArtifacts.findLatestByCaseIdAndType(caseId, artifactType)
+        requestedVersionNumber && requestedArtifactType !== "all"
+          ? await legalArtifacts.findByCaseIdTypeAndVersion(caseId, artifactType, requestedVersionNumber)
+          : await legalArtifacts.findLatestByCaseIdAndType(caseId, artifactType)
       ] as const)
     );
 
@@ -163,7 +185,7 @@ export async function GET(request: Request, context: RouteContext) {
       status: 200,
       headers: {
         "content-type": contentType,
-        "content-disposition": `attachment; filename="${buildExportFilename(caseId, format, requestedArtifactTypes)}"`,
+        "content-disposition": `attachment; filename="${buildExportFilename(caseId, format, requestedArtifactTypes, requestedVersionNumber)}"`,
         "cache-control": "no-store"
       }
     });

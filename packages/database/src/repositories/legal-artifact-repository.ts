@@ -38,6 +38,26 @@ export class LegalArtifactRepository {
     return record;
   }
 
+  async findByCaseIdTypeAndVersion(
+    caseId: string,
+    artifactType: string,
+    versionNumber: number
+  ): Promise<LegalArtifactRecord | undefined> {
+    const [record] = await this.db
+      .select()
+      .from(legalArtifactsTable)
+      .where(
+        and(
+          eq(legalArtifactsTable.caseId, caseId),
+          eq(legalArtifactsTable.artifactType, artifactType),
+          eq(legalArtifactsTable.versionNumber, versionNumber)
+        )
+      )
+      .limit(1);
+
+    return record;
+  }
+
   async listByCaseId(caseId: string): Promise<LegalArtifactRecord[]> {
     return this.db
       .select()

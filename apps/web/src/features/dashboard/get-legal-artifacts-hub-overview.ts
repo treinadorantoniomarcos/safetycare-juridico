@@ -79,10 +79,6 @@ function orderArtifacts(artifacts: LegalArtifactsHubArtifactView[]) {
       return leftOrder - rightOrder;
     }
 
-    if (left.updatedAt !== right.updatedAt) {
-      return right.updatedAt.localeCompare(left.updatedAt);
-    }
-
     return right.versionNumber - left.versionNumber;
   });
 }
@@ -104,29 +100,16 @@ export async function getLegalArtifactsHubOverview(): Promise<LegalArtifactsHubO
     .from(legalArtifactsTable)
     .orderBy(desc(legalArtifactsTable.updatedAt), desc(legalArtifactsTable.versionNumber));
 
-  const latestArtifactsByCaseAndType = new Map<string, LegalArtifactRecord>();
-
-  for (const artifact of artifactRows) {
-    const key = `${artifact.caseId}:${artifact.artifactType}`;
-
-    if (!latestArtifactsByCaseAndType.has(key)) {
-      latestArtifactsByCaseAndType.set(key, artifact);
-    }
-  }
-
   const artifactsByCase = new Map<string, LegalArtifactsHubArtifactView[]>();
   const latestArtifactUpdatedAtByCase = new Map<string, string>();
 
-  for (const artifact of latestArtifactsByCaseAndType.values()) {
+  for (const artifact of artifactRows) {
     const caseArtifacts = artifactsByCase.get(artifact.caseId) ?? [];
     caseArtifacts.push(formatArtifact(artifact));
     artifactsByCase.set(artifact.caseId, caseArtifacts);
 
-    const currentLatest = latestArtifactUpdatedAtByCase.get(artifact.caseId);
-    const updatedAt = toIsoDate(artifact.updatedAt);
-
-    if (!currentLatest || updatedAt > currentLatest) {
-      latestArtifactUpdatedAtByCase.set(artifact.caseId, updatedAt);
+    if (!latestArtifactUpdatedAtByCase.has(artifact.caseId)) {
+      latestArtifactUpdatedAtByCase.set(artifact.caseId, toIsoDate(artifact.updatedAt));
     }
   }
 
@@ -163,7 +146,7 @@ export async function getLegalArtifactsHubOverview(): Promise<LegalArtifactsHubO
   return {
     generatedAt: new Date().toISOString(),
     totalCases: cases.length,
-    totalArtifacts: latestArtifactsByCaseAndType.size,
+    totalArtifacts: artifactRows.length,
     cases
   };
 }
