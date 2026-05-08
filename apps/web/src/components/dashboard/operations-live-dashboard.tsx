@@ -147,6 +147,9 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
         <div className="ops-header-right">
           <p className="ops-clock">{liveClockLabel}</p>
           <span className={systemBadgeClassName}>{systemBadgeLabel}</span>
+          <Link className="button-ghost inline-action" href="/painel-executivo/artefatos">
+            Artefatos
+          </Link>
           <Link className="button-ghost inline-action" href="/">
             Cadastro publico
           </Link>

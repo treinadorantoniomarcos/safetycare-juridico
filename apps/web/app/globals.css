@@ -860,6 +860,78 @@ h2 {
   line-height: 1.5;
 }
 
+.legal-artifacts-hub {
+  gap: 14px;
+}
+
+.legal-artifacts-hub__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.legal-artifacts-hub__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.legal-artifacts-hub__summary-row {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
+  align-items: end;
+}
+
+.legal-artifacts-hub__search {
+  margin: 0;
+}
+
+.legal-artifacts-hub__search input {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.legal-artifacts-hub__case-list {
+  display: grid;
+  gap: 14px;
+}
+
+.legal-artifacts-hub__case-card {
+  gap: 14px;
+}
+
+.legal-artifacts-hub__case-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.legal-artifacts-hub__case-head h2,
+.legal-artifacts-hub__artifact-card h3 {
+  margin: 0;
+}
+
+.legal-artifacts-hub__case-actions {
+  align-items: center;
+}
+
+.legal-artifacts-hub__artifact-list {
+  display: grid;
+  gap: 12px;
+}
+
+.legal-artifacts-hub__artifact-card {
+  gap: 10px;
+}
+
 .review-artifact-list {
   display: grid;
   gap: 10px;

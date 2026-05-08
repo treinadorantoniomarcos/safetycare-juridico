@@ -332,7 +332,10 @@ export function LegalArtifactEditor({ artifacts, caseId, legalStatus }: LegalArt
 
   if (groupedArtifacts.length === 0) {
     return (
-      <section className="form-section-card supporting-documents-card legal-artifact-editor">
+      <section
+        id="artefatos"
+        className="form-section-card supporting-documents-card legal-artifact-editor"
+      >
         <div className="form-section-head">
           <p className="section-eyebrow">Artefatos gerados</p>
           <h3>Editar, salvar e baixar</h3>
@@ -348,7 +351,10 @@ export function LegalArtifactEditor({ artifacts, caseId, legalStatus }: LegalArt
   }
 
   return (
-    <section className="form-section-card supporting-documents-card legal-artifact-editor">
+    <section
+      id="artefatos"
+      className="form-section-card supporting-documents-card legal-artifact-editor"
+    >
       <div className="form-section-head">
         <p className="section-eyebrow">Artefatos gerados</p>
         <h3>Editar, salvar e baixar</h3>

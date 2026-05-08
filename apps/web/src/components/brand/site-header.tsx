@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 type SiteHeaderProps = {
-  current?: "home" | "metodo" | "faq" | "resume" | "dashboard";
+  current?: "home" | "metodo" | "faq" | "resume" | "dashboard" | "artifacts";
 };
 
 function linkClass(active: boolean) {
@@ -10,7 +10,9 @@ function linkClass(active: boolean) {
 
 export function SiteHeader({ current = "home" }: SiteHeaderProps) {
   const dashboardHref =
-    current === "dashboard" ? "/painel-executivo" : "https://bright-orbit-nexus.lovable.app";
+    current === "dashboard" || current === "artifacts"
+      ? "/painel-executivo"
+      : "https://bright-orbit-nexus.lovable.app";
 
   return (
     <header className="brand-header">
@@ -30,6 +32,9 @@ export function SiteHeader({ current = "home" }: SiteHeaderProps) {
         </Link>
         <Link href="/retomar-caso" className={linkClass(current === "resume")}>
           Retomar caso
+        </Link>
+        <Link href="/painel-executivo/artefatos" className={linkClass(current === "artifacts")}>
+          Artefatos
         </Link>
         <Link href={dashboardHref} className={linkClass(current === "dashboard")}>
           Dashboard
