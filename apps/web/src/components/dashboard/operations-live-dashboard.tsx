@@ -75,7 +75,45 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
 
   useEffect(() => {
     let active = true;
+    let refreshInFlight = false;
     const source = new EventSource("/api/dashboard/operations-live/stream");
+
+    const refreshSnapshot = async () => {
+      if (!active || refreshInFlight) {
+        return;
+      }
+
+      refreshInFlight = true;
+
+      try {
+        const response = await fetch("/api/dashboard/operations-live", {
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as OperationsLiveOverview;
+
+        if (!active) {
+          return;
+        }
+
+        setData(payload);
+        setConnectionStatus((current) => (current === "offline" ? "online" : current));
+        setError(null);
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setConnectionStatus((current) => (current === "online" ? "offline" : current));
+        setError("Atualizacao em tempo real indisponivel no momento.");
+      } finally {
+        refreshInFlight = false;
+      }
+    };
 
     source.onopen = () => {
       if (!active) {
@@ -120,9 +158,26 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
       setError("Conexao em tempo real instavel. Tentando reconectar...");
     };
 
+    void refreshSnapshot();
+    const fallbackInterval = window.setInterval(() => {
+      void refreshSnapshot();
+    }, 15000);
+
+    const refreshOnVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshSnapshot();
+      }
+    };
+
+    document.addEventListener("visibilitychange", refreshOnVisibilityChange);
+    window.addEventListener("focus", refreshOnVisibilityChange);
+
     return () => {
       active = false;
       source.close();
+      window.clearInterval(fallbackInterval);
+      document.removeEventListener("visibilitychange", refreshOnVisibilityChange);
+      window.removeEventListener("focus", refreshOnVisibilityChange);
     };
   }, []);
 
@@ -274,7 +329,7 @@ export function OperationsLiveDashboard({ initialData }: OperationsLiveDashboard
       </section>
 
       <footer className="ops-footer">
-        Atualizacao push em tempo real via SSE | conexao: {connectionStatus}
+        Atualizacao push via SSE com fallback de sincronizacao | conexao: {connectionStatus}
       </footer>
     </section>
   );
