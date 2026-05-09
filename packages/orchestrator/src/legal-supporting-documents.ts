@@ -87,9 +87,13 @@ function buildPowerOfAttorneyDocument(
       "data_da_outorga"
     ],
     reviewNotes: [
+      input.contactIsProcessRepresentative
+        ? "O solicitante informou que sera o proprio procurador e responsavel pelo acompanhamento do processo."
+        : "O solicitante informou que nao sera o procurador; preencher a secao especifica com os dados do procurador e responsavel antes da assinatura.",
       "Ajustar a qualificacao do outorgante antes da assinatura, especialmente se o contratante nao for o proprio paciente.",
       "Conferir se nome, CPF, RG, e-mail, WhatsApp e endereco do paciente estao completos e coerentes com o contrato.",
       "Conferir se e-mails e WhatsApps adicionais do paciente e do solicitante estao coerentes com os contatos principais.",
+      "Quando houver procurador distinto do solicitante, conferir os dados do procurador e responsavel pelo acompanhamento do processo e substitui-los nos campos de outorgante/contratante conforme o caso.",
       "Conferir se nome, CPF, RG, e-mail, WhatsApp e endereco do solicitante estao completos e coerentes com o contrato.",
       "Conferir se os poderes especiais estao adequados ao tipo de medida que sera proposta.",
       "Definir se o cartorio ou o tribunal exigira firma reconhecida."
@@ -170,9 +174,13 @@ function buildFeeAgreementDocument(
       "data_da_assinatura"
     ],
     reviewNotes: [
+      input.contactIsProcessRepresentative
+        ? "O solicitante informou que sera o proprio contratante e responsavel pelo acompanhamento do processo."
+        : "O solicitante informou que nao sera o contratante; preencher a secao especifica com os dados do procurador e responsavel antes da assinatura.",
       "Definir valor, parcela inicial, vencimentos e eventual percentual de exito antes da assinatura.",
       "Conferir se nome, CPF, RG, e-mail, WhatsApp e endereco do paciente estao corretos.",
       "Conferir se e-mails e WhatsApps adicionais do paciente e do contratante estao corretos e devem constar nos contatos.",
+      "Quando houver procurador distinto do solicitante, conferir os dados do procurador e responsavel pelo acompanhamento do processo e usá-los na qualificacao contratual, se aplicavel.",
       "Conferir se nome, CPF, RG, e-mail, WhatsApp e endereco do contratante estao corretos.",
       "Conferir se o regime de reembolso de despesas e a multa contratual estao adequados ao caso concreto.",
       "Ajustar o foro e o escopo da contratacao conforme a estrategia humanamente aprovada."

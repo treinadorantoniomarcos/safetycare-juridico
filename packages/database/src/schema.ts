@@ -243,6 +243,7 @@ export const legalBriefInputsTable = pgTable(
     patientAdditionalWhatsapps: jsonb("patient_additional_whatsapps").$type<string[]>().notNull().default([]),
     patientRg: text("patient_rg").notNull().default(""),
     relationToPatient: text("relation_to_patient").notNull(),
+    contactIsProcessRepresentative: boolean("contact_is_process_representative").notNull().default(true),
     contactFullName: text("contact_full_name").notNull().default(""),
     contactAddress: text("contact_address").notNull().default(""),
     contactWhatsapp: text("contact_whatsapp").notNull().default(""),
@@ -251,6 +252,20 @@ export const legalBriefInputsTable = pgTable(
     contactAdditionalWhatsapps: jsonb("contact_additional_whatsapps").$type<string[]>().notNull().default([]),
     contactCpf: text("contact_cpf").notNull().default(""),
     contactRg: text("contact_rg").notNull().default(""),
+    processRepresentativeFullName: text("process_representative_full_name").notNull().default(""),
+    processRepresentativeCpf: text("process_representative_cpf").notNull().default(""),
+    processRepresentativeRg: text("process_representative_rg").notNull().default(""),
+    processRepresentativeAddress: text("process_representative_address").notNull().default(""),
+    processRepresentativeWhatsapp: text("process_representative_whatsapp").notNull().default(""),
+    processRepresentativeEmail: text("process_representative_email").notNull().default(""),
+    processRepresentativeAdditionalEmails: jsonb("process_representative_additional_emails")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    processRepresentativeAdditionalWhatsapps: jsonb("process_representative_additional_whatsapps")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
     problemType: text("problem_type").notNull(),
     currentUrgency: text("current_urgency").notNull(),
     keyDates: jsonb("key_dates")

@@ -91,6 +91,7 @@ function formatSubmission(record: {
   patientAdditionalWhatsapps: unknown;
   patientRg: string;
   relationToPatient: string;
+  contactIsProcessRepresentative: boolean;
   contactFullName: string;
   contactAddress: string;
   contactWhatsapp: string;
@@ -99,6 +100,14 @@ function formatSubmission(record: {
   contactAdditionalWhatsapps: unknown;
   contactCpf: string;
   contactRg: string;
+  processRepresentativeFullName: string;
+  processRepresentativeCpf: string;
+  processRepresentativeRg: string;
+  processRepresentativeAddress: string;
+  processRepresentativeWhatsapp: string;
+  processRepresentativeEmail: string;
+  processRepresentativeAdditionalEmails: unknown;
+  processRepresentativeAdditionalWhatsapps: unknown;
   problemType: string;
   currentUrgency: string;
   keyDates: LegalBriefInput["keyDates"];
@@ -132,6 +141,7 @@ function formatSubmission(record: {
     patientAdditionalWhatsapps: normalizeStringList(record.patientAdditionalWhatsapps),
     patientRg: record.patientRg ?? "",
     relationToPatient: record.relationToPatient,
+    contactIsProcessRepresentative: record.contactIsProcessRepresentative ?? true,
     contactFullName: record.contactFullName ?? "",
     contactAddress: record.contactAddress ?? "",
     contactWhatsapp: record.contactWhatsapp ?? "",
@@ -140,6 +150,18 @@ function formatSubmission(record: {
     contactAdditionalWhatsapps: normalizeStringList(record.contactAdditionalWhatsapps),
     contactCpf: record.contactCpf ?? "",
     contactRg: record.contactRg ?? "",
+    processRepresentativeFullName: record.processRepresentativeFullName ?? "",
+    processRepresentativeCpf: record.processRepresentativeCpf ?? "",
+    processRepresentativeRg: record.processRepresentativeRg ?? "",
+    processRepresentativeAddress: record.processRepresentativeAddress ?? "",
+    processRepresentativeWhatsapp: record.processRepresentativeWhatsapp ?? "",
+    processRepresentativeEmail: record.processRepresentativeEmail ?? "",
+    processRepresentativeAdditionalEmails: normalizeStringList(
+      record.processRepresentativeAdditionalEmails
+    ),
+    processRepresentativeAdditionalWhatsapps: normalizeStringList(
+      record.processRepresentativeAdditionalWhatsapps
+    ),
     problemType: record.problemType as LegalBriefInput["problemType"],
     currentUrgency: record.currentUrgency as LegalBriefInput["currentUrgency"],
     keyDates: record.keyDates,
@@ -378,6 +400,7 @@ export async function POST(request: Request, context: RouteContext) {
       patientAdditionalWhatsapps: parsedPayload.data.patientAdditionalWhatsapps,
       patientRg: parsedPayload.data.patientRg,
       relationToPatient: parsedPayload.data.relationToPatient,
+      contactIsProcessRepresentative: parsedPayload.data.contactIsProcessRepresentative,
       contactFullName: parsedPayload.data.contactFullName,
       contactAddress: parsedPayload.data.contactAddress,
       contactWhatsapp: parsedPayload.data.contactWhatsapp,
@@ -386,6 +409,15 @@ export async function POST(request: Request, context: RouteContext) {
       contactAdditionalWhatsapps: parsedPayload.data.contactAdditionalWhatsapps,
       contactCpf: parsedPayload.data.contactCpf,
       contactRg: parsedPayload.data.contactRg,
+      processRepresentativeFullName: parsedPayload.data.processRepresentativeFullName,
+      processRepresentativeCpf: parsedPayload.data.processRepresentativeCpf,
+      processRepresentativeRg: parsedPayload.data.processRepresentativeRg,
+      processRepresentativeAddress: parsedPayload.data.processRepresentativeAddress,
+      processRepresentativeWhatsapp: parsedPayload.data.processRepresentativeWhatsapp,
+      processRepresentativeEmail: parsedPayload.data.processRepresentativeEmail,
+      processRepresentativeAdditionalEmails: parsedPayload.data.processRepresentativeAdditionalEmails,
+      processRepresentativeAdditionalWhatsapps:
+        parsedPayload.data.processRepresentativeAdditionalWhatsapps,
       problemType: parsedPayload.data.problemType,
       currentUrgency: parsedPayload.data.currentUrgency,
       keyDates: parsedPayload.data.keyDates,

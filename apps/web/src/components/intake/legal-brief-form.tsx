@@ -22,16 +22,52 @@ type WitnessEntry = {
   address: string;
   whatsapp: string;
 };
+type ProcessRepresentativeEntry = {
+  fullName: string;
+  cpf: string;
+  rg: string;
+  address: string;
+  whatsapp: string;
+  email: string;
+  additionalEmails: string[];
+  additionalWhatsapps: string[];
+};
 type OptionalContactListField =
   | "patientAdditionalEmails"
   | "patientAdditionalWhatsapps"
   | "contactAdditionalEmails"
-  | "contactAdditionalWhatsapps";
+  | "contactAdditionalWhatsapps"
+  | "processRepresentativeAdditionalEmails"
+  | "processRepresentativeAdditionalWhatsapps";
 
 const MAX_UPLOADED_DOCUMENTS = 10;
 const MAX_UPLOADED_DOCUMENT_SIZE_BYTES = 12 * 1024 * 1024;
 
-type LegalBriefFormState = Omit<LegalBriefInput, "caseId" | "workflowJobId" | "draftScope">;
+type LegalBriefFormState = Omit<
+  LegalBriefInput,
+  | "caseId"
+  | "workflowJobId"
+  | "draftScope"
+  | "contactIsProcessRepresentative"
+  | "processRepresentativeFullName"
+  | "processRepresentativeCpf"
+  | "processRepresentativeRg"
+  | "processRepresentativeAddress"
+  | "processRepresentativeWhatsapp"
+  | "processRepresentativeEmail"
+  | "processRepresentativeAdditionalEmails"
+  | "processRepresentativeAdditionalWhatsapps"
+> & {
+  contactIsProcessRepresentative: boolean | null;
+  processRepresentativeFullName: string;
+  processRepresentativeCpf: string;
+  processRepresentativeRg: string;
+  processRepresentativeAddress: string;
+  processRepresentativeWhatsapp: string;
+  processRepresentativeEmail: string;
+  processRepresentativeAdditionalEmails: string[];
+  processRepresentativeAdditionalWhatsapps: string[];
+};
 
 type LegalBriefSubmission = Omit<LegalBriefInput, "caseId" | "workflowJobId"> & {
   submittedAt: string;
@@ -75,6 +111,7 @@ function createEmptyState(): LegalBriefFormState {
     patientAdditionalWhatsapps: [],
     patientRg: "",
     relationToPatient: "",
+    contactIsProcessRepresentative: null,
     contactFullName: "",
     contactAddress: "",
     contactWhatsapp: "",
@@ -83,6 +120,14 @@ function createEmptyState(): LegalBriefFormState {
     contactAdditionalWhatsapps: [],
     contactCpf: "",
     contactRg: "",
+    processRepresentativeFullName: "",
+    processRepresentativeCpf: "",
+    processRepresentativeRg: "",
+    processRepresentativeAddress: "",
+    processRepresentativeWhatsapp: "",
+    processRepresentativeEmail: "",
+    processRepresentativeAdditionalEmails: [],
+    processRepresentativeAdditionalWhatsapps: [],
     problemType: "atendimento",
     currentUrgency: "medium",
     keyDates: [{ label: "", date: "", time: "" }],
@@ -104,6 +149,19 @@ function createEmptyWitness(): WitnessEntry {
     rg: "",
     address: "",
     whatsapp: ""
+  };
+}
+
+function createEmptyProcessRepresentative(): ProcessRepresentativeEntry {
+  return {
+    fullName: "",
+    cpf: "",
+    rg: "",
+    address: "",
+    whatsapp: "",
+    email: "",
+    additionalEmails: [],
+    additionalWhatsapps: []
   };
 }
 
@@ -140,6 +198,7 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
     patientAdditionalWhatsapps: normalizeStringList(submission.patientAdditionalWhatsapps),
     patientRg: submission.patientRg ?? "",
     relationToPatient: submission.relationToPatient,
+    contactIsProcessRepresentative: submission.contactIsProcessRepresentative ?? true,
     contactFullName: submission.contactFullName ?? "",
     contactAddress: submission.contactAddress ?? "",
     contactWhatsapp: submission.contactWhatsapp ?? "",
@@ -148,6 +207,18 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
     contactAdditionalWhatsapps: normalizeStringList(submission.contactAdditionalWhatsapps),
     contactCpf: submission.contactCpf ?? "",
     contactRg: submission.contactRg ?? "",
+    processRepresentativeFullName: submission.processRepresentativeFullName ?? "",
+    processRepresentativeCpf: submission.processRepresentativeCpf ?? "",
+    processRepresentativeRg: submission.processRepresentativeRg ?? "",
+    processRepresentativeAddress: submission.processRepresentativeAddress ?? "",
+    processRepresentativeWhatsapp: submission.processRepresentativeWhatsapp ?? "",
+    processRepresentativeEmail: submission.processRepresentativeEmail ?? "",
+    processRepresentativeAdditionalEmails: normalizeStringList(
+      submission.processRepresentativeAdditionalEmails
+    ),
+    processRepresentativeAdditionalWhatsapps: normalizeStringList(
+      submission.processRepresentativeAdditionalWhatsapps
+    ),
     problemType: submission.problemType,
     currentUrgency: submission.currentUrgency,
     keyDates:
@@ -241,6 +312,69 @@ function renderRepeatableContactList({
         </button>
       </div>
     </>
+  );
+}
+
+function renderYesNoChoice({
+  title,
+  note,
+  value,
+  yesLabel,
+  noLabel,
+  yesDescription,
+  noDescription,
+  onChange
+}: {
+  title: string;
+  note: string;
+  value: boolean | null;
+  yesLabel: string;
+  noLabel: string;
+  yesDescription: string;
+  noDescription: string;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <fieldset className="binary-choice-fieldset">
+      <legend className="binary-choice-legend">{title}</legend>
+      <p className="section-note">{note}</p>
+
+      <div className="binary-choice-grid">
+        <label
+          className={`binary-choice-card ${value === true ? "binary-choice-card--selected" : ""}`}
+        >
+          <input
+            type="radio"
+            name="contactIsProcessRepresentative"
+            value="yes"
+            checked={value === true}
+            onChange={() => onChange(true)}
+          />
+          <span className="binary-choice-card__dot binary-choice-card__dot--yes" />
+          <span className="binary-choice-card__body">
+            <strong>{yesLabel}</strong>
+            <span>{yesDescription}</span>
+          </span>
+        </label>
+
+        <label
+          className={`binary-choice-card ${value === false ? "binary-choice-card--selected" : ""}`}
+        >
+          <input
+            type="radio"
+            name="contactIsProcessRepresentative"
+            value="no"
+            checked={value === false}
+            onChange={() => onChange(false)}
+          />
+          <span className="binary-choice-card__dot binary-choice-card__dot--no" />
+          <span className="binary-choice-card__body">
+            <strong>{noLabel}</strong>
+            <span>{noDescription}</span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
   );
 }
 
@@ -599,6 +733,32 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
     }));
   }
 
+  function setProcessRepresentativeSelection(value: boolean) {
+    setFormState((prev) => {
+      if (value) {
+        const clearedRepresentative = createEmptyProcessRepresentative();
+
+        return {
+          ...prev,
+          contactIsProcessRepresentative: true,
+          processRepresentativeFullName: clearedRepresentative.fullName,
+          processRepresentativeCpf: clearedRepresentative.cpf,
+          processRepresentativeRg: clearedRepresentative.rg,
+          processRepresentativeAddress: clearedRepresentative.address,
+          processRepresentativeWhatsapp: clearedRepresentative.whatsapp,
+          processRepresentativeEmail: clearedRepresentative.email,
+          processRepresentativeAdditionalEmails: clearedRepresentative.additionalEmails,
+          processRepresentativeAdditionalWhatsapps: clearedRepresentative.additionalWhatsapps
+        };
+      }
+
+      return {
+        ...prev,
+        contactIsProcessRepresentative: false
+      };
+    });
+  }
+
   function removeStringListItem(field: "documentsAttached", index: number) {
     setFormState((prev) => ({
       ...prev,
@@ -701,6 +861,13 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
       return;
     }
 
+    if (formState.contactIsProcessRepresentative === null) {
+      setError(
+        "Informe se o solicitante será o procurador do paciente e responsável pelo acompanhamento do processo."
+      );
+      return;
+    }
+
     const requiredValues = [
       formState.patientFullName,
       formState.patientCpf,
@@ -723,6 +890,17 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
       formState.mainRequest,
       formState.subsidiaryRequest
     ];
+
+    if (formState.contactIsProcessRepresentative === false) {
+      requiredValues.push(
+        formState.processRepresentativeFullName,
+        formState.processRepresentativeCpf,
+        formState.processRepresentativeRg,
+        formState.processRepresentativeAddress,
+        formState.processRepresentativeWhatsapp,
+        formState.processRepresentativeEmail
+      );
+    }
 
     if (requiredValues.some((value) => value.trim().length === 0)) {
       setError("Preencha todos os campos obrigatórios antes de enviar.");
@@ -760,6 +938,7 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           patientAdditionalWhatsapps: trimList(formState.patientAdditionalWhatsapps),
           patientRg: formState.patientRg.trim(),
           relationToPatient: formState.relationToPatient.trim(),
+          contactIsProcessRepresentative: formState.contactIsProcessRepresentative,
           contactFullName: formState.contactFullName.trim(),
           contactAddress: formState.contactAddress.trim(),
           contactWhatsapp: formState.contactWhatsapp.trim(),
@@ -768,6 +947,18 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           contactAdditionalWhatsapps: trimList(formState.contactAdditionalWhatsapps),
           contactCpf: formState.contactCpf.trim(),
           contactRg: formState.contactRg.trim(),
+          processRepresentativeFullName: formState.processRepresentativeFullName.trim(),
+          processRepresentativeCpf: formState.processRepresentativeCpf.trim(),
+          processRepresentativeRg: formState.processRepresentativeRg.trim(),
+          processRepresentativeAddress: formState.processRepresentativeAddress.trim(),
+          processRepresentativeWhatsapp: formState.processRepresentativeWhatsapp.trim(),
+          processRepresentativeEmail: formState.processRepresentativeEmail.trim(),
+          processRepresentativeAdditionalEmails: trimList(
+            formState.processRepresentativeAdditionalEmails
+          ),
+          processRepresentativeAdditionalWhatsapps: trimList(
+            formState.processRepresentativeAdditionalWhatsapps
+          ),
           problemType: formState.problemType,
           currentUrgency: formState.currentUrgency,
           keyDates,
@@ -1143,6 +1334,19 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           </label>
         </div>
 
+        {renderYesNoChoice({
+          title: "Solicitante e acompanhamento",
+          note:
+            "Informe se a pessoa que está preenchendo o formulário também será o procurador do paciente e responsável pelo acompanhamento do processo.",
+          value: formState.contactIsProcessRepresentative,
+          yesLabel: "Sim",
+          noLabel: "Não",
+          yesDescription: "O solicitante também será o procurador e responsável pelo processo.",
+          noDescription:
+            "Abrir os campos abaixo para informar o procurador e responsável pelo acompanhamento do processo.",
+          onChange: setProcessRepresentativeSelection
+        })}
+
         {renderRepeatableContactList({
           title: "E-mails adicionais do solicitante",
           fieldLabel: "E-mail adicional",
@@ -1175,6 +1379,160 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
             updateOptionalContactList("contactAdditionalWhatsapps", index, value)
         })}
       </section>
+
+      {formState.contactIsProcessRepresentative === false ? (
+        <section className="form-section-card">
+          <div className="form-section-head">
+            <p className="section-eyebrow">Procurador e processo</p>
+            <h3>Dados do procurador e responsável pelo acompanhamento do processo</h3>
+            <p className="section-note">
+              Preencha esses campos quando o solicitante for diferente de quem assinará a
+              procuração e acompanhará o caso.
+            </p>
+          </div>
+
+          <div className="field-grid">
+            <label className="field">
+              <span>Nome completo</span>
+              <input
+                type="text"
+                name="processRepresentativeFullName"
+                autoComplete="name"
+                placeholder="Nome completo do procurador"
+                value={formState.processRepresentativeFullName}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    processRepresentativeFullName: event.target.value
+                  }))
+                }
+              />
+            </label>
+
+            <label className="field">
+              <span>CPF</span>
+              <input
+                type="text"
+                name="processRepresentativeCpf"
+                inputMode="numeric"
+                placeholder="000.000.000-00"
+                value={formState.processRepresentativeCpf}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    processRepresentativeCpf: event.target.value
+                  }))
+                }
+              />
+            </label>
+          </div>
+
+          <div className="field-grid">
+            <label className="field">
+              <span>RG</span>
+              <input
+                type="text"
+                name="processRepresentativeRg"
+                placeholder="Documento de identidade"
+                value={formState.processRepresentativeRg}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    processRepresentativeRg: event.target.value
+                  }))
+                }
+              />
+            </label>
+
+            <label className="field">
+              <span>E-mail</span>
+              <input
+                type="email"
+                name="processRepresentativeEmail"
+                autoComplete="email"
+                placeholder="nome@exemplo.com"
+                value={formState.processRepresentativeEmail}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    processRepresentativeEmail: event.target.value
+                  }))
+                }
+              />
+            </label>
+          </div>
+
+          <div className="field-grid">
+            <label className="field">
+              <span>WhatsApp</span>
+              <input
+                type="tel"
+                name="processRepresentativeWhatsapp"
+                autoComplete="tel"
+                placeholder="(00) 00000-0000"
+                value={formState.processRepresentativeWhatsapp}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    processRepresentativeWhatsapp: event.target.value
+                  }))
+                }
+              />
+            </label>
+
+            <label className="field">
+              <span>Endereço</span>
+              <input
+                type="text"
+                name="processRepresentativeAddress"
+                autoComplete="street-address"
+                placeholder="Rua, número, bairro, cidade e UF"
+                value={formState.processRepresentativeAddress}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    processRepresentativeAddress: event.target.value
+                  }))
+                }
+              />
+            </label>
+          </div>
+
+          {renderRepeatableContactList({
+            title: "E-mails adicionais do procurador",
+            fieldLabel: "E-mail adicional",
+            note: "Opcional. Adicione outro e-mail para acompanhamento do processo e das procurações pelo procurador.",
+            emptyMessage: "Nenhum e-mail adicional do procurador informado ainda.",
+            items: formState.processRepresentativeAdditionalEmails,
+            inputType: "email",
+            autoComplete: "email",
+            placeholder: "nome.adicional@exemplo.com",
+            addLabel: "Adicionar outro e-mail do procurador",
+            onAdd: () => addOptionalContactListItem("processRepresentativeAdditionalEmails"),
+            onRemove: (index) =>
+              removeOptionalContactListItem("processRepresentativeAdditionalEmails", index),
+            onUpdate: (index, value) =>
+              updateOptionalContactList("processRepresentativeAdditionalEmails", index, value)
+          })}
+
+          {renderRepeatableContactList({
+            title: "WhatsApps adicionais do procurador",
+            fieldLabel: "WhatsApp adicional",
+            note: "Opcional. Adicione outro WhatsApp para acompanhamento do processo e das procurações pelo procurador.",
+            emptyMessage: "Nenhum WhatsApp adicional do procurador informado ainda.",
+            items: formState.processRepresentativeAdditionalWhatsapps,
+            inputType: "tel",
+            autoComplete: "tel",
+            placeholder: "(00) 00000-0000",
+            addLabel: "Adicionar outro WhatsApp do procurador",
+            onAdd: () => addOptionalContactListItem("processRepresentativeAdditionalWhatsapps"),
+            onRemove: (index) =>
+              removeOptionalContactListItem("processRepresentativeAdditionalWhatsapps", index),
+            onUpdate: (index, value) =>
+              updateOptionalContactList("processRepresentativeAdditionalWhatsapps", index, value)
+          })}
+        </section>
+      ) : null}
 
       <section className="form-section-card">
         <div className="form-section-head">

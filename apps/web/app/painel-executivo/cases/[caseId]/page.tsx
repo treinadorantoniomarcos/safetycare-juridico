@@ -261,6 +261,10 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
                   <strong>{submission.relationToPatient}</strong>
                 </div>
                 <div className="review-kv">
+                  <span>Solicitante sera o procurador?</span>
+                  <strong>{submission.contactIsProcessRepresentative ? "Sim" : "Não"}</strong>
+                </div>
+                <div className="review-kv">
                   <span>Tipo de problema</span>
                   <strong>{formatProblemType(submission.problemType)}</strong>
                 </div>
@@ -345,6 +349,47 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
                   {renderList(submission.contactAdditionalWhatsapps)}
                 </div>
               </div>
+
+              {!submission.contactIsProcessRepresentative ? (
+                <div className="review-block">
+                  <h4>Dados do procurador e responsavel pelo processo</h4>
+                  <div className="review-kv-grid">
+                    <div className="review-kv">
+                      <span>Nome completo</span>
+                      <strong>{submission.processRepresentativeFullName}</strong>
+                    </div>
+                    <div className="review-kv">
+                      <span>CPF</span>
+                      <strong>{submission.processRepresentativeCpf}</strong>
+                    </div>
+                    <div className="review-kv">
+                      <span>RG</span>
+                      <strong>{submission.processRepresentativeRg}</strong>
+                    </div>
+                    <div className="review-kv">
+                      <span>E-mail</span>
+                      <strong>{submission.processRepresentativeEmail}</strong>
+                    </div>
+                    <div className="review-kv">
+                      <span>WhatsApp</span>
+                      <strong>{submission.processRepresentativeWhatsapp}</strong>
+                    </div>
+                    <div className="review-kv">
+                      <span>Endereco</span>
+                      <strong>{submission.processRepresentativeAddress}</strong>
+                    </div>
+                  </div>
+
+                  <div className="review-block">
+                    <h5>E-mails adicionais do procurador</h5>
+                    {renderList(submission.processRepresentativeAdditionalEmails)}
+                  </div>
+                  <div className="review-block">
+                    <h5>WhatsApps adicionais do procurador</h5>
+                    {renderList(submission.processRepresentativeAdditionalWhatsapps)}
+                  </div>
+                </div>
+              ) : null}
             </section>
 
             <section className="form-section-card">

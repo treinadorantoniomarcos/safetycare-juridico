@@ -98,6 +98,7 @@ function formatSubmission(record: LegalBriefInputRecord): LegalBriefSubmissionVi
     patientAdditionalWhatsapps: normalizeStringList(record.patientAdditionalWhatsapps),
     patientRg: record.patientRg ?? "",
     relationToPatient: record.relationToPatient,
+    contactIsProcessRepresentative: record.contactIsProcessRepresentative ?? true,
     contactFullName: record.contactFullName ?? "",
     contactAddress: record.contactAddress ?? "",
     contactWhatsapp: record.contactWhatsapp ?? "",
@@ -106,6 +107,18 @@ function formatSubmission(record: LegalBriefInputRecord): LegalBriefSubmissionVi
     contactAdditionalWhatsapps: normalizeStringList(record.contactAdditionalWhatsapps),
     contactCpf: record.contactCpf ?? "",
     contactRg: record.contactRg ?? "",
+    processRepresentativeFullName: record.processRepresentativeFullName ?? "",
+    processRepresentativeCpf: record.processRepresentativeCpf ?? "",
+    processRepresentativeRg: record.processRepresentativeRg ?? "",
+    processRepresentativeAddress: record.processRepresentativeAddress ?? "",
+    processRepresentativeWhatsapp: record.processRepresentativeWhatsapp ?? "",
+    processRepresentativeEmail: record.processRepresentativeEmail ?? "",
+    processRepresentativeAdditionalEmails: normalizeStringList(
+      record.processRepresentativeAdditionalEmails
+    ),
+    processRepresentativeAdditionalWhatsapps: normalizeStringList(
+      record.processRepresentativeAdditionalWhatsapps
+    ),
     problemType: record.problemType as LegalBriefInput["problemType"],
     currentUrgency: record.currentUrgency as LegalBriefInput["currentUrgency"],
     keyDates: record.keyDates,

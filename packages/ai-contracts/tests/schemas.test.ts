@@ -411,6 +411,7 @@ describe("legalBriefInputSchema", () => {
       patientAdditionalWhatsapps: ["(41) 96666-5555"],
       patientRg: "9876543",
       relationToPatient: "Filha",
+      contactIsProcessRepresentative: false,
       contactFullName: "Maria Souza",
       contactAddress: "Rua A, 123, Centro, Curitiba-PR",
       contactWhatsapp: "(41) 98888-7777",
@@ -419,6 +420,14 @@ describe("legalBriefInputSchema", () => {
       contactAdditionalWhatsapps: ["(41) 97777-6666"],
       contactCpf: "22233344455",
       contactRg: "1234567",
+      processRepresentativeFullName: "Carla Souza",
+      processRepresentativeCpf: "44455566677",
+      processRepresentativeRg: "9876543",
+      processRepresentativeAddress: "Rua B, 123, Curitiba-PR",
+      processRepresentativeWhatsapp: "(41) 99999-8888",
+      processRepresentativeEmail: "carla.souza@example.com",
+      processRepresentativeAdditionalEmails: ["carla.alt@example.com"],
+      processRepresentativeAdditionalWhatsapps: ["(41) 98888-7777"],
       problemType: "plano",
       currentUrgency: "high",
       keyDates: [{ label: "Negativa do plano", date: "2025-05-02", time: "14:30" }],
@@ -442,9 +451,12 @@ describe("legalBriefInputSchema", () => {
 
     expect(result.contactFullName).toBe("Maria Souza");
     expect(result.contactEmail).toBe("maria.souza@example.com");
+    expect(result.contactIsProcessRepresentative).toBe(false);
+    expect(result.processRepresentativeFullName).toBe("Carla Souza");
     expect(result.patientEmail).toBe("ana.souza@example.com");
     expect(result.patientAdditionalEmails).toEqual(["ana.alt@example.com"]);
     expect(result.contactAdditionalWhatsapps).toEqual(["(41) 97777-6666"]);
+    expect(result.processRepresentativeAdditionalEmails).toEqual(["carla.alt@example.com"]);
     expect(result.keyDates[0].time).toBe("14:30");
   });
 });

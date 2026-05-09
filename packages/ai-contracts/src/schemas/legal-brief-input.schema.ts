@@ -20,6 +20,15 @@ const optionalTrimmedTextSchema = (maxLength: number) =>
     return trimmed.length === 0 ? undefined : trimmed;
   }, z.string().trim().max(maxLength).optional());
 
+const optionalEmailSchema = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}, z.string().trim().email().max(200).optional());
+
 const additionalEmailListSchema = z.array(z.string().trim().email().max(200)).max(10).default([]);
 const additionalWhatsappListSchema = z.array(z.string().trim().min(5).max(40)).max(10).default([]);
 
@@ -60,6 +69,7 @@ export const legalBriefInputSchema = z.object({
   patientAdditionalWhatsapps: additionalWhatsappListSchema,
   patientRg: z.string().trim().min(3).max(20),
   relationToPatient: z.string().trim().min(1).max(120),
+  contactIsProcessRepresentative: z.boolean(),
   contactFullName: z.string().trim().min(1).max(200),
   contactAddress: z.string().trim().min(5).max(250),
   contactWhatsapp: z.string().trim().min(5).max(40),
@@ -68,6 +78,14 @@ export const legalBriefInputSchema = z.object({
   contactAdditionalWhatsapps: additionalWhatsappListSchema,
   contactCpf: z.string().trim().min(11).max(18),
   contactRg: z.string().trim().min(3).max(20),
+  processRepresentativeFullName: optionalTrimmedTextSchema(200),
+  processRepresentativeCpf: optionalTrimmedTextSchema(18),
+  processRepresentativeRg: optionalTrimmedTextSchema(20),
+  processRepresentativeAddress: optionalTrimmedTextSchema(250),
+  processRepresentativeWhatsapp: optionalTrimmedTextSchema(40),
+  processRepresentativeEmail: optionalEmailSchema,
+  processRepresentativeAdditionalEmails: additionalEmailListSchema,
+  processRepresentativeAdditionalWhatsapps: additionalWhatsappListSchema,
   problemType: z.enum(legalBriefProblemTypes),
   currentUrgency: z.enum(triageUrgencyLevels),
   keyDates: z.array(legalBriefKeyDateSchema).min(1).max(12),
@@ -79,6 +97,58 @@ export const legalBriefInputSchema = z.object({
   witnesses: z.array(legalBriefWitnessSchema).max(20).default([]),
   mainRequest: z.string().trim().min(5).max(4000),
   subsidiaryRequest: z.string().trim().min(5).max(4000)
+}).superRefine((data, ctx) => {
+  if (data.contactIsProcessRepresentative) {
+    return;
+  }
+
+  const requiredRepresentativeFields: Array<{
+    key:
+      | "processRepresentativeFullName"
+      | "processRepresentativeCpf"
+      | "processRepresentativeRg"
+      | "processRepresentativeAddress"
+      | "processRepresentativeWhatsapp"
+      | "processRepresentativeEmail";
+    message: string;
+  }> = [
+    {
+      key: "processRepresentativeFullName",
+      message: "Informe o nome completo do procurador e responsavel pelo processo."
+    },
+    {
+      key: "processRepresentativeCpf",
+      message: "Informe o CPF do procurador e responsavel pelo processo."
+    },
+    {
+      key: "processRepresentativeRg",
+      message: "Informe o RG do procurador e responsavel pelo processo."
+    },
+    {
+      key: "processRepresentativeAddress",
+      message: "Informe o endereco completo do procurador e responsavel pelo processo."
+    },
+    {
+      key: "processRepresentativeWhatsapp",
+      message: "Informe o WhatsApp do procurador e responsavel pelo processo."
+    },
+    {
+      key: "processRepresentativeEmail",
+      message: "Informe o e-mail do procurador e responsavel pelo processo."
+    }
+  ];
+
+  for (const field of requiredRepresentativeFields) {
+    const value = data[field.key];
+
+    if (typeof value !== "string" || value.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [field.key],
+        message: field.message
+      });
+    }
+  }
 });
 
 export type LegalBriefWitness = z.infer<typeof legalBriefWitnessSchema>;

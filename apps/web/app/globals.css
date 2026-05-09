@@ -1270,6 +1270,109 @@ h2 {
   box-shadow: 0 0 0 4px #fdeff1;
 }
 
+.binary-choice-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.binary-choice-legend {
+  margin: 0;
+  padding: 0;
+  color: var(--metal);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.binary-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.binary-choice-card {
+  position: relative;
+  border: 1px solid #d9e2ef;
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(32, 56, 94, 0.04);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.binary-choice-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(32, 56, 94, 0.08);
+}
+
+.binary-choice-card--selected {
+  border-color: var(--ink);
+  box-shadow: 0 14px 28px rgba(32, 56, 94, 0.1);
+}
+
+.binary-choice-card input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.binary-choice-card__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  margin-top: 4px;
+}
+
+.binary-choice-card__body {
+  display: grid;
+  gap: 4px;
+}
+
+.binary-choice-card__body strong {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.binary-choice-card__body span {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.binary-choice-card--yes {
+  background: linear-gradient(180deg, #effaf3 0%, #ffffff 100%);
+}
+
+.binary-choice-card--yes .binary-choice-card__dot {
+  background: #2f8f46;
+  box-shadow: 0 0 0 4px #e9f7ee;
+}
+
+.binary-choice-card--no {
+  background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%);
+}
+
+.binary-choice-card--no .binary-choice-card__dot {
+  background: #ba2c3b;
+  box-shadow: 0 0 0 4px #fdeff1;
+}
+
 .score-choice-note {
   margin: 0;
   border: 1px dashed var(--line);
@@ -2473,6 +2576,10 @@ h2 {
   }
 
   .score-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .binary-choice-grid {
     grid-template-columns: 1fr;
   }
 

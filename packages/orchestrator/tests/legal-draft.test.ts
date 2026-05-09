@@ -18,6 +18,7 @@ describe("buildCivilHealthLegalDraft", () => {
       patientAdditionalWhatsapps: ["62988880000"],
       patientRg: "1234567",
       relationToPatient: "Filho",
+      contactIsProcessRepresentative: false,
       contactFullName: "Maria Silva",
       contactAddress: "Rua B, 456",
       contactWhatsapp: "62988888888",
@@ -26,6 +27,14 @@ describe("buildCivilHealthLegalDraft", () => {
       contactAdditionalWhatsapps: ["62977770000"],
       contactCpf: "10987654321",
       contactRg: "7654321",
+      processRepresentativeFullName: "Carla Silva",
+      processRepresentativeCpf: "11223344556",
+      processRepresentativeRg: "MG-9988776",
+      processRepresentativeAddress: "Rua C, 789",
+      processRepresentativeWhatsapp: "62966660000",
+      processRepresentativeEmail: "carla@example.com",
+      processRepresentativeAdditionalEmails: ["carla.alt@example.com"],
+      processRepresentativeAdditionalWhatsapps: ["62955550000"],
       problemType: "atendimento",
       currentUrgency: "high",
       keyDates: [{ label: "Atendimento", date: "2026-05-01", time: "18:10" }],
@@ -53,6 +62,9 @@ describe("buildCivilHealthLegalDraft", () => {
     );
     expect(draft.sections.find((section) => section.key === "contexto")?.body).toContain(
       "E-mails adicionais do paciente"
+    );
+    expect(draft.sections.find((section) => section.key === "contexto")?.body).toContain(
+      "Solicitante sera o procurador e responsavel pelo acompanhamento do processo: nao"
     );
     expect(draft.markdown).toContain("falha no atendimento emergencial");
     expect(draft.markdown).toContain("Análise jurídica preliminar");

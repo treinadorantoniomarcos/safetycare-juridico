@@ -82,6 +82,52 @@ function renderList(items: string[], emptyMessage: string) {
   return items.map((item) => `- ${normalizeText(item)}`).join("\n");
 }
 
+function buildProcessRepresentativeReference(input: CivilHealthDraftInput) {
+  const lines = [
+    `Solicitante sera o procurador e responsavel pelo acompanhamento do processo: ${
+      input.contactIsProcessRepresentative ? "sim" : "nao"
+    }.`
+  ];
+
+  if (input.contactIsProcessRepresentative) {
+    return lines;
+  }
+
+  return lines
+    .concat([
+      `Procurador e responsavel pelo acompanhamento do processo: ${normalizeText(
+        input.processRepresentativeFullName ?? ""
+      )}.`,
+      `CPF do procurador: ${normalizeText(input.processRepresentativeCpf ?? "")}.`,
+      `RG do procurador: ${normalizeText(input.processRepresentativeRg ?? "")}.`,
+      `Endereco do procurador: ${normalizeText(input.processRepresentativeAddress ?? "")}.`,
+      `WhatsApp do procurador: ${normalizeText(input.processRepresentativeWhatsapp ?? "")}.`,
+      `E-mail do procurador: ${normalizeText(input.processRepresentativeEmail ?? "")}.`
+    ])
+    .concat(
+      input.processRepresentativeAdditionalEmails.length > 0
+        ? [
+            `E-mails adicionais do procurador:`,
+            renderList(
+              input.processRepresentativeAdditionalEmails,
+              "Nenhum e-mail adicional do procurador foi informado."
+            )
+          ]
+        : []
+    )
+    .concat(
+      input.processRepresentativeAdditionalWhatsapps.length > 0
+        ? [
+            `WhatsApps adicionais do procurador:`,
+            renderList(
+              input.processRepresentativeAdditionalWhatsapps,
+              "Nenhum WhatsApp adicional do procurador foi informado."
+            )
+          ]
+        : []
+    );
+}
+
 function renderUploadedDocuments(input: CivilHealthDraftInput["uploadedDocuments"]) {
   if (input.length === 0) {
     return "- Nenhum arquivo enviado no formulario.";
@@ -169,6 +215,9 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
         `CPF do paciente: ${normalizeText(input.patientCpf)}.`,
         `RG do paciente: ${normalizeText(input.patientRg)}.`,
         `Relação informada: ${normalizeText(input.relationToPatient)}.`,
+      ]
+        .concat(buildProcessRepresentativeReference(input))
+        .concat([
         `Solicitante: ${normalizeText(input.contactFullName)}.`,
         `Endereço do solicitante: ${normalizeText(input.contactAddress)}.`,
         `WhatsApp do solicitante: ${normalizeText(input.contactWhatsapp)}.`,
@@ -179,7 +228,7 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
         `Contato informado: ${normalizeText(input.contact)}.`,
         `Tipo de problema: ${problemTypeLabel}.`,
         `Urgência atual: ${urgencyLabel}.`
-      ]
+      ])
         .concat(
           input.patientAdditionalEmails.length > 0
             ? [

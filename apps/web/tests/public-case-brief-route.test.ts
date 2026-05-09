@@ -144,6 +144,7 @@ describe("Public legal brief route", () => {
       patientAdditionalWhatsapps: ["(41) 96666-5555"],
       patientRg: "9876543",
       relationToPatient: "Filha",
+      contactIsProcessRepresentative: false,
       contactFullName: "Maria Souza",
       contactAddress: "Rua A, 123, Centro, Curitiba-PR",
       contactWhatsapp: "(41) 98888-7777",
@@ -152,6 +153,14 @@ describe("Public legal brief route", () => {
       contactAdditionalWhatsapps: ["(41) 97777-6666"],
       contactCpf: "22233344455",
       contactRg: "1234567",
+      processRepresentativeFullName: "Carla Souza",
+      processRepresentativeCpf: "44455566677",
+      processRepresentativeRg: "MG-9.876.543",
+      processRepresentativeAddress: "Rua B, 321, Curitiba-PR",
+      processRepresentativeWhatsapp: "(41) 96666-4444",
+      processRepresentativeEmail: "carla.souza@example.com",
+      processRepresentativeAdditionalEmails: ["carla.alt@example.com"],
+      processRepresentativeAdditionalWhatsapps: ["(41) 95555-3333"],
       problemType: "plano",
       currentUrgency: "high",
       keyDates: [{ label: "Negativa do plano", date: "2025-05-02", time: "14:30" }],
@@ -196,8 +205,10 @@ describe("Public legal brief route", () => {
     expect(body.status).toBe("ready");
     expect(body.submission.patientFullName).toBe("Ana Souza");
     expect(body.submission.contactFullName).toBe("Maria Souza");
+    expect(body.submission.contactIsProcessRepresentative).toBe(false);
     expect(body.submission.patientAdditionalEmails).toEqual(["ana.alt@example.com"]);
     expect(body.submission.contactAdditionalWhatsapps).toEqual(["(41) 97777-6666"]);
+    expect(body.submission.processRepresentativeFullName).toBe("Carla Souza");
     expect(body.submission.keyDates[0].time).toBe("14:30");
     expect(body.submission.uploadedDocuments).toHaveLength(1);
     expect(body.draft.title).toContain("Minuta preliminar");
@@ -241,6 +252,7 @@ describe("Public legal brief route", () => {
       patientAdditionalWhatsapps: ["(41) 95555-4444"],
       patientRg: "1234568",
       relationToPatient: "Mãe",
+      contactIsProcessRepresentative: true,
       contactFullName: "João Costa",
       contactAddress: "Rua B, 456, Centro, Curitiba-PR",
       contactWhatsapp: "(41) 97777-6666",
@@ -249,6 +261,14 @@ describe("Public legal brief route", () => {
       contactAdditionalWhatsapps: ["(41) 96666-5555"],
       contactCpf: "33344455566",
       contactRg: "7654321",
+      processRepresentativeFullName: "",
+      processRepresentativeCpf: "",
+      processRepresentativeRg: "",
+      processRepresentativeAddress: "",
+      processRepresentativeWhatsapp: "",
+      processRepresentativeEmail: "",
+      processRepresentativeAdditionalEmails: [],
+      processRepresentativeAdditionalWhatsapps: [],
       problemType: "medicamento",
       currentUrgency: "critical",
       keyDates: [{ label: "Negativa do remédio", date: "2025-05-02", time: "09:15" }],
@@ -304,6 +324,7 @@ describe("Public legal brief route", () => {
           patientAdditionalWhatsapps: ["(41) 95555-4444"],
           patientRg: "1234568",
           relationToPatient: "Mãe",
+          contactIsProcessRepresentative: true,
           contactFullName: "João Costa",
           contactAddress: "Rua B, 456, Centro, Curitiba-PR",
           contactWhatsapp: "(41) 97777-6666",
@@ -312,6 +333,14 @@ describe("Public legal brief route", () => {
           contactAdditionalWhatsapps: ["(41) 96666-5555"],
           contactCpf: "33344455566",
           contactRg: "7654321",
+          processRepresentativeFullName: "",
+          processRepresentativeCpf: "",
+          processRepresentativeRg: "",
+          processRepresentativeAddress: "",
+          processRepresentativeWhatsapp: "",
+          processRepresentativeEmail: "",
+          processRepresentativeAdditionalEmails: [],
+          processRepresentativeAdditionalWhatsapps: [],
           problemType: "medicamento",
           currentUrgency: "critical",
           keyDates: [{ label: "Negativa do remédio", date: "2025-05-02", time: "09:15" }],

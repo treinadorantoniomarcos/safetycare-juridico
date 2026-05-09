@@ -295,6 +295,7 @@ const briefPayload = {
   patientAdditionalWhatsapps: ["(41) 95555-4444"],
   patientRg: "1234568",
   relationToPatient: "Mae",
+  contactIsProcessRepresentative: false,
   contactFullName: "Joao Costa",
   contactAddress: "Rua B, 456, Centro, Curitiba-PR",
   contactWhatsapp: "(41) 97777-6666",
@@ -303,6 +304,14 @@ const briefPayload = {
   contactAdditionalWhatsapps: ["(41) 96666-5555"],
   contactCpf: "33344455566",
   contactRg: "7654321",
+  processRepresentativeFullName: "Dra. Lucia Costa",
+  processRepresentativeCpf: "444.555.666-77",
+  processRepresentativeRg: "SP-8.765.432",
+  processRepresentativeAddress: "Rua C, 789, Centro, Curitiba-PR",
+  processRepresentativeWhatsapp: "(41) 94444-3333",
+  processRepresentativeEmail: "lucia.costa@example.com",
+  processRepresentativeAdditionalEmails: ["lucia.alt@example.com"],
+  processRepresentativeAdditionalWhatsapps: ["(41) 93333-2222"],
   problemType: "medicamento",
   currentUrgency: "critical",
   keyDates: [{ label: "Negativa do remedio", date: "2026-05-02", time: "10:00" }],
@@ -715,6 +724,7 @@ describe("full client journey", () => {
     expect(briefSubmissionBody.status).toBe("accepted");
     expect(briefSubmissionBody.submission.patientFullName).toBe("Maria Costa");
     expect(briefSubmissionBody.submission.contactFullName).toBe("Joao Costa");
+    expect(briefSubmissionBody.submission.contactIsProcessRepresentative).toBe(false);
     expect(briefSubmissionBody.submission.patientAdditionalEmails).toEqual([
       "maria.alt@example.com"
     ]);
@@ -736,6 +746,9 @@ describe("full client journey", () => {
     expect(briefFetchedAfterSubmitResponse.status).toBe(200);
     expect(briefFetchedAfterSubmitBody.submission.patientFullName).toBe("Maria Costa");
     expect(briefFetchedAfterSubmitBody.submission.contactEmail).toBe("joao.costa@example.com");
+    expect(briefFetchedAfterSubmitBody.submission.processRepresentativeFullName).toBe(
+      "Dra. Lucia Costa"
+    );
     expect(briefFetchedAfterSubmitBody.submission.contactAdditionalWhatsapps).toEqual([
       "(41) 96666-5555"
     ]);
