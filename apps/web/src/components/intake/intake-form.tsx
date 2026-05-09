@@ -198,6 +198,11 @@ export function IntakeForm({ landingSource = "unknown" }: IntakeFormProps) {
         </label>
       </div>
 
+      <p className="section-note">
+        Informe e-mail e WhatsApp corretos. Os contatos para o prosseguimento de uma eventual
+        acao poderao ser feitos por esses canais e tambem pela plataforma.
+      </p>
+
       <label className="field">
         <span>Origem</span>
         <select

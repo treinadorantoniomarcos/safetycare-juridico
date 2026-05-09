@@ -112,6 +112,11 @@ export default async function ObrigadoPage({ searchParams }: ObrigadoPageProps) 
               Codigo de acesso: <strong>{accessCode}</strong>
             </p>
           ) : null}
+          <p>
+            Se, na analise humana, for verificado que este ocorrido pode se tornar uma acao, novas
+            informacoes poderao ser solicitadas por um novo formulario aberto nesta mesma
+            plataforma.
+          </p>
           {!canOpenLegalBrief ? (
             <p>
               A liberacao acontece quando a equipe classificar o score manualmente em verde ou amarelo. Se
