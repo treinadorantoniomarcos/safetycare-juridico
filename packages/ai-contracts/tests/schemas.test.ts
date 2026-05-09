@@ -407,12 +407,16 @@ describe("legalBriefInputSchema", () => {
       patientAddress: "Rua do Paciente, 123, Curitiba-PR",
       patientWhatsapp: "(41) 97777-6666",
       patientEmail: "ana.souza@example.com",
+      patientAdditionalEmails: ["ana.alt@example.com"],
+      patientAdditionalWhatsapps: ["(41) 96666-5555"],
       patientRg: "9876543",
       relationToPatient: "Filha",
       contactFullName: "Maria Souza",
       contactAddress: "Rua A, 123, Centro, Curitiba-PR",
       contactWhatsapp: "(41) 98888-7777",
       contactEmail: "maria.souza@example.com",
+      contactAdditionalEmails: ["maria.alt@example.com"],
+      contactAdditionalWhatsapps: ["(41) 97777-6666"],
       contactCpf: "22233344455",
       contactRg: "1234567",
       problemType: "plano",
@@ -439,6 +443,8 @@ describe("legalBriefInputSchema", () => {
     expect(result.contactFullName).toBe("Maria Souza");
     expect(result.contactEmail).toBe("maria.souza@example.com");
     expect(result.patientEmail).toBe("ana.souza@example.com");
+    expect(result.patientAdditionalEmails).toEqual(["ana.alt@example.com"]);
+    expect(result.contactAdditionalWhatsapps).toEqual(["(41) 97777-6666"]);
     expect(result.keyDates[0].time).toBe("14:30");
   });
 });

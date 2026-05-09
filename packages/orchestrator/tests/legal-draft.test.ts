@@ -14,12 +14,16 @@ describe("buildCivilHealthLegalDraft", () => {
       patientAddress: "Rua A, 123",
       patientWhatsapp: "62999999999",
       patientEmail: "roberto@example.com",
+      patientAdditionalEmails: ["roberto.alt@example.com"],
+      patientAdditionalWhatsapps: ["62988880000"],
       patientRg: "1234567",
       relationToPatient: "Filho",
       contactFullName: "Maria Silva",
       contactAddress: "Rua B, 456",
       contactWhatsapp: "62988888888",
       contactEmail: "maria@example.com",
+      contactAdditionalEmails: ["maria.alt@example.com"],
+      contactAdditionalWhatsapps: ["62977770000"],
       contactCpf: "10987654321",
       contactRg: "7654321",
       problemType: "atendimento",
@@ -46,6 +50,9 @@ describe("buildCivilHealthLegalDraft", () => {
 
     expect(draft.sections.some((section) => section.title === "Análise jurídica preliminar")).toBe(
       true
+    );
+    expect(draft.sections.find((section) => section.key === "contexto")?.body).toContain(
+      "E-mails adicionais do paciente"
     );
     expect(draft.markdown).toContain("falha no atendimento emergencial");
     expect(draft.markdown).toContain("Análise jurídica preliminar");

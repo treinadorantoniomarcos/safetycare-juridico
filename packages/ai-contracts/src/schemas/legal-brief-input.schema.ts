@@ -20,6 +20,9 @@ const optionalTrimmedTextSchema = (maxLength: number) =>
     return trimmed.length === 0 ? undefined : trimmed;
   }, z.string().trim().max(maxLength).optional());
 
+const additionalEmailListSchema = z.array(z.string().trim().email().max(200)).max(10).default([]);
+const additionalWhatsappListSchema = z.array(z.string().trim().min(5).max(40)).max(10).default([]);
+
 export const legalBriefKeyDateSchema = z.object({
   label: z.string().trim().min(1).max(140),
   date: z.string().date(),
@@ -53,12 +56,16 @@ export const legalBriefInputSchema = z.object({
   patientAddress: z.string().trim().min(5).max(250),
   patientWhatsapp: z.string().trim().min(5).max(40),
   patientEmail: z.string().trim().email().max(200),
+  patientAdditionalEmails: additionalEmailListSchema,
+  patientAdditionalWhatsapps: additionalWhatsappListSchema,
   patientRg: z.string().trim().min(3).max(20),
   relationToPatient: z.string().trim().min(1).max(120),
   contactFullName: z.string().trim().min(1).max(200),
   contactAddress: z.string().trim().min(5).max(250),
   contactWhatsapp: z.string().trim().min(5).max(40),
   contactEmail: z.string().trim().email().max(200),
+  contactAdditionalEmails: additionalEmailListSchema,
+  contactAdditionalWhatsapps: additionalWhatsappListSchema,
   contactCpf: z.string().trim().min(11).max(18),
   contactRg: z.string().trim().min(3).max(20),
   problemType: z.enum(legalBriefProblemTypes),

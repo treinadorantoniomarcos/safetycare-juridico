@@ -22,6 +22,11 @@ type WitnessEntry = {
   address: string;
   whatsapp: string;
 };
+type OptionalContactListField =
+  | "patientAdditionalEmails"
+  | "patientAdditionalWhatsapps"
+  | "contactAdditionalEmails"
+  | "contactAdditionalWhatsapps";
 
 const MAX_UPLOADED_DOCUMENTS = 10;
 const MAX_UPLOADED_DOCUMENT_SIZE_BYTES = 12 * 1024 * 1024;
@@ -66,12 +71,16 @@ function createEmptyState(): LegalBriefFormState {
     patientAddress: "",
     patientWhatsapp: "",
     patientEmail: "",
+    patientAdditionalEmails: [],
+    patientAdditionalWhatsapps: [],
     patientRg: "",
     relationToPatient: "",
     contactFullName: "",
     contactAddress: "",
     contactWhatsapp: "",
     contactEmail: "",
+    contactAdditionalEmails: [],
+    contactAdditionalWhatsapps: [],
     contactCpf: "",
     contactRg: "",
     problemType: "atendimento",
@@ -111,6 +120,14 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
     whatsapp: item.whatsapp ?? ""
   }));
 
+  const normalizeStringList = (values: unknown) =>
+    Array.isArray(values)
+      ? values
+          .filter((value): value is string => typeof value === "string")
+          .map((value) => value.trim())
+          .filter((value) => value.length > 0)
+      : [];
+
   return {
     patientFullName: submission.patientFullName,
     patientCpf: submission.patientCpf,
@@ -119,12 +136,16 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
     patientAddress: submission.patientAddress ?? "",
     patientWhatsapp: submission.patientWhatsapp ?? "",
     patientEmail: submission.patientEmail ?? "",
+    patientAdditionalEmails: normalizeStringList(submission.patientAdditionalEmails),
+    patientAdditionalWhatsapps: normalizeStringList(submission.patientAdditionalWhatsapps),
     patientRg: submission.patientRg ?? "",
     relationToPatient: submission.relationToPatient,
     contactFullName: submission.contactFullName ?? "",
     contactAddress: submission.contactAddress ?? "",
     contactWhatsapp: submission.contactWhatsapp ?? "",
     contactEmail: submission.contactEmail ?? "",
+    contactAdditionalEmails: normalizeStringList(submission.contactAdditionalEmails),
+    contactAdditionalWhatsapps: normalizeStringList(submission.contactAdditionalWhatsapps),
     contactCpf: submission.contactCpf ?? "",
     contactRg: submission.contactRg ?? "",
     problemType: submission.problemType,
@@ -149,6 +170,78 @@ function buildStateFromSubmission(submission: LegalBriefSubmission | null | unde
 
 function trimList(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean);
+}
+
+function renderRepeatableContactList({
+  title,
+  fieldLabel,
+  note,
+  emptyMessage,
+  items,
+  inputType,
+  autoComplete,
+  placeholder,
+  addLabel,
+  onAdd,
+  onRemove,
+  onUpdate
+}: {
+  title: string;
+  fieldLabel: string;
+  note: string;
+  emptyMessage: string;
+  items: string[];
+  inputType: "email" | "tel";
+  autoComplete?: string;
+  placeholder: string;
+  addLabel: string;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  onUpdate: (index: number, value: string) => void;
+}) {
+  return (
+    <>
+      <div className="form-section-head form-section-head--compact">
+        <h4>{title}</h4>
+        <p className="section-note">{note}</p>
+      </div>
+
+      <div className="repeatable-list">
+        {items.length > 0 ? (
+          items.map((item, index) => (
+            <div key={`${title}-${index}`} className="repeatable-grid repeatable-grid--single">
+              <label className="field">
+                <span>{fieldLabel}</span>
+                <input
+                  type={inputType}
+                  autoComplete={autoComplete}
+                  placeholder={placeholder}
+                  value={item}
+                  onChange={(event) => onUpdate(index, event.target.value)}
+                />
+              </label>
+
+              <button
+                type="button"
+                className="button-ghost inline-action inline-action--danger"
+                onClick={() => onRemove(index)}
+              >
+                Remover
+              </button>
+            </div>
+          ))
+        ) : (
+          <p className="review-empty-state">{emptyMessage}</p>
+        )}
+      </div>
+
+      <div className="repeatable-toolbar">
+        <button type="button" className="button-ghost inline-action" onClick={onAdd}>
+          {addLabel}
+        </button>
+      </div>
+    </>
+  );
 }
 
 function trimDates(values: LegalBriefKeyDate[]) {
@@ -481,7 +574,25 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
     }));
   }
 
+  function updateOptionalContactList(
+    field: OptionalContactListField,
+    index: number,
+    value: string
+  ) {
+    setFormState((prev) => ({
+      ...prev,
+      [field]: prev[field].map((item, currentIndex) => (currentIndex === index ? value : item))
+    }));
+  }
+
   function addStringListItem(field: "documentsAttached") {
+    setFormState((prev) => ({
+      ...prev,
+      [field]: [...prev[field], ""]
+    }));
+  }
+
+  function addOptionalContactListItem(field: OptionalContactListField) {
     setFormState((prev) => ({
       ...prev,
       [field]: [...prev[field], ""]
@@ -495,6 +606,13 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
         prev[field].length === 1
           ? prev[field]
           : prev[field].filter((_, currentIndex) => currentIndex !== index)
+    }));
+  }
+
+  function removeOptionalContactListItem(field: OptionalContactListField, index: number) {
+    setFormState((prev) => ({
+      ...prev,
+      [field]: prev[field].filter((_, currentIndex) => currentIndex !== index)
     }));
   }
 
@@ -638,12 +756,16 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
           patientAddress: formState.patientAddress.trim(),
           patientWhatsapp: formState.patientWhatsapp.trim(),
           patientEmail: formState.patientEmail.trim(),
+          patientAdditionalEmails: trimList(formState.patientAdditionalEmails),
+          patientAdditionalWhatsapps: trimList(formState.patientAdditionalWhatsapps),
           patientRg: formState.patientRg.trim(),
           relationToPatient: formState.relationToPatient.trim(),
           contactFullName: formState.contactFullName.trim(),
           contactAddress: formState.contactAddress.trim(),
           contactWhatsapp: formState.contactWhatsapp.trim(),
           contactEmail: formState.contactEmail.trim(),
+          contactAdditionalEmails: trimList(formState.contactAdditionalEmails),
+          contactAdditionalWhatsapps: trimList(formState.contactAdditionalWhatsapps),
           contactCpf: formState.contactCpf.trim(),
           contactRg: formState.contactRg.trim(),
           problemType: formState.problemType,
@@ -885,9 +1007,41 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
               onChange={(event) =>
                 setFormState((prev) => ({ ...prev, patientEmail: event.target.value }))
               }
-            />
+              />
           </label>
         </div>
+
+        {renderRepeatableContactList({
+          title: "E-mails adicionais do paciente",
+          fieldLabel: "E-mail adicional",
+          note: "Opcional. Adicione outro e-mail para contato posterior com o paciente.",
+          emptyMessage: "Nenhum e-mail adicional do paciente informado ainda.",
+          items: formState.patientAdditionalEmails,
+          inputType: "email",
+          autoComplete: "email",
+          placeholder: "nome.adicional@exemplo.com",
+          addLabel: "Adicionar outro e-mail do paciente",
+          onAdd: () => addOptionalContactListItem("patientAdditionalEmails"),
+          onRemove: (index) => removeOptionalContactListItem("patientAdditionalEmails", index),
+          onUpdate: (index, value) =>
+            updateOptionalContactList("patientAdditionalEmails", index, value)
+        })}
+
+        {renderRepeatableContactList({
+          title: "WhatsApps adicionais do paciente",
+          fieldLabel: "WhatsApp adicional",
+          note: "Opcional. Adicione outro número para contato posterior com o paciente.",
+          emptyMessage: "Nenhum WhatsApp adicional do paciente informado ainda.",
+          items: formState.patientAdditionalWhatsapps,
+          inputType: "tel",
+          autoComplete: "tel",
+          placeholder: "(00) 00000-0000",
+          addLabel: "Adicionar outro WhatsApp do paciente",
+          onAdd: () => addOptionalContactListItem("patientAdditionalWhatsapps"),
+          onRemove: (index) => removeOptionalContactListItem("patientAdditionalWhatsapps", index),
+          onUpdate: (index, value) =>
+            updateOptionalContactList("patientAdditionalWhatsapps", index, value)
+        })}
       </section>
 
       <section className="form-section-card">
@@ -985,9 +1139,41 @@ export function LegalBriefForm({ caseId, workflowJobId }: LegalBriefFormProps) {
               onChange={(event) =>
                 setFormState((prev) => ({ ...prev, contactAddress: event.target.value }))
               }
-            />
+              />
           </label>
         </div>
+
+        {renderRepeatableContactList({
+          title: "E-mails adicionais do solicitante",
+          fieldLabel: "E-mail adicional",
+          note: "Opcional. Adicione outro e-mail para acompanhamento do processo e das procurações.",
+          emptyMessage: "Nenhum e-mail adicional do solicitante informado ainda.",
+          items: formState.contactAdditionalEmails,
+          inputType: "email",
+          autoComplete: "email",
+          placeholder: "nome.adicional@exemplo.com",
+          addLabel: "Adicionar outro e-mail do solicitante",
+          onAdd: () => addOptionalContactListItem("contactAdditionalEmails"),
+          onRemove: (index) => removeOptionalContactListItem("contactAdditionalEmails", index),
+          onUpdate: (index, value) =>
+            updateOptionalContactList("contactAdditionalEmails", index, value)
+        })}
+
+        {renderRepeatableContactList({
+          title: "WhatsApps adicionais do solicitante",
+          fieldLabel: "WhatsApp adicional",
+          note: "Opcional. Adicione outro WhatsApp para acompanhamento do processo e das procurações.",
+          emptyMessage: "Nenhum WhatsApp adicional do solicitante informado ainda.",
+          items: formState.contactAdditionalWhatsapps,
+          inputType: "tel",
+          autoComplete: "tel",
+          placeholder: "(00) 00000-0000",
+          addLabel: "Adicionar outro WhatsApp do solicitante",
+          onAdd: () => addOptionalContactListItem("contactAdditionalWhatsapps"),
+          onRemove: (index) => removeOptionalContactListItem("contactAdditionalWhatsapps", index),
+          onUpdate: (index, value) =>
+            updateOptionalContactList("contactAdditionalWhatsapps", index, value)
+        })}
       </section>
 
       <section className="form-section-card">

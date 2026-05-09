@@ -291,12 +291,16 @@ const briefPayload = {
   patientAddress: "Rua do Paciente, 456, Curitiba-PR",
   patientWhatsapp: "(41) 96666-5555",
   patientEmail: "maria.costa@example.com",
+  patientAdditionalEmails: ["maria.alt@example.com"],
+  patientAdditionalWhatsapps: ["(41) 95555-4444"],
   patientRg: "1234568",
   relationToPatient: "Mae",
   contactFullName: "Joao Costa",
   contactAddress: "Rua B, 456, Centro, Curitiba-PR",
   contactWhatsapp: "(41) 97777-6666",
   contactEmail: "joao.costa@example.com",
+  contactAdditionalEmails: ["joao.alt@example.com"],
+  contactAdditionalWhatsapps: ["(41) 96666-5555"],
   contactCpf: "33344455566",
   contactRg: "7654321",
   problemType: "medicamento",
@@ -711,6 +715,9 @@ describe("full client journey", () => {
     expect(briefSubmissionBody.status).toBe("accepted");
     expect(briefSubmissionBody.submission.patientFullName).toBe("Maria Costa");
     expect(briefSubmissionBody.submission.contactFullName).toBe("Joao Costa");
+    expect(briefSubmissionBody.submission.patientAdditionalEmails).toEqual([
+      "maria.alt@example.com"
+    ]);
     expect(briefSubmissionBody.draft.sections.length).toBeGreaterThan(0);
     expect(briefSubmissionBody.supportingDocumentPack.documents).toHaveLength(2);
 
@@ -729,6 +736,9 @@ describe("full client journey", () => {
     expect(briefFetchedAfterSubmitResponse.status).toBe(200);
     expect(briefFetchedAfterSubmitBody.submission.patientFullName).toBe("Maria Costa");
     expect(briefFetchedAfterSubmitBody.submission.contactEmail).toBe("joao.costa@example.com");
+    expect(briefFetchedAfterSubmitBody.submission.contactAdditionalWhatsapps).toEqual([
+      "(41) 96666-5555"
+    ]);
     expect(briefFetchedAfterSubmitBody.supportingDocumentPack.documents).toHaveLength(2);
 
     seedArtifactsFromBriefResponse(briefSubmissionBody);

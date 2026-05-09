@@ -293,6 +293,18 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
               </div>
 
               <div className="review-block">
+                <h4>Contatos adicionais do paciente</h4>
+                <div className="review-block">
+                  <h5>E-mails adicionais</h5>
+                  {renderList(submission.patientAdditionalEmails)}
+                </div>
+                <div className="review-block">
+                  <h5>WhatsApps adicionais</h5>
+                  {renderList(submission.patientAdditionalWhatsapps)}
+                </div>
+              </div>
+
+              <div className="review-block">
                 <h4>Dados de quem está preenchendo</h4>
                 <div className="review-kv-grid">
                   <div className="review-kv">
@@ -319,6 +331,18 @@ export default async function LegalBriefReviewPage({ params }: PageProps) {
                     <span>Endereço</span>
                     <strong>{submission.contactAddress}</strong>
                   </div>
+                </div>
+              </div>
+
+              <div className="review-block">
+                <h4>Contatos adicionais do solicitante</h4>
+                <div className="review-block">
+                  <h5>E-mails adicionais</h5>
+                  {renderList(submission.contactAdditionalEmails)}
+                </div>
+                <div className="review-block">
+                  <h5>WhatsApps adicionais</h5>
+                  {renderList(submission.contactAdditionalWhatsapps)}
                 </div>
               </div>
             </section>

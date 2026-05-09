@@ -140,12 +140,16 @@ describe("Public legal brief route", () => {
       patientAddress: "Rua do Paciente, 123, Curitiba-PR",
       patientWhatsapp: "(41) 97777-6666",
       patientEmail: "ana.souza@example.com",
+      patientAdditionalEmails: ["ana.alt@example.com"],
+      patientAdditionalWhatsapps: ["(41) 96666-5555"],
       patientRg: "9876543",
       relationToPatient: "Filha",
       contactFullName: "Maria Souza",
       contactAddress: "Rua A, 123, Centro, Curitiba-PR",
       contactWhatsapp: "(41) 98888-7777",
       contactEmail: "maria.souza@example.com",
+      contactAdditionalEmails: ["maria.alt@example.com"],
+      contactAdditionalWhatsapps: ["(41) 97777-6666"],
       contactCpf: "22233344455",
       contactRg: "1234567",
       problemType: "plano",
@@ -192,6 +196,8 @@ describe("Public legal brief route", () => {
     expect(body.status).toBe("ready");
     expect(body.submission.patientFullName).toBe("Ana Souza");
     expect(body.submission.contactFullName).toBe("Maria Souza");
+    expect(body.submission.patientAdditionalEmails).toEqual(["ana.alt@example.com"]);
+    expect(body.submission.contactAdditionalWhatsapps).toEqual(["(41) 97777-6666"]);
     expect(body.submission.keyDates[0].time).toBe("14:30");
     expect(body.submission.uploadedDocuments).toHaveLength(1);
     expect(body.draft.title).toContain("Minuta preliminar");
@@ -231,12 +237,16 @@ describe("Public legal brief route", () => {
       patientAddress: "Rua do Paciente, 456, Curitiba-PR",
       patientWhatsapp: "(41) 96666-5555",
       patientEmail: "maria.costa@example.com",
+      patientAdditionalEmails: ["maria.alt@example.com"],
+      patientAdditionalWhatsapps: ["(41) 95555-4444"],
       patientRg: "1234568",
       relationToPatient: "Mãe",
       contactFullName: "João Costa",
       contactAddress: "Rua B, 456, Centro, Curitiba-PR",
       contactWhatsapp: "(41) 97777-6666",
       contactEmail: "joao.costa@example.com",
+      contactAdditionalEmails: ["joao.alt@example.com"],
+      contactAdditionalWhatsapps: ["(41) 96666-5555"],
       contactCpf: "33344455566",
       contactRg: "7654321",
       problemType: "medicamento",
@@ -290,12 +300,16 @@ describe("Public legal brief route", () => {
           patientAddress: "Rua do Paciente, 456, Curitiba-PR",
           patientWhatsapp: "(41) 96666-5555",
           patientEmail: "maria.costa@example.com",
+          patientAdditionalEmails: ["maria.alt@example.com"],
+          patientAdditionalWhatsapps: ["(41) 95555-4444"],
           patientRg: "1234568",
           relationToPatient: "Mãe",
           contactFullName: "João Costa",
           contactAddress: "Rua B, 456, Centro, Curitiba-PR",
           contactWhatsapp: "(41) 97777-6666",
           contactEmail: "joao.costa@example.com",
+          contactAdditionalEmails: ["joao.alt@example.com"],
+          contactAdditionalWhatsapps: ["(41) 96666-5555"],
           contactCpf: "33344455566",
           contactRg: "7654321",
           problemType: "medicamento",
@@ -342,6 +356,8 @@ describe("Public legal brief route", () => {
     expect(body.submission.uploadedDocuments).toHaveLength(1);
     expect(body.submission.patientEmail).toBe("maria.costa@example.com");
     expect(body.submission.contactEmail).toBe("joao.costa@example.com");
+    expect(body.submission.patientAdditionalWhatsapps).toEqual(["(41) 95555-4444"]);
+    expect(body.submission.contactAdditionalEmails).toEqual(["joao.alt@example.com"]);
     expect(body.supportingDocumentPack.documents).toHaveLength(2);
   });
 });

@@ -67,6 +67,17 @@ function toIsoDate(value: Date | string | null | undefined) {
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 }
 
+function normalizeStringList(values: unknown) {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return values
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+}
+
 function formatSubmission(record: {
   draftScope: string;
   patientFullName: string;
@@ -76,12 +87,16 @@ function formatSubmission(record: {
   patientAddress: string;
   patientWhatsapp: string;
   patientEmail: string;
+  patientAdditionalEmails: unknown;
+  patientAdditionalWhatsapps: unknown;
   patientRg: string;
   relationToPatient: string;
   contactFullName: string;
   contactAddress: string;
   contactWhatsapp: string;
   contactEmail: string;
+  contactAdditionalEmails: unknown;
+  contactAdditionalWhatsapps: unknown;
   contactCpf: string;
   contactRg: string;
   problemType: string;
@@ -113,12 +128,16 @@ function formatSubmission(record: {
     patientAddress: record.patientAddress ?? "",
     patientWhatsapp: record.patientWhatsapp ?? "",
     patientEmail: record.patientEmail ?? "",
+    patientAdditionalEmails: normalizeStringList(record.patientAdditionalEmails),
+    patientAdditionalWhatsapps: normalizeStringList(record.patientAdditionalWhatsapps),
     patientRg: record.patientRg ?? "",
     relationToPatient: record.relationToPatient,
     contactFullName: record.contactFullName ?? "",
     contactAddress: record.contactAddress ?? "",
     contactWhatsapp: record.contactWhatsapp ?? "",
     contactEmail: record.contactEmail ?? "",
+    contactAdditionalEmails: normalizeStringList(record.contactAdditionalEmails),
+    contactAdditionalWhatsapps: normalizeStringList(record.contactAdditionalWhatsapps),
     contactCpf: record.contactCpf ?? "",
     contactRg: record.contactRg ?? "",
     problemType: record.problemType as LegalBriefInput["problemType"],
@@ -355,12 +374,16 @@ export async function POST(request: Request, context: RouteContext) {
       patientAddress: parsedPayload.data.patientAddress,
       patientWhatsapp: parsedPayload.data.patientWhatsapp,
       patientEmail: parsedPayload.data.patientEmail,
+      patientAdditionalEmails: parsedPayload.data.patientAdditionalEmails,
+      patientAdditionalWhatsapps: parsedPayload.data.patientAdditionalWhatsapps,
       patientRg: parsedPayload.data.patientRg,
       relationToPatient: parsedPayload.data.relationToPatient,
       contactFullName: parsedPayload.data.contactFullName,
       contactAddress: parsedPayload.data.contactAddress,
       contactWhatsapp: parsedPayload.data.contactWhatsapp,
       contactEmail: parsedPayload.data.contactEmail,
+      contactAdditionalEmails: parsedPayload.data.contactAdditionalEmails,
+      contactAdditionalWhatsapps: parsedPayload.data.contactAdditionalWhatsapps,
       contactCpf: parsedPayload.data.contactCpf,
       contactRg: parsedPayload.data.contactRg,
       problemType: parsedPayload.data.problemType,

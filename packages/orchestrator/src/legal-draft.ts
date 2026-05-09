@@ -179,7 +179,52 @@ export function buildCivilHealthLegalDraft(input: CivilHealthDraftInput): LegalD
         `Contato informado: ${normalizeText(input.contact)}.`,
         `Tipo de problema: ${problemTypeLabel}.`,
         `Urgência atual: ${urgencyLabel}.`
-      ].join("\n")
+      ]
+        .concat(
+          input.patientAdditionalEmails.length > 0
+            ? [
+                `E-mails adicionais do paciente:`,
+                renderList(
+                  input.patientAdditionalEmails,
+                  "Nenhum e-mail adicional do paciente foi informado."
+                )
+              ]
+            : []
+        )
+        .concat(
+          input.patientAdditionalWhatsapps.length > 0
+            ? [
+                `WhatsApps adicionais do paciente:`,
+                renderList(
+                  input.patientAdditionalWhatsapps,
+                  "Nenhum WhatsApp adicional do paciente foi informado."
+                )
+              ]
+            : []
+        )
+        .concat(
+          input.contactAdditionalEmails.length > 0
+            ? [
+                `E-mails adicionais do solicitante:`,
+                renderList(
+                  input.contactAdditionalEmails,
+                  "Nenhum e-mail adicional do solicitante foi informado."
+                )
+              ]
+            : []
+        )
+        .concat(
+          input.contactAdditionalWhatsapps.length > 0
+            ? [
+                `WhatsApps adicionais do solicitante:`,
+                renderList(
+                  input.contactAdditionalWhatsapps,
+                  "Nenhum WhatsApp adicional do solicitante foi informado."
+                )
+              ]
+            : []
+        )
+        .join("\n")
     },
     {
       key: "fatos",

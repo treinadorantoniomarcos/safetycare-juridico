@@ -73,6 +73,17 @@ function toIsoDate(value: Date | string | null | undefined) {
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 }
 
+function normalizeStringList(values: unknown) {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return values
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+}
+
 function formatSubmission(record: LegalBriefInputRecord): LegalBriefSubmissionView {
   return {
     draftScope: "civil_health",
@@ -83,12 +94,16 @@ function formatSubmission(record: LegalBriefInputRecord): LegalBriefSubmissionVi
     patientAddress: record.patientAddress ?? "",
     patientWhatsapp: record.patientWhatsapp ?? "",
     patientEmail: record.patientEmail ?? "",
+    patientAdditionalEmails: normalizeStringList(record.patientAdditionalEmails),
+    patientAdditionalWhatsapps: normalizeStringList(record.patientAdditionalWhatsapps),
     patientRg: record.patientRg ?? "",
     relationToPatient: record.relationToPatient,
     contactFullName: record.contactFullName ?? "",
     contactAddress: record.contactAddress ?? "",
     contactWhatsapp: record.contactWhatsapp ?? "",
     contactEmail: record.contactEmail ?? "",
+    contactAdditionalEmails: normalizeStringList(record.contactAdditionalEmails),
+    contactAdditionalWhatsapps: normalizeStringList(record.contactAdditionalWhatsapps),
     contactCpf: record.contactCpf ?? "",
     contactRg: record.contactRg ?? "",
     problemType: record.problemType as LegalBriefInput["problemType"],
